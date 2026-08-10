@@ -1,0 +1,20 @@
+{
+  "name": "s2-reussite",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "build": "cd client && npm run build",
+    "seed:pdfs": "node scripts/make-demo-pdf.js",
+    "smoke": "node scripts/smoke-test.js",
+    "test:sse": "node scripts/sse-live-test.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "express": "^5.2.1",
+    "multer": "^2.2.0"
+  }
+}

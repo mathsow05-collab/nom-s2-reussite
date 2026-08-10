@@ -1,0 +1,20 @@
+# Déploiement VPS en une commande : docker compose up -d --build
+# Les données (base SQLite + PDF uploadés) sont persistées dans ./data et ./uploads.
+services:
+  app:
+    build: .
+    container_name: s2-reussite
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000" # exposé uniquement en local ; Nginx/Caddy fait le lien avec l'extérieur
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?Définissez JWT_SECRET (openssl rand -hex 32)}
+      ADMIN1_USERNAME: ${ADMIN1_USERNAME:-admin}
+      ADMIN1_PASSWORD: ${ADMIN1_PASSWORD:?Définissez ADMIN1_PASSWORD}
+      ADMIN2_USERNAME: ${ADMIN2_USERNAME:-partenaire}
+      ADMIN2_PASSWORD: ${ADMIN2_PASSWORD:?Définissez ADMIN2_PASSWORD}
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads

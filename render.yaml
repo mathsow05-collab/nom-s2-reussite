@@ -1,0 +1,36 @@
+# Déploiement Render en un clic : https://render.com/docs/blueprint-spec
+# 1. Poussez ce dépôt sur GitHub/GitLab
+# 2. Sur Render : New + → Blueprint → sélectionnez le dépôt
+# 3. Renseignez les 4 variables marquées "sync: false" (comptes admin)
+services:
+  - type: web
+    name: s2-reussite
+    runtime: node
+    plan: free # passez à un plan payant si le disque persistant l'exige
+    region: frankfurt
+    buildCommand: npm install --no-audit --no-fund && cd client && npm install --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: s2-data
+      mountPath: /opt/render/s2-data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATA_DIR
+        value: /opt/render/s2-data/data
+      - key: UPLOADS_DIR
+        value: /opt/render/s2-data/uploads
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN1_USERNAME
+        sync: false
+      - key: ADMIN1_PASSWORD
+        sync: false
+      - key: ADMIN2_USERNAME
+        sync: false
+      - key: ADMIN2_PASSWORD
+        sync: false

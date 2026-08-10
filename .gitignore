@@ -1,0 +1,19 @@
+# Dépendances
+node_modules/
+client/node_modules/
+
+# Secrets et configuration locale
+.env
+
+# Données (base + uploads) : à sauvegarder séparément, jamais en dépôt
+data/
+uploads/
+backups/
+
+# Build frontend
+client/dist/
+
+# Divers
+demo-accounts.txt
+*.log
+.DS_Store
