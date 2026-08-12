@@ -1,11 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, getToken, clearToken, MATIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
+import PdfViewer from '../components/PdfViewer.jsx';
 import Metiers from './Metiers.jsx';
-
-// PDF.js est chargé uniquement quand un élève ouvre un PDF (bundle léger sur mobile)
-const PdfViewer = lazy(() => import('../components/PdfViewer.jsx'));
 
 export default function StudentApp() {
   const [me, setMe] = useState(null);
@@ -178,17 +176,13 @@ function Viewer({ c, onClose }) {
         <div className="ratio">
           <iframe
             title={c.titre}
-            src={`https://www.youtube-nocookie.com/embed/${c.youtube_id}?rel=0&modestbranding=1`}
+            src={`https://www.youtube-nocookie.com/embed/${c.youtube_id}?rel=0&modestbranding=1&playsinline=1&hl=fr`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         </div>
       )}
-      {pdfUrl && showPdf && (
-        <Suspense fallback={<div className="pdf-viewer"><div className="pdf-status">Chargement du lecteur PDF…</div></div>}>
-          <PdfViewer src={pdfUrl} />
-        </Suspense>
-      )}
+      {pdfUrl && showPdf && <PdfViewer url={pdfUrl} />}
       <div className="viewer-foot">
         {c.youtube_id && pdfUrl && (
           <button className="btn btn-outline" onClick={() => setShowPdf((s) => !s)}>

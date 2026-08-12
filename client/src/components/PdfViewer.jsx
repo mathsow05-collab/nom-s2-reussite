@@ -1,57 +1,63 @@
 import { useEffect, useRef, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
+// Visionneuse PDF intégrée (moteur PDF.js de Mozilla, auto-hébergé) :
+// fonctionne sur TOUS les navigateurs, y compris Chrome mobile qui ne sait
+// pas afficher les PDF dans une iframe.
+// Chargée en différé (import dynamique) pour ne pas alourdir la page d'accueil.
 
-// Visionneuse PDF universelle (fonctionne sur Android, iPhone et PC) :
-// le PDF est rendu en images via PDF.js, au lieu de l'iframe que beaucoup
-// de navigateurs mobiles refusent d'afficher.
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-
-export default function PdfViewer({ src }) {
+export default function PdfViewer({ url }) {
   const containerRef = useRef(null);
-  const [status, setStatus] = useState('loading');
+  const [state, setState] = useState('loading'); // loading | ready | error
+  const [pages, setPages] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setStatus('loading');
+    setState('loading');
     (async () => {
-      try {
-        const pdf = await pdfjsLib.getDocument(src).promise;
+      const [pdfjs, worker] = await Promise.all([
+        import('pdfjs-dist/legacy/build/pdf.mjs'),
+        import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'),
+      ]);
+      pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+      const doc = await pdfjs.getDocument(url).promise;
+      if (cancelled) return;
+      setPages(doc.numPages);
+      const container = containerRef.current;
+      container.innerHTML = '';
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
         if (cancelled) return;
-        const container = containerRef.current;
-        container.innerHTML = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          if (cancelled) return;
-          const page = await pdf.getPage(i);
-          const base = page.getViewport({ scale: 1 });
-          const cssWidth = Math.min(container.clientWidth || 640, 900);
-          const ratio = window.devicePixelRatio || 1;
-          const viewport = page.getViewport({ scale: (cssWidth * ratio) / base.width });
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.floor(viewport.width);
-          canvas.height = Math.floor(viewport.height);
-          canvas.style.width = '100%';
-          container.appendChild(canvas);
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-          if (!cancelled) setStatus('ready');
-        }
-      } catch {
-        if (!cancelled) setStatus('error');
+        const base = page.getViewport({ scale: 1 });
+        const width = container.clientWidth || 600;
+        const viewport = page.getViewport({ scale: width / base.width });
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page';
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+        container.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+        await page.render({
+          canvasContext: ctx,
+          viewport,
+          transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null,
+        }).promise;
       }
-    })();
+      if (!cancelled) setState('ready');
+    })().catch(() => {
+      if (!cancelled) setState('error');
+    });
     return () => {
       cancelled = true;
     };
-  }, [src]);
+  }, [url]);
 
   return (
     <div className="pdf-viewer">
-      {status === 'loading' && <div className="pdf-status">Ouverture du PDF…</div>}
-      {status === 'error' && (
-        <div className="pdf-status">
-          Aperçu impossible sur cet appareil — utilisez le bouton « Télécharger » ci-dessous.
-        </div>
+      {state === 'loading' && <div className="pdf-status">Chargement du PDF…</div>}
+      {state === 'error' && (
+        <div className="pdf-status">Aperçu impossible sur cet appareil — utilise le bouton Télécharger ci-dessous.</div>
       )}
+      {state === 'ready' && <div className="pdf-status pdf-status-ok">{pages} page{pages > 1 ? 's' : ''}</div>}
       <div className="pdf-pages" ref={containerRef} />
     </div>
   );
