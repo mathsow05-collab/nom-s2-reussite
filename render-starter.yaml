@@ -1,25 +1,29 @@
-# Déploiement Render — PLAN GRATUIT (sans disque persistant)
-# https://render.com/docs/blueprint-spec
-#
-# ⚠️ Limitation du plan gratuit : le stockage est temporaire. À chaque
-# redémarrage/redéploiement, la base repart du seed (comptes admin recréés à
-# partir des variables d'environnement, élèves de démo régénérés). Les élèves
-# et PDF ajoutés via l'espace admin ne sont PAS conservés.
-# → Pour la vraie production : utilisez render-starter.yaml (plan payant + disque).
+# Déploiement Render — PRODUCTION (plan payant + disque persistant)
+# À utiliser quand vous passez au plan Starter (~7 $/mois) :
+#   New + → Blueprint → choisir ce dépôt → Blueprint Path : render-starter.yaml
+# Le disque conserve la base SQLite et les PDF entre les redéploiages.
 services:
   - type: web
     name: s2-reussite
     runtime: node
-    plan: free
+    plan: starter
     region: frankfurt
     buildCommand: npm install --no-audit --no-fund && cd client && npm install --no-audit --no-fund && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
+    disk:
+      name: s2-data
+      mountPath: /opt/render/s2-data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
+      - key: DATA_DIR
+        value: /opt/render/s2-data/data
+      - key: UPLOADS_DIR
+        value: /opt/render/s2-data/uploads
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN1_USERNAME
