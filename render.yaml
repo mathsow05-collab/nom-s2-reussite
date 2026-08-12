@@ -18,8 +18,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
+      # NB : ne PAS définir PORT ici — Render injecte son propre port et le
+      # serveur le lit automatiquement (process.env.PORT).
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN1_USERNAME

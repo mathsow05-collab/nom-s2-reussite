@@ -18,8 +18,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3000
+      # NB : ne PAS définir PORT ici — Render injecte son propre port.
       - key: DATA_DIR
         value: /opt/render/s2-data/data
       - key: UPLOADS_DIR
