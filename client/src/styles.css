@@ -175,6 +175,10 @@ input[type='file'].input { padding: 8px; }
 .ratio iframe { width: 100%; height: 100%; border: 0; display: block; }
 .pdf-box { height: 70dvh; background: #525659; border-radius: 10px; overflow: hidden; }
 .pdf-box iframe { width: 100%; height: 100%; border: 0; }
+.pdf-viewer { max-height: 72dvh; overflow-y: auto; background: #40444a; border-radius: 10px; padding: 12px; }
+.pdf-pages { display: grid; gap: 10px; }
+.pdf-pages canvas { display: block; margin: 0 auto; border-radius: 6px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4); background: #fff; }
+.pdf-status { color: #e5e7eb; text-align: center; padding: 18px 10px; font-size: 0.9rem; }
 .viewer-foot { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 
 /* Orientation : bannière + carrousel */

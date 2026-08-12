@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { api, getToken, clearToken, MATIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import Metiers from './Metiers.jsx';
+
+// PDF.js est chargé uniquement quand un élève ouvre un PDF (bundle léger sur mobile)
+const PdfViewer = lazy(() => import('../components/PdfViewer.jsx'));
 
 export default function StudentApp() {
   const [me, setMe] = useState(null);
@@ -182,9 +185,9 @@ function Viewer({ c, onClose }) {
         </div>
       )}
       {pdfUrl && showPdf && (
-        <div className="pdf-box">
-          <iframe title={`PDF ${c.titre}`} src={pdfUrl} />
-        </div>
+        <Suspense fallback={<div className="pdf-viewer"><div className="pdf-status">Chargement du lecteur PDF…</div></div>}>
+          <PdfViewer src={pdfUrl} />
+        </Suspense>
       )}
       <div className="viewer-foot">
         {c.youtube_id && pdfUrl && (

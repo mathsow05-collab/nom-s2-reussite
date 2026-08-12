@@ -30,7 +30,7 @@ app.use((req, res, next) => {
     'Content-Security-Policy',
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
       "connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
-      'frame-src https://www.youtube-nocookie.com https://www.youtube.com'
+      "worker-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com"
   );
   next();
 });
