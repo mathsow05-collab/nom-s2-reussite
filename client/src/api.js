@@ -48,10 +48,10 @@ export const MATIERES_L2 = [
   { id: 'anglais', label: 'Anglais', color: '#db2777' },
 ];
 export const MATIERES_AR = [
-  { id: 'lecture', label: 'Lecture & textes', color: '#0d9488' },
-  { id: 'grammaire', label: 'Grammaire', color: '#7c3aed' },
-  { id: 'conjugaison', label: 'Conjugaison', color: '#d97706' },
-  { id: 'vocabulaire', label: 'Vocabulaire & expression', color: '#db2777' },
+  { id: 'lecture', label: 'Lecture & makharij', color: '#0d9488' },
+  { id: 'sourates', label: 'Sourates & mémorisation', color: '#059669' },
+  { id: 'tajwid', label: 'Tajwid', color: '#d97706' },
+  { id: 'tafsir', label: 'Sens & tafsîr', color: '#7c3aed' },
 ];
 export const FILIERES = {
   S2: { label: 'S2 · Sciences', matieres: MATIERES_S2 },

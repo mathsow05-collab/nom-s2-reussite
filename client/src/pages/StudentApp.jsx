@@ -131,6 +131,7 @@ export default function StudentApp() {
 
       {tab === 'cours' && (
         <main className="container">
+          {filiere === 'AR' && <CoranEspace meId={me.eleve_id} />}
           {filiere === 'AR' && <LexiqueArabe />}
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
@@ -226,6 +227,71 @@ function Viewer({ c, onClose }) {
         )}
       </div>
     </Modal>
+  );
+}
+
+// Espace Coran : verset du jour + suivi de mémorisation des sourates.
+const VERSETS = [
+  { ar: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', fr: 'À côté de la difficulté, il y a certes une facilité.', ref: 'Ash-Sharh · 6' },
+  { ar: 'إِنَّ اللَّهَ مَعَ الصَّابِرِينَ', fr: 'Allah est avec ceux qui patientent.', ref: 'Al-Baqara · 153' },
+  { ar: 'وَقُل رَّبِّ زِدْنِي عِلْمًا', fr: '« Mon Seigneur, accrois mes connaissances ! »', ref: 'Tâ-Hâ · 114' },
+  { ar: 'لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ', fr: 'Ne désespérez pas de la miséricorde d’Allah.', ref: 'Az-Zumar · 53' },
+  { ar: 'فَاذْكُرُونِي أَذْكُرْكُمْ', fr: 'Souvenez-vous de Moi, Je me souviendrai de vous.', ref: 'Al-Baqara · 152' },
+  { ar: 'إِنَّ هَٰذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ', fr: 'Ce Coran guide vers ce qui est le plus juste.', ref: 'Al-Isrâ · 9' },
+];
+const SOURATES_MEM = [
+  ['Al-Fâtiha', 7], ['Az-Zalzala', 8], ['Al-ʿÂdiyât', 11], ['Al-Qâriʿa', 11], ['At-Takâthur', 8],
+  ['Al-ʿAsr', 3], ['Al-Humaza', 9], ['Al-Fîl', 5], ['Quraysh', 4], ['Al-Mâʿûn', 7],
+  ['Al-Kawthar', 3], ['Al-Kâfirûn', 6], ['An-Nasr', 3], ['Al-Masad', 5], ['Al-Ikhlâs', 4],
+  ['Al-Falaq', 5], ['An-Nâs', 6],
+];
+function CoranEspace({ meId }) {
+  const jour = Math.floor(Date.now() / 86400000) % VERSETS.length;
+  const v = VERSETS[jour];
+  const key = `s2r_mem_${meId}`;
+  const [mem, setMem] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(key) || '{}');
+    } catch {
+      return {};
+    }
+  });
+  function cycle(nom) {
+    setMem((m) => {
+      const next = { ...m, [nom]: m[nom] === 'encours' ? 'acquis' : m[nom] === 'acquis' ? '' : 'encours' };
+      localStorage.setItem(key, JSON.stringify(next));
+      return next;
+    });
+  }
+  const acquis = SOURATES_MEM.filter(([n]) => mem[n] === 'acquis').length;
+  const pct = Math.round((acquis / SOURATES_MEM.length) * 100);
+  return (
+    <>
+      <section className="verse-card">
+        <div className="verse-ar">{v.ar}</div>
+        <div className="verse-fr">« {v.fr} »</div>
+        <div className="verse-ref">Verset du jour — {v.ref}</div>
+      </section>
+      <section className="panel" style={{ marginBottom: 16 }}>
+        <h2>🕌 Ma mémorisation des sourates</h2>
+        <p className="muted small">Touche une sourate pour la passer « en cours » puis « acquise ». Ton progrès est gardé sur cet appareil.</p>
+        <div className="mem-bar">
+          <div style={{ width: `${pct}%` }} />
+        </div>
+        <div className="muted small" style={{ marginBottom: 10 }}>
+          {acquis}/{SOURATES_MEM.length} sourates acquises ({pct} %)
+        </div>
+        <div className="mem-grid">
+          {SOURATES_MEM.map(([nom, ayats]) => (
+            <button key={nom} className={mem[nom] === 'acquis' ? 'mem-item acquis' : mem[nom] === 'encours' ? 'mem-item encours' : 'mem-item'} onClick={() => cycle(nom)}>
+              <strong>{nom}</strong>
+              <span className="muted small">{ayats} versets</span>
+              <span className="mem-status">{mem[nom] === 'acquis' ? '✔ acquise' : mem[nom] === 'encours' ? '⏳ en cours' : 'à apprendre'}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 

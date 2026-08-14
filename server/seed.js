@@ -18,6 +18,7 @@ function seed(db, log = console.log) {
       { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
       { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
       { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
+      { username: 'aliou', password: 'aliou2026', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
     ];
     const ins = db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)');
     for (const a of admins) {
@@ -32,6 +33,7 @@ function seed(db, log = console.log) {
       { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
       { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
       { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
+      { username: 'aliou', password: 'aliou2026', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
     ];
     for (const a of extra) {
       if (!db.prepare('SELECT 1 FROM admins WHERE username = ?').get(a.username)) {
@@ -213,15 +215,21 @@ function seed(db, log = console.log) {
     log(`[seed] ${ech.length} échéances créées.`);
   }
 
-  /* ---------------- Cours d'arabe (par niveau 1/2/3) ---------------- */
-  if (db.prepare("SELECT COUNT(*) c FROM cours WHERE filiere = 'AR'").get().c === 0) {
+  /* ---------------- Cours Coran / arabe (niveaux 1-3) ---------------- */
+  const hasCoran = db.prepare("SELECT COUNT(*) c FROM cours WHERE filiere = 'AR' AND matiere = 'sourates'").get().c > 0;
+  if (!hasCoran) {
+    db.prepare("DELETE FROM cours WHERE filiere = 'AR'").run();
     const cours = [
-      { titre: 'L’alphabet arabe et la prononciation', matiere: 'lecture', niveau: 1, youtube_id: 'rgLli1ecwl8', pdf_file: 'arabe/niveau1-alphabet.pdf', description: 'Les 28 lettres, leurs formes isolées et attachées, les voyelles courtes (harakât).' },
-      { titre: 'Salutations et premiers mots', matiere: 'vocabulaire', niveau: 1, pdf_file: 'arabe/niveau1-salutations.pdf', description: 'Dire bonjour, se présenter, remercier : le kit de survie du débutant.' },
-      { titre: 'La phrase nominale (moubtada’ / khabar)', matiere: 'grammaire', niveau: 2, pdf_file: 'arabe/niveau2-phrase-nominale.pdf', description: 'Construire des phrases sans verbe : le sujet et son prédicat, avec exercices.' },
-      { titre: 'Le verbe au passé (mâdi)', matiere: 'conjugaison', niveau: 2, pdf_file: 'arabe/niveau2-madi.pdf', description: 'Conjuguer les verbes de base au passé : schémas, tableaux, pratique.' },
-      { titre: 'Lecture : comprendre un texte court', matiere: 'lecture', niveau: 3, pdf_file: 'arabe/niveau3-lecture.pdf', description: 'Méthode de lecture-compréhension avec un texte adapté et son lexique.' },
-      { titre: 'Expression : rédiger un petit paragraphe', matiere: 'vocabulaire', niveau: 3, pdf_file: 'arabe/niveau3-expression.pdf', description: 'Assembler ses acquis pour écrire : connecteurs, tournures utiles, exemples.' },
+      { titre: "L'alphabet arabe et les makharij (prononciation)", matiere: 'lecture', niveau: 1, youtube_id: 'rgLli1ecwl8', pdf_file: 'arabe/niveau1-alphabet.pdf', description: "Les 28 lettres, leurs sons exacts (points d'articulation) et les voyelles." },
+      { titre: "Sourate Al-Fâtiha : lire correctement", matiere: 'sourates', niveau: 1, youtube_id: 'lLzs5QX9pDE', pdf_file: 'arabe/niveau1-fatiha.pdf', description: "La sourate qui ouvre le Coran : lecture répétée, translittération et sens global." },
+      { titre: "Petites sourates (1) : Al-Kawthar et Al-Ikhlâs", matiere: 'sourates', niveau: 1, pdf_file: 'arabe/niveau1-petites1.pdf', description: "Lecture, mémorisation et signification des sourates 108 et 112." },
+      { titre: "Petites sourates (2) : Al-Falaq et An-Nâs", matiere: 'sourates', niveau: 1, pdf_file: 'arabe/niveau1-petites2.pdf', description: "Les deux sourates protectrices (113-114) : lecture et mémorisation." },
+      { titre: "Tajwid 1 : les allongements (madd) et la qalqala", matiere: 'tajwid', niveau: 2, youtube_id: '8bsenfOm2Ck', pdf_file: 'arabe/niveau2-tajwid1.pdf', description: "Les règles de base pour embellir la récitation sans erreur." },
+      { titre: "Lecture appliquée : Ad-Duhâ et Ash-Sharh", matiere: 'sourates', niveau: 2, pdf_file: 'arabe/niveau2-duha.pdf', description: "Appliquer le tajwid appris sur les sourates 93 et 94, avec leur sens." },
+      { titre: "Mémorisation guidée : sourates 99 à 103", matiere: 'sourates', niveau: 2, pdf_file: 'arabe/niveau2-memorisation.pdf', description: "Méthode pas à pas : répéter, comprendre, réciter par cœur." },
+      { titre: "Tajwid 2 : nûn sâkina et tanwîn (idghâm, ikhfâ, izhâr)", matiere: 'tajwid', niveau: 3, pdf_file: 'arabe/niveau3-tajwid2.pdf', description: "Les 4 règles du nûn sâkina avec exemples coraniques." },
+      { titre: "Sourate Al-Mulk (1-10) : lecture et sens", matiere: 'tafsir', niveau: 3, pdf_file: 'arabe/niveau3-mulk.pdf', description: "Lecture fluide des premiers versets et explication simplifiée." },
+      { titre: "Le sens des petites sourates : tafsîr simplifié", matiere: 'tafsir', niveau: 3, pdf_file: 'arabe/niveau3-tafsir.pdf', description: "Comprendre ce que disent les sourates mémorisées au niveau 1." },
     ];
     const ins = db.prepare(
       'INSERT INTO cours (titre, matiere, description, youtube_id, pdf_file, ordre, filiere, niveau) VALUES (@titre, @matiere, @description, @youtube_id, @pdf_file, @ordre, @filiere, @niveau)'
@@ -229,7 +237,7 @@ function seed(db, log = console.log) {
     cours.forEach((c, i) => ins.run({ youtube_id: null, pdf_file: null, ...c, ordre: i + 1, filiere: 'AR' }));
     const written = writeDemoPdfs(UPLOADS_DIR);
     if (written.length) log(`[seed] ${written.length} PDF générés.`);
-    log(`[seed] ${cours.length} cours d'arabe créés (niveaux 1-3).`);
+    log(`[seed] Programme Coran : ${cours.length} cours (niveaux 1-3).`);
   }
 
   /* ---------------- Lexique arabe-français (bonus interactif) ---------------- */

@@ -150,6 +150,20 @@ input[type='file'].input { padding: 8px; }
 .lex-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-align: center; }
 .lex-ar { font-size: 1.35rem; font-weight: 700; color: #0f766e; direction: rtl; }
 .lex-fr { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+.verse-card {
+  background: linear-gradient(120deg, #065f46, #0d9488); color: #fff; border-radius: var(--radius);
+  padding: 20px; text-align: center; margin-bottom: 14px; box-shadow: var(--shadow);
+}
+.verse-ar { font-size: 1.6rem; direction: rtl; line-height: 2; font-weight: 700; }
+.verse-fr { color: #d1fae5; margin-top: 6px; font-size: 0.95rem; }
+.verse-ref { color: #6ee7b7; font-size: 0.78rem; margin-top: 6px; letter-spacing: 0.05em; }
+.mem-bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+.mem-bar > div { height: 100%; background: var(--ok); transition: width 0.3s; }
+.mem-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.mem-item { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px; cursor: pointer; display: grid; gap: 2px; text-align: left; }
+.mem-item.encours { border-color: #f59e0b; background: #fffbeb; }
+.mem-item.acquis { border-color: #22c55e; background: #f0fdf4; }
+.mem-status { font-size: 0.72rem; color: var(--muted); }
 
 .seg { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 1100px; margin: 0 auto; }
 .seg button {

@@ -53,6 +53,10 @@ export default function AdminApp() {
       </div>
     );
 
+  // Le périmètre Arabe ne voit que l'essentiel : pas d'annales/quiz/agenda/métiers.
+  const visibleTabs =
+    me.filiere === 'AR' ? TABS.filter((t) => !['annales', 'quiz', 'agenda', 'metiers'].includes(t.id)) : TABS;
+
   return (
     <div className="admin-shell">
       <aside className="admin-side">
@@ -63,9 +67,9 @@ export default function AdminApp() {
           {me.displayName} {me.filiere !== 'all' && <span className={`filiere-badge fil-${me.filiere}`}>{me.filiere}</span>}
         </div>
         <nav className="admin-nav">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-              <Icon name={t.icon} /> {t.label}
+              <Icon name={t.icon} /> {t.id === 'cours' && me.filiere === 'AR' ? 'Cours Coran' : t.label}
             </button>
           ))}
         </nav>

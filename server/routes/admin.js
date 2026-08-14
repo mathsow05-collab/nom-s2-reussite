@@ -15,7 +15,14 @@ const UPLOADS = UPLOADS_DIR;
 const TMP_DIR = path.join(UPLOADS, 'tmp');
 fs.mkdirSync(TMP_DIR, { recursive: true });
 
-const MATIERES = ['maths', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'lecture', 'grammaire', 'conjugaison', 'vocabulaire'];
+const MATIERES = ['maths', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'lecture', 'sourates', 'tajwid', 'tafsir'];
+
+// Le périmètre Arabe (ex. Moustapha) ne gère QUE élèves + cours Coran :
+// annales, quiz, agenda et catalogue métiers lui sont fermés.
+function refuseAR(req, res, next) {
+  if (req.scope === 'AR') return res.status(403).json({ error: 'Module réservé aux autres périmètres de gestion.' });
+  return next();
+}
 const admin = requireAdmin(db);
 
 /* ------------------------- helpers ------------------------- */
@@ -299,7 +306,7 @@ router.delete('/cours/:id', admin, (req, res) => {
 });
 
 /* ------------------------- catalogue métiers ------------------------- */
-router.get('/metiers', admin, (req, res) => {
+router.get('/metiers', admin, refuseAR, (req, res) => {
   const sql =
     req.scope === 'all'
       ? 'SELECT * FROM metiers ORDER BY filiere, ordre, id'
@@ -314,7 +321,7 @@ router.post('/upload-image', admin, imageUpload, (req, res) => {
   return res.json({ url: `/media/metiers/${path.basename(dest)}` });
 });
 
-router.post('/metiers', admin, (req, res) => {
+router.post('/metiers', admin, refuseAR, (req, res) => {
   const { titre, domaine, description, debouches, image, parcours } = req.body || {};
   if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
   const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
@@ -326,7 +333,7 @@ router.post('/metiers', admin, (req, res) => {
   return res.status(201).json({ id: info.lastInsertRowid });
 });
 
-router.put('/metiers/:id', admin, (req, res) => {
+router.put('/metiers/:id', admin, refuseAR, (req, res) => {
   const m = db.prepare('SELECT * FROM metiers WHERE id = ?').get(req.params.id);
   if (!m) return res.status(404).json({ error: 'Métier introuvable.' });
   db.prepare('UPDATE metiers SET titre = ?, domaine = ?, description = ?, debouches = ?, image = ?, parcours = ? WHERE id = ?').run(
@@ -341,7 +348,7 @@ router.put('/metiers/:id', admin, (req, res) => {
   return res.json({ ok: true });
 });
 
-router.delete('/metiers/:id', admin, (req, res) => {
+router.delete('/metiers/:id', admin, refuseAR, (req, res) => {
   const m = db.prepare('SELECT * FROM metiers WHERE id = ?').get(req.params.id);
   if (!m) return res.status(404).json({ error: 'Métier introuvable.' });
   db.prepare('DELETE FROM metiers WHERE id = ?').run(m.id);
@@ -354,7 +361,7 @@ const annalesUpload = makeUploader(['.pdf'], 25).fields([
   { name: 'corrige', maxCount: 1 },
 ]);
 
-router.get('/annales', admin, (req, res) => {
+router.get('/annales', admin, refuseAR, (req, res) => {
   res.json(
     db
       .prepare(req.scope === 'all' ? 'SELECT * FROM annales ORDER BY annee DESC, id DESC' : 'SELECT * FROM annales WHERE filiere = ? ORDER BY annee DESC, id DESC')
@@ -362,7 +369,7 @@ router.get('/annales', admin, (req, res) => {
   );
 });
 
-router.post('/annales', admin, annalesUpload, (req, res) => {
+router.post('/annales', admin, refuseAR, annalesUpload, (req, res) => {
   const { titre, matiere, annee } = req.body || {};
   const an = parseInt(annee, 10);
   if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
@@ -390,7 +397,7 @@ router.post('/annales', admin, annalesUpload, (req, res) => {
   res.status(201).json({ id: info.lastInsertRowid });
 });
 
-router.delete('/annales/:id', admin, (req, res) => {
+router.delete('/annales/:id', admin, refuseAR, (req, res) => {
   const a = db.prepare('SELECT * FROM annales WHERE id = ?').get(req.params.id);
   if (!checkScope(req, res, a)) return;
   if (a.sujet_pdf) tryUnlink(path.join(UPLOADS, a.sujet_pdf));
@@ -400,7 +407,7 @@ router.delete('/annales/:id', admin, (req, res) => {
 });
 
 /* ------------------------- Quiz ------------------------- */
-router.get('/quiz', admin, (req, res) => {
+router.get('/quiz', admin, refuseAR, (req, res) => {
   res.json(
     db
       .prepare(req.scope === 'all' ? 'SELECT * FROM quiz_questions ORDER BY filiere, matiere, lecon, id' : 'SELECT * FROM quiz_questions WHERE filiere = ? ORDER BY matiere, lecon, id')
@@ -409,7 +416,7 @@ router.get('/quiz', admin, (req, res) => {
   );
 });
 
-router.post('/quiz', admin, (req, res) => {
+router.post('/quiz', admin, refuseAR, (req, res) => {
   const { question, lecon, matiere, choix, bonne } = req.body || {};
   if (!question || !String(question).trim()) return res.status(400).json({ error: 'La question est obligatoire.' });
   if (!lecon || !String(lecon).trim()) return res.status(400).json({ error: 'La leçon est obligatoire.' });
@@ -425,7 +432,7 @@ router.post('/quiz', admin, (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-router.delete('/quiz/:id', admin, (req, res) => {
+router.delete('/quiz/:id', admin, refuseAR, (req, res) => {
   const q = db.prepare('SELECT * FROM quiz_questions WHERE id = ?').get(req.params.id);
   if (!checkScope(req, res, q)) return;
   db.prepare('DELETE FROM quiz_questions WHERE id = ?').run(q.id);
@@ -469,11 +476,11 @@ router.post('/idees/:id/lu', admin, (req, res) => {
 });
 
 /* ------------------------- Échéances (agenda) ------------------------- */
-router.get('/echeances', admin, (req, res) => {
+router.get('/echeances', admin, refuseAR, (req, res) => {
   res.json(db.prepare('SELECT * FROM echeances ORDER BY date_debut').all());
 });
 
-router.post('/echeances', admin, (req, res) => {
+router.post('/echeances', admin, refuseAR, (req, res) => {
   const { titre, categorie, date_debut, date_fin, lieu, description, conseils } = req.body || {};
   if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date_debut || ''))) return res.status(400).json({ error: 'Date de début invalide.' });
@@ -491,7 +498,7 @@ router.post('/echeances', admin, (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-router.delete('/echeances/:id', admin, (req, res) => {
+router.delete('/echeances/:id', admin, refuseAR, (req, res) => {
   db.prepare('DELETE FROM echeances WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
