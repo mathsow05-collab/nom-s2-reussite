@@ -164,6 +164,13 @@ input[type='file'].input { padding: 8px; }
 .mem-item.encours { border-color: #f59e0b; background: #fffbeb; }
 .mem-item.acquis { border-color: #22c55e; background: #f0fdf4; }
 .mem-status { font-size: 0.72rem; color: var(--muted); }
+.audio-box { background: #f8fafc; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.audio-title { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 8px; color: #0f766e; }
+.ayah-question { direction: rtl; font-size: 1.5rem; line-height: 2; text-align: center; background: #f0fdfa; border: 1px solid #ccfbf1; border-radius: 10px; padding: 14px; margin: 10px 0; }
+.ayah-choices { display: grid; gap: 8px; }
+.ayah-choices .quiz-choice { direction: rtl; font-size: 1.05rem; line-height: 1.9; }
+.ayah-choices .quiz-choice.good { border-color: #22c55e; background: #f0fdf4; }
+.ayah-choices .quiz-choice.bad { border-color: #ef4444; background: #fef2f2; }
 
 .seg { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 1100px; margin: 0 auto; }
 .seg button {

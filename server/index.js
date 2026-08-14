@@ -29,7 +29,7 @@ app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
-      "connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
+      "connect-src 'self'; media-src 'self' https://cdn.islamic.network; object-src 'none'; base-uri 'self'; form-action 'self'; " +
       "worker-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com"
   );
   next();

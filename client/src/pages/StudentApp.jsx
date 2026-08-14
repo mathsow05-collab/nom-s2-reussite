@@ -3,6 +3,8 @@ import { api, getToken, clearToken, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
+import AudioCoran from '../components/AudioCoran.jsx';
+import QuizAyat from '../components/QuizAyat.jsx';
 import Metiers from './Metiers.jsx';
 import Annales from './Annales.jsx';
 import Quiz from './Quiz.jsx';
@@ -132,6 +134,8 @@ export default function StudentApp() {
       {tab === 'cours' && (
         <main className="container">
           {filiere === 'AR' && <CoranEspace meId={me.eleve_id} />}
+          {filiere === 'AR' && <AudioCoran />}
+          {filiere === 'AR' && <QuizAyat />}
           {filiere === 'AR' && <LexiqueArabe />}
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
