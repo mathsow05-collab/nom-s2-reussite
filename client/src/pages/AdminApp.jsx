@@ -87,7 +87,7 @@ export default function AdminApp() {
         {tab === 'agenda' && <AgendaAdmin />}
         {tab === 'questions' && <QuestionsAdmin adminScope={me.filiere} />}
         {tab === 'idees' && <IdeesAdmin />}
-        {tab === 'metiers' && <MetiersAdmin />}
+        {tab === 'metiers' && <MetiersAdmin adminScope={me.filiere} />}
       </div>
     </div>
   );

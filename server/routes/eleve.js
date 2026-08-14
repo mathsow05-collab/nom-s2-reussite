@@ -97,7 +97,10 @@ router.get('/cours/:id/pdf', requireEleve(db, { allowQuery: true }), (req, res) 
 });
 
 router.get('/metiers', requireEleve(db), (req, res) => {
-  res.json(db.prepare('SELECT * FROM metiers ORDER BY ordre, id').all());
+  const filiere = req.eleve.filiere || 'S2';
+  res.json(
+    db.prepare("SELECT * FROM metiers WHERE filiere = ? OR filiere = 'all' ORDER BY ordre, id").all(filiere)
+  );
 });
 
 router.post('/logout', requireEleve(db), (req, res) => {

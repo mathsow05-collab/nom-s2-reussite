@@ -133,5 +133,7 @@ ensureColumn('eleves', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('cours', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('admins', 'display_name', 'TEXT');
+ensureColumn('metiers', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
+ensureColumn('metiers', 'parcours', 'TEXT');
 
 module.exports = db;

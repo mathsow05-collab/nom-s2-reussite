@@ -77,6 +77,12 @@ export default function Metiers() {
             </div>
           )}
           <p>{open.description}</p>
+          {open.parcours && (
+            <>
+              <h4 className="h4">🎓 Études après le Bac S2</h4>
+              <p className="parcours-box">{open.parcours}</p>
+            </>
+          )}
           {open.debouches && (
             <>
               <h4 className="h4">Débouchés</h4>

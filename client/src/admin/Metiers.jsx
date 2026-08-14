@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 
-export default function MetiersAdmin() {
+export default function MetiersAdmin({ adminScope = 'all' }) {
   const [list, setList] = useState(null);
   const [form, setForm] = useState(null);
   const [err, setErr] = useState(null);
@@ -33,7 +33,7 @@ export default function MetiersAdmin() {
         <h1>Catalogue métiers (orientation S2)</h1>
         <button
           className="btn btn-primary"
-          onClick={() => setForm({ id: null, titre: '', domaine: '', description: '', debouches: '', image: null, imageUrl: '' })}
+          onClick={() => setForm({ id: null, titre: '', domaine: '', description: '', parcours: '', debouches: '', image: null, imageUrl: '', filiere: adminScope === 'all' ? 'S2' : adminScope })}
         >
           <Icon name="plus" size={16} /> Nouvelle fiche métier
         </button>
@@ -55,7 +55,10 @@ export default function MetiersAdmin() {
                 </div>
               )}
               <div className="metier-admin-body">
-                {m.domaine && <span className="badge badge-soft">{m.domaine}</span>}
+                <div>
+                  <span className={`filiere-badge fil-${m.filiere || 'S2'}`}>{m.filiere || 'S2'}</span>{' '}
+                  {m.domaine && <span className="badge badge-soft">{m.domaine}</span>}
+                </div>
                 <h3>{m.titre}</h3>
                 <p className="muted clamp2">{m.description}</p>
                 <div className="td-actions">
@@ -67,9 +70,11 @@ export default function MetiersAdmin() {
                         titre: m.titre,
                         domaine: m.domaine || '',
                         description: m.description || '',
+                        parcours: m.parcours || '',
                         debouches: (m.debouches || '').split(';').join('\n'),
                         image: null,
                         imageUrl: m.image || '',
+                        filiere: m.filiere || 'S2',
                       })
                     }
                   >
@@ -106,9 +111,7 @@ function MetierForm({ form, onClose, onSaved }) {
 
   function set(key, val) {
     setF((prev) => ({ ...prev, [key]: val }));
-  }
-
-  async function onImage(file) {
+  }  async function onImage(file) {
     if (!file) return;
     setUploading(true);
     setErr(null);
@@ -133,6 +136,8 @@ function MetierForm({ form, onClose, onSaved }) {
         titre: f.titre,
         domaine: f.domaine,
         description: f.description,
+        parcours: f.parcours,
+        filiere: f.filiere,
         debouches: f.debouches
           .split('\n')
           .map((d) => d.trim())
@@ -155,12 +160,19 @@ function MetierForm({ form, onClose, onSaved }) {
         <label className="label">Titre du métier *</label>
         <input className="input" value={f.titre} onChange={(e) => set('titre', e.target.value)} autoFocus />
 
+        <label className="label">Filière</label>
+        <select className="input" value={f.filiere} onChange={(e) => set('filiere', e.target.value)} disabled={!!f.id}>
+          <option value="S2">S2 · Sciences</option>
+          <option value="L2">L2 · Lettres</option>
+        </select>
         <label className="label">Domaine</label>
         <input className="input" placeholder="Santé, Numérique, Droit…" value={f.domaine} onChange={(e) => set('domaine', e.target.value)} />
 
         <label className="label">Description</label>
         <textarea className="input" rows="4" value={f.description} onChange={(e) => set('description', e.target.value)} />
 
+        <label className="label">Parcours d'études après le Bac</label>
+        <textarea className="input" rows="3" placeholder="Ex. : Bac S2 → EPT génie civil, 5 ans…" value={f.parcours} onChange={(e) => set('parcours', e.target.value)} />
         <label className="label">Débouchés (un par ligne)</label>
         <textarea className="input" rows="3" value={f.debouches} onChange={(e) => set('debouches', e.target.value)} />
 

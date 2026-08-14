@@ -281,7 +281,11 @@ router.delete('/cours/:id', admin, (req, res) => {
 
 /* ------------------------- catalogue métiers ------------------------- */
 router.get('/metiers', admin, (req, res) => {
-  res.json(db.prepare('SELECT * FROM metiers ORDER BY ordre, id').all());
+  const sql =
+    req.scope === 'all'
+      ? 'SELECT * FROM metiers ORDER BY filiere, ordre, id'
+      : "SELECT * FROM metiers WHERE filiere = ? OR filiere = 'all' ORDER BY ordre, id";
+  res.json(db.prepare(sql).all(...(req.scope === 'all' ? [] : [req.scope])));
 });
 
 router.post('/upload-image', admin, imageUpload, (req, res) => {
@@ -292,12 +296,13 @@ router.post('/upload-image', admin, imageUpload, (req, res) => {
 });
 
 router.post('/metiers', admin, (req, res) => {
-  const { titre, domaine, description, debouches, image } = req.body || {};
+  const { titre, domaine, description, debouches, image, parcours } = req.body || {};
   if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
-  const maxOrdre = db.prepare('SELECT MAX(ordre) m FROM metiers').get().m || 0;
+  const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
+  const maxOrdre = db.prepare('SELECT MAX(ordre) m FROM metiers WHERE filiere = ?').get(filiere).m || 0;
   const info = db
-    .prepare('INSERT INTO metiers (titre, domaine, description, debouches, image, ordre) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(String(titre).trim(), domaine || null, description || null, debouches || null, image || null, maxOrdre + 1);
+    .prepare('INSERT INTO metiers (titre, domaine, description, debouches, image, ordre, filiere, parcours) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(String(titre).trim(), domaine || null, description || null, debouches || null, image || null, maxOrdre + 1, filiere, parcours || null);
   addLog('metier_cree', { source: 'admin', req, details: titre });
   return res.status(201).json({ id: info.lastInsertRowid });
 });
@@ -305,12 +310,13 @@ router.post('/metiers', admin, (req, res) => {
 router.put('/metiers/:id', admin, (req, res) => {
   const m = db.prepare('SELECT * FROM metiers WHERE id = ?').get(req.params.id);
   if (!m) return res.status(404).json({ error: 'Métier introuvable.' });
-  db.prepare('UPDATE metiers SET titre = ?, domaine = ?, description = ?, debouches = ?, image = ? WHERE id = ?').run(
+  db.prepare('UPDATE metiers SET titre = ?, domaine = ?, description = ?, debouches = ?, image = ?, parcours = ? WHERE id = ?').run(
     String(req.body.titre ?? m.titre).trim(),
     req.body.domaine ?? m.domaine,
     req.body.description ?? m.description,
     req.body.debouches ?? m.debouches,
     req.body.image ?? m.image,
+    req.body.parcours ?? m.parcours,
     m.id
   );
   return res.json({ ok: true });
