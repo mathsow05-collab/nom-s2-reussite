@@ -136,4 +136,115 @@ router.get('/stream', (req, res) => {
   });
 });
 
+/* ------------------------- Annales (sujets + corrigés) ------------------------- */
+router.get('/annales', requireEleve(db), (req, res) => {
+  const filiere = req.eleve.filiere || 'S2';
+  const annee = parseInt(req.query.annee || '0', 10);
+  const matiere = String(req.query.matiere || '');
+  let sql = 'SELECT id, filiere, matiere, annee, titre, sujet_pdf, corrige_pdf FROM annales WHERE filiere = ?';
+  const args = [filiere];
+  if (annee) {
+    sql += ' AND annee = ?';
+    args.push(annee);
+  }
+  if (matiere && matiere !== 'all') {
+    sql += ' AND matiere = ?';
+    args.push(matiere);
+  }
+  sql += ' ORDER BY annee DESC, id DESC';
+  res.json(
+    db.prepare(sql).all(...args).map((r) => ({
+      id: r.id,
+      filiere: r.filiere,
+      matiere: r.matiere,
+      annee: r.annee,
+      titre: r.titre,
+      has_sujet: !!r.sujet_pdf,
+      has_corrige: !!r.corrige_pdf,
+    }))
+  );
+});
+
+router.get('/annales/:id/:type', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const type = req.params.type;
+  if (type !== 'sujet' && type !== 'corrige') return res.status(400).json({ error: 'Type invalide.' });
+  const a = db.prepare('SELECT * FROM annales WHERE id = ?').get(req.params.id);
+  if (!a || (a.filiere || 'S2') !== (req.eleve.filiere || 'S2')) return res.status(404).json({ error: 'Annales introuvables.' });
+  const rel = type === 'sujet' ? a.sujet_pdf : a.corrige_pdf;
+  if (!rel) return res.status(404).json({ error: 'PDF absent.' });
+  const file = path.join(UPLOADS, rel);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'PDF manquant sur le serveur.' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${path.basename(file)}"`);
+  return res.sendFile(file);
+});
+
+/* ------------------------- Quiz d'auto-évaluation ------------------------- */
+router.get('/quiz/lecons', requireEleve(db), (req, res) => {
+  const filiere = req.eleve.filiere || 'S2';
+  const matiere = String(req.query.matiere || '');
+  let sql = 'SELECT DISTINCT matiere, lecon FROM quiz_questions WHERE filiere = ?';
+  const args = [filiere];
+  if (matiere && matiere !== 'all') {
+    sql += ' AND matiere = ?';
+    args.push(matiere);
+  }
+  res.json(db.prepare(sql).all(...args));
+});
+
+router.get('/quiz/questions', requireEleve(db), (req, res) => {
+  const filiere = req.eleve.filiere || 'S2';
+  const matiere = String(req.query.matiere || '');
+  const lecon = String(req.query.lecon || '');
+  const n = Math.max(5, Math.min(20, parseInt(req.query.n || '10', 10) || 10));
+  let sql = 'SELECT id, question, choix, matiere, lecon, bonne FROM quiz_questions WHERE filiere = ?';
+  const args = [filiere];
+  if (matiere && matiere !== 'all') {
+    sql += ' AND matiere = ?';
+    args.push(matiere);
+  }
+  if (lecon) {
+    sql += ' AND lecon = ?';
+    args.push(lecon);
+  }
+  const rows = db.prepare(sql).all(...args);
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+  }
+  res.json(rows.slice(0, n).map((r) => ({ ...r, choix: JSON.parse(r.choix) })));
+});
+
+/* ------------------------- Questions élèves & boîte à idées ------------------------- */
+router.get('/questions', requireEleve(db), (req, res) => {
+  res.json(db.prepare('SELECT * FROM questions_eleves WHERE eleve_db_id = ? ORDER BY id DESC').all(req.eleve.id));
+});
+
+router.post('/questions', requireEleve(db), (req, res) => {
+  const message = String(req.body?.message || '').trim();
+  if (!message) return res.status(400).json({ error: 'Le message est obligatoire.' });
+  const info = db
+    .prepare('INSERT INTO questions_eleves (eleve_db_id, eleve_ref, filiere, sujet, message) VALUES (?, ?, ?, ?, ?)')
+    .run(req.eleve.id, req.eleve.eleve_id, req.eleve.filiere || 'S2', String(req.body?.sujet || '').trim() || null, message);
+  addLog('question_posee', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: req.body?.sujet || '' });
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+router.get('/idees', requireEleve(db), (req, res) => {
+  res.json(db.prepare('SELECT id, message, lu, created_at FROM idees WHERE eleve_db_id = ? ORDER BY id DESC').all(req.eleve.id));
+});
+
+router.post('/idees', requireEleve(db), (req, res) => {
+  const message = String(req.body?.message || '').trim();
+  if (!message) return res.status(400).json({ error: 'Le message est obligatoire.' });
+  db.prepare('INSERT INTO idees (eleve_db_id, eleve_ref, message) VALUES (?, ?, ?)').run(req.eleve.id, req.eleve.eleve_id, message);
+  addLog('idee_envoyee', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req });
+  res.status(201).json({ ok: true });
+});
+
+/* ------------------------- Agenda des échéances ------------------------- */
+router.get('/echeances', requireEleve(db), (req, res) => {
+  res.json(db.prepare('SELECT * FROM echeances ORDER BY date_debut').all());
+});
+
 module.exports = router;

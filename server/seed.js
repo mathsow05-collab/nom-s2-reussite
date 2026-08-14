@@ -110,6 +110,85 @@ function seed(db, log = console.log) {
     log(`[seed] ${cours.length} cours L2 créés.`);
   }
 
+  /* ---------------- Annales (sujets + corrigés) ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM annales').get().c === 0) {
+    const annales = [
+      { filiere: 'S2', matiere: 'maths', annee: 2023, titre: 'Bac S2 2023 – Mathématiques', sujet_pdf: 'annales/s2-maths-2023-sujet.pdf', corrige_pdf: 'annales/s2-maths-2023-corrige.pdf' },
+      { filiere: 'S2', matiere: 'physique-chimie', annee: 2022, titre: 'Bac S2 2022 – Physique-Chimie', sujet_pdf: 'annales/s2-pc-2022-sujet.pdf', corrige_pdf: 'annales/s2-pc-2022-corrige.pdf' },
+      { filiere: 'L2', matiere: 'francais', annee: 2021, titre: 'Bac L2 2021 – Français', sujet_pdf: 'annales/l2-francais-2021-sujet.pdf', corrige_pdf: 'annales/l2-francais-2021-corrige.pdf' },
+      { filiere: 'L2', matiere: 'philosophie', annee: 2024, titre: 'Bac L2 2024 – Philosophie', sujet_pdf: 'annales/l2-philo-2024-sujet.pdf', corrige_pdf: 'annales/l2-philo-2024-corrige.pdf' },
+    ];
+    const ins = db.prepare('INSERT INTO annales (filiere, matiere, annee, titre, sujet_pdf, corrige_pdf) VALUES (@filiere, @matiere, @annee, @titre, @sujet_pdf, @corrige_pdf)');
+    for (const a of annales) ins.run(a);
+    const written = writeDemoPdfs(UPLOADS_DIR);
+    if (written.length) log(`[seed] ${written.length} PDF générés.`);
+    log(`[seed] ${annales.length} annales créées.`);
+  }
+
+  /* ---------------- Questions de quiz (auto-évaluation) ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM quiz_questions').get().c === 0) {
+    const Q = (filiere, matiere, lecon, question, choix, bonne) => ({ filiere, matiere, lecon, question, choix: JSON.stringify(choix), bonne });
+    const quiz = [
+      Q('S2', 'maths', 'Puissances', '10³ × 10² = ?', ['10⁶', '10⁵', '10⁹', '100'], 1),
+      Q('S2', 'maths', 'Puissances', '(10²)³ = ?', ['10⁵', '10⁶', '10⁸', '10⁹'], 1),
+      Q('S2', 'maths', 'Puissances', '10⁻² = ?', ['-100', '1/100', '100', '-20'], 1),
+      Q('S2', 'maths', 'Puissances', '2⁵ = ?', ['10', '25', '32', '64'], 2),
+      Q('S2', 'maths', 'Puissances', 'Si a ≠ 0, a⁰ = ?', ['0', '1', 'a', '10'], 1),
+      Q('S2', 'maths', 'Puissances', '10⁷ / 10³ = ?', ['10⁴', '10¹⁰', '10³', '10²¹'], 0),
+      Q('S2', 'maths', 'Puissances', '√100 = ?', ['50', '10', '20', '100'], 1),
+      Q('S2', 'maths', 'Puissances', 'L’écriture scientifique de 4500 est :', ['45 × 10²', '4,5 × 10³', '0,45 × 10⁴', '4,5 × 10²'], 1),
+      Q('S2', 'maths', 'Puissances', '(2 × 10³)² = ?', ['2 × 10⁶', '4 × 10⁶', '4 × 10⁹', '2 × 10⁹'], 1),
+      Q('S2', 'maths', 'Puissances', '10⁰ + 10¹ = ?', ['10', '11', '20', '1'], 1),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'L’unité de l’énergie est :', ['le newton', 'le joule', 'le watt', 'le pascal'], 1),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'L’énergie cinétique vaut :', ['m.g.h', '½.m.v²', 'm.v', '½.m.h²'], 1),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'L’énergie potentielle de pesanteur vaut :', ['m.g.z', '½.m.v²', 'm.v.z', 'g.z'], 0),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'L’énergie mécanique est :', ['Ec - Ep', 'Ec × Ep', 'Ec + Ep', 'Ep / Ec'], 2),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'Un objet qui tombe (sans frottement) :', ['voit son Ec augmenter', 'voit son Ec diminuer', 'garde Ec constante', 'perd toute énergie'], 0),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'Vitesse doublée, masse identique : Ec est…', ['doublée', 'inchangée', 'multipliée par 4', 'divisée par 2'], 2),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'Sans frottements, Em est :', ['croissante', 'décroissante', 'constante', 'nulle'], 2),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'g vaut environ :', ['9,8 N/kg', '98 N/kg', '0,98 N/kg', '9,8 m/s'], 0),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'Avec frottements, une partie de Em devient :', ['de la lumière', 'de la chaleur', 'de la masse', 'rien'], 1),
+      Q('S2', 'physique-chimie', 'Énergie mécanique', 'Masse doublée à même vitesse : Ec est…', ['doublée', 'quadruplée', 'inchangée', 'divisée par 2'], 0),
+      Q('L2', 'francais', 'Figures de style', '« Il est fort comme un lion » est :', ['une métaphore', 'une comparaison', 'une hyperbole', 'une litote'], 1),
+      Q('L2', 'francais', 'Figures de style', '« Cet homme est un lion » est :', ['une comparaison', 'une métaphore', 'un oxymore', 'une anaphore'], 1),
+      Q('L2', 'francais', 'Figures de style', '« Je meurs de faim » est :', ['une hyperbole', 'une litote', 'une gradation', 'un oxymore'], 0),
+      Q('L2', 'francais', 'Figures de style', '« Une obscure clarté » est :', ['un oxymore', 'une antithèse', 'une métaphore', 'une litote'], 0),
+      Q('L2', 'francais', 'Figures de style', '« Va, je ne te hais point » est :', ['une litote', 'une hyperbole', 'une anaphore', 'une comparaison'], 0),
+      Q('L2', 'francais', 'Figures de style', 'Répéter un mot en début de phrases successives :', ['gradation', 'anaphore', 'personnification', 'oxymore'], 1),
+      Q('L2', 'francais', 'Figures de style', '« Je me meurs, je suis mort, je suis enterré » illustre :', ['une gradation', 'une litote', 'une comparaison', 'un euphémisme'], 0),
+      Q('L2', 'francais', 'Figures de style', 'Donner des traits humains à un objet :', ['personnification', 'métaphore', 'antithèse', 'litote'], 0),
+      Q('L2', 'francais', 'Figures de style', 'Opposer deux idées dans une même phrase :', ['oxymore', 'antithèse', 'hyperbole', 'anaphore'], 1),
+      Q('L2', 'francais', 'Figures de style', 'La métaphore est une comparaison…', ['avec l’outil « comme »', 'sans outil de comparaison', 'toujours négative', 'réservée à la poésie'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', '« Je pense donc je suis » est de :', ['Kant', 'Descartes', 'Sartre', 'Hobbes'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', '« A priori » signifie :', ['après l’expérience', 'indépendant de l’expérience', 'par l’expérience', 'contre l’expérience'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', 'Doctrine faisant du plaisir le souverain bien :', ['stoïcisme', 'épicurisme', 'empirisme', 'idéalisme'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', '« L’homme est un animal politique » :', ['Platon', 'Aristote', 'Rousseau', 'Marx'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', 'Le contraire du dogmatisme est :', ['le scepticisme', 'le rationalisme', 'le réalisme', 'l’empirisme'], 0),
+      Q('L2', 'philosophie', 'Repères et notions', 'L’éthique étudie :', ['l’être', 'l’action morale', 'la beauté', 'le langage'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', 'Pour Sartre, l’homme est :', ['déterminé par Dieu', 'condamné à être libre', 'un roseau pensant', 'un loup pour l’homme'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', 'Thèse, antithèse, puis :', ['hypothèse', 'synthèse', 'analyse', 'exégèse'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', '« Connais-toi toi-même » était inscrit à :', ['Athènes', 'Delphes', 'Rome', 'Alexandrie'], 1),
+      Q('L2', 'philosophie', 'Repères et notions', 'Pour l’empirisme, la connaissance vient :', ['de la raison', 'de l’expérience', 'de Dieu', 'des idées innées'], 1),
+    ];
+    const ins = db.prepare('INSERT INTO quiz_questions (filiere, matiere, lecon, question, choix, bonne) VALUES (@filiere, @matiere, @lecon, @question, @choix, @bonne)');
+    for (const q of quiz) ins.run(q);
+    log(`[seed] ${quiz.length} questions de quiz créées.`);
+  }
+
+  /* ---------------- Échéances (agenda dynamique) ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM echeances').get().c === 0) {
+    const ech = [
+      { titre: 'Bac général – épreuves écrites (S2 & L2)', categorie: 'bac', date_debut: '2027-06-07', date_fin: '2027-06-12', lieu: 'Centres d’examen de ton département (voir convocation)', description: 'L’épreuve reine de l’année : toutes les matières écrites sur une semaine.', conseils: 'Refais les annales 2015-2026 en conditions réelles; dors 8 h la veille; arrive 1 h en avance avec convocation + pièce d’identité; commence par lire TOUT le sujet.' },
+      { titre: 'Bac blanc du lycée', categorie: 'examen', date_debut: '2027-04-05', date_fin: '2027-04-09', lieu: 'Ton lycée', description: 'Répétition générale dans les conditions du Bac.', conseils: 'Téléphone à la maison, montre simple, copie propre : habitue-toi dès maintenant au format.' },
+      { titre: 'Concours ENSA Thiès – pré-inscriptions', categorie: 'concours', date_debut: '2026-09-15', date_fin: '2026-10-30', lieu: 'En ligne + ENSA de Thiès', description: 'Ouverture des pré-inscriptions au concours d’entrée des écoles d’ingénieurs (polytechnique, agronomie…).', conseils: 'Prépare le dossier (relevés de notes, CNI, photos) en avance; révise maths et physique de Première et Terminale.' },
+      { titre: 'Concours Médecine (UCAD) – retrait des dossiers', categorie: 'concours', date_debut: '2026-11-02', date_fin: '2026-11-27', lieu: 'Dakar, Université Cheikh Anta Diop', description: 'Dépôt des dossiers pour le concours d’entrée en Faculté de Médecine.', conseils: 'Le concours porte sur maths, physique, chimie et SVT du programme S2 : commence les annales dès septembre.' },
+      { titre: 'Compositions du 1er trimestre', categorie: 'examen', date_debut: '2026-12-07', date_fin: '2026-12-11', lieu: 'Ton lycée', description: 'Premier bilan officiel de l’année : les comptes rendus entrent dans ton dossier pour les concours.', conseils: 'Fais un planning de révision 3 semaines avant avec le générateur de la plateforme.' },
+    ];
+    const ins = db.prepare('INSERT INTO echeances (titre, categorie, date_debut, date_fin, lieu, description, conseils) VALUES (@titre, @categorie, @date_debut, @date_fin, @lieu, @description, @conseils)');
+    for (const e of ech) ins.run(e);
+    log(`[seed] ${ech.length} échéances créées.`);
+  }
+
   /* ---------------- Catalogue métiers (orientation, commun S2/L2) ---------------- */
   if (db.prepare('SELECT COUNT(*) c FROM metiers').get().c === 0) {
     const metiers = [

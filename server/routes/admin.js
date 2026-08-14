@@ -323,4 +323,152 @@ router.delete('/metiers/:id', admin, (req, res) => {
   return res.json({ ok: true });
 });
 
+/* ------------------------- Annales ------------------------- */
+const annalesUpload = makeUploader(['.pdf'], 25).fields([
+  { name: 'sujet', maxCount: 1 },
+  { name: 'corrige', maxCount: 1 },
+]);
+
+router.get('/annales', admin, (req, res) => {
+  res.json(
+    db
+      .prepare(req.scope === 'all' ? 'SELECT * FROM annales ORDER BY annee DESC, id DESC' : 'SELECT * FROM annales WHERE filiere = ? ORDER BY annee DESC, id DESC')
+      .all(...(req.scope === 'all' ? [] : [req.scope]))
+  );
+});
+
+router.post('/annales', admin, annalesUpload, (req, res) => {
+  const { titre, matiere, annee } = req.body || {};
+  const an = parseInt(annee, 10);
+  if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
+  if (!MATIERES.includes(matiere)) return res.status(400).json({ error: 'Matière invalide.' });
+  if (!an || an < 2000 || an > 2026) return res.status(400).json({ error: 'Année invalide (2000 à 2026).' });
+  const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
+
+  function moveFile(field) {
+    const f = req.files?.[field]?.[0];
+    if (!f) return null;
+    const dir = path.join(UPLOADS, 'annales');
+    fs.mkdirSync(dir, { recursive: true });
+    const dest = path.join(dir, `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.pdf`);
+    fs.renameSync(f.path, dest);
+    return `annales/${path.basename(dest)}`;
+  }
+  const sujet_pdf = moveFile('sujet');
+  const corrige_pdf = moveFile('corrige');
+  if (!sujet_pdf && !corrige_pdf) return res.status(400).json({ error: 'Ajoutez au moins un PDF (sujet ou corrigé).' });
+
+  const info = db
+    .prepare('INSERT INTO annales (filiere, matiere, annee, titre, sujet_pdf, corrige_pdf) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(filiere, matiere, an, String(titre).trim(), sujet_pdf, corrige_pdf);
+  addLog('annales_ajoutees', { source: 'admin', req, details: `${titre} (${annee})` });
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+router.delete('/annales/:id', admin, (req, res) => {
+  const a = db.prepare('SELECT * FROM annales WHERE id = ?').get(req.params.id);
+  if (!checkScope(req, res, a)) return;
+  if (a.sujet_pdf) tryUnlink(path.join(UPLOADS, a.sujet_pdf));
+  if (a.corrige_pdf) tryUnlink(path.join(UPLOADS, a.corrige_pdf));
+  db.prepare('DELETE FROM annales WHERE id = ?').run(a.id);
+  res.json({ ok: true });
+});
+
+/* ------------------------- Quiz ------------------------- */
+router.get('/quiz', admin, (req, res) => {
+  res.json(
+    db
+      .prepare(req.scope === 'all' ? 'SELECT * FROM quiz_questions ORDER BY filiere, matiere, lecon, id' : 'SELECT * FROM quiz_questions WHERE filiere = ? ORDER BY matiere, lecon, id')
+      .all(...(req.scope === 'all' ? [] : [req.scope]))
+      .map((r) => ({ ...r, choix: JSON.parse(r.choix) }))
+  );
+});
+
+router.post('/quiz', admin, (req, res) => {
+  const { question, lecon, matiere, choix, bonne } = req.body || {};
+  if (!question || !String(question).trim()) return res.status(400).json({ error: 'La question est obligatoire.' });
+  if (!lecon || !String(lecon).trim()) return res.status(400).json({ error: 'La leçon est obligatoire.' });
+  if (!MATIERES.includes(matiere)) return res.status(400).json({ error: 'Matière invalide.' });
+  if (!Array.isArray(choix) || choix.length !== 4 || choix.some((c) => !String(c).trim()))
+    return res.status(400).json({ error: 'Il faut exactement 4 choix remplis.' });
+  const b = parseInt(bonne, 10);
+  if (!(b >= 0 && b <= 3)) return res.status(400).json({ error: 'Bonne réponse invalide.' });
+  const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
+  db.prepare('INSERT INTO quiz_questions (filiere, matiere, lecon, question, choix, bonne) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(filiere, matiere, String(lecon).trim(), String(question).trim(), JSON.stringify(choix.map((c) => String(c).trim())), b);
+  addLog('quiz_question_ajoutee', { source: 'admin', req, details: `${lecon} (${filiere})` });
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/quiz/:id', admin, (req, res) => {
+  const q = db.prepare('SELECT * FROM quiz_questions WHERE id = ?').get(req.params.id);
+  if (!checkScope(req, res, q)) return;
+  db.prepare('DELETE FROM quiz_questions WHERE id = ?').run(q.id);
+  res.json({ ok: true });
+});
+
+/* ------------------------- Questions des élèves ------------------------- */
+router.get('/questions', admin, (req, res) => {
+  res.json(
+    db
+      .prepare(
+        req.scope === 'all'
+          ? "SELECT * FROM questions_eleves ORDER BY (statut = 'en_attente') DESC, id DESC"
+          : "SELECT * FROM questions_eleves WHERE filiere = ? ORDER BY (statut = 'en_attente') DESC, id DESC"
+      )
+      .all(...(req.scope === 'all' ? [] : [req.scope]))
+  );
+});
+
+router.post('/questions/:id/repondre', admin, (req, res) => {
+  const q = db.prepare('SELECT * FROM questions_eleves WHERE id = ?').get(req.params.id);
+  if (!checkScope(req, res, q)) return;
+  const reponse = String(req.body?.reponse || '').trim();
+  if (!reponse) return res.status(400).json({ error: 'La réponse est obligatoire.' });
+  db.prepare("UPDATE questions_eleves SET reponse = ?, statut = 'repondu', repondu_at = ? WHERE id = ?")
+    .run(reponse, new Date().toISOString(), q.id);
+  // Temps réel : l'élève connecté reçoit la réponse immédiatement.
+  sse.send(q.eleve_db_id, 'reponse', { id: q.id, reponse });
+  addLog('question_repondu', { source: 'admin', eleveDbId: q.eleve_db_id, eleveRef: q.eleve_ref, req, details: `par ${req.admin.username}` });
+  res.json({ ok: true });
+});
+
+/* ------------------------- Boîte à idées ------------------------- */
+router.get('/idees', admin, (req, res) => {
+  res.json(db.prepare('SELECT * FROM idees ORDER BY lu ASC, id DESC').all());
+});
+
+router.post('/idees/:id/lu', admin, (req, res) => {
+  db.prepare('UPDATE idees SET lu = 1 WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+/* ------------------------- Échéances (agenda) ------------------------- */
+router.get('/echeances', admin, (req, res) => {
+  res.json(db.prepare('SELECT * FROM echeances ORDER BY date_debut').all());
+});
+
+router.post('/echeances', admin, (req, res) => {
+  const { titre, categorie, date_debut, date_fin, lieu, description, conseils } = req.body || {};
+  if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date_debut || ''))) return res.status(400).json({ error: 'Date de début invalide.' });
+  db.prepare('INSERT INTO echeances (titre, categorie, date_debut, date_fin, lieu, description, conseils) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(
+      String(titre).trim(),
+      ['bac', 'concours', 'examen', 'autre'].includes(categorie) ? categorie : 'autre',
+      date_debut,
+      /^\d{4}-\d{2}-\d{2}$/.test(String(date_fin || '')) ? date_fin : null,
+      lieu || null,
+      description || null,
+      conseils || null
+    );
+  addLog('echeance_ajoutee', { source: 'admin', req, details: titre });
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/echeances/:id', admin, (req, res) => {
+  db.prepare('DELETE FROM echeances WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 module.exports = router;

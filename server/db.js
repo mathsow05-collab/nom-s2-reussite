@@ -61,6 +61,62 @@ CREATE TABLE IF NOT EXISTS logs (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS annales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filiere TEXT NOT NULL,
+  matiere TEXT NOT NULL,
+  annee INTEGER NOT NULL,
+  titre TEXT NOT NULL,
+  sujet_pdf TEXT,
+  corrige_pdf TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS quiz_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filiere TEXT NOT NULL,
+  matiere TEXT NOT NULL,
+  lecon TEXT NOT NULL,
+  question TEXT NOT NULL,
+  choix TEXT NOT NULL,
+  bonne INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS questions_eleves (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eleve_db_id INTEGER NOT NULL,
+  eleve_ref TEXT,
+  filiere TEXT,
+  sujet TEXT,
+  message TEXT NOT NULL,
+  reponse TEXT,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  repondu_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS idees (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eleve_db_id INTEGER,
+  eleve_ref TEXT,
+  message TEXT NOT NULL,
+  lu INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS echeances (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  categorie TEXT NOT NULL DEFAULT 'autre',
+  date_debut TEXT NOT NULL,
+  date_fin TEXT,
+  lieu TEXT,
+  description TEXT,
+  conseils TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_eleves_eleve_id ON eleves(eleve_id);
 CREATE INDEX IF NOT EXISTS idx_eleves_session ON eleves(session_jti);
 CREATE INDEX IF NOT EXISTS idx_cours_matiere ON cours(matiere);

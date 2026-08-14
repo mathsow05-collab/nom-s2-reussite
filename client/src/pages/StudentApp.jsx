@@ -4,6 +4,21 @@ import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import Metiers from './Metiers.jsx';
+import Annales from './Annales.jsx';
+import Quiz from './Quiz.jsx';
+import Agenda from './Agenda.jsx';
+import Outils from './Outils.jsx';
+import Echanges from './Echanges.jsx';
+
+const TABS = [
+  { id: 'cours', label: 'Cours', icon: 'book' },
+  { id: 'annales', label: 'Annales', icon: 'file' },
+  { id: 'quiz', label: 'Quiz', icon: 'award' },
+  { id: 'orientation', label: 'Orientation', icon: 'compass' },
+  { id: 'agenda', label: 'Agenda', icon: 'calendar' },
+  { id: 'outils', label: 'Outils', icon: 'chart' },
+  { id: 'echanges', label: 'Échanges', icon: 'chat' },
+];
 
 export default function StudentApp() {
   const [me, setMe] = useState(null);
@@ -35,6 +50,13 @@ export default function StudentApp() {
       try {
         const d = JSON.parse(ev.data);
         setLost(d.type || 'session_perdue');
+      } catch {
+        /* ignore */
+      }
+    });
+    es.addEventListener('reponse', (ev) => {
+      try {
+        window.dispatchEvent(new CustomEvent('s2r-sse', { detail: JSON.parse(ev.data) }));
       } catch {
         /* ignore */
       }
@@ -93,15 +115,21 @@ export default function StudentApp() {
       </header>
 
       <nav className="seg">
-        <button className={tab === 'cours' ? 'active' : ''} onClick={() => setTab('cours')}>
-          <Icon name="book" /> Cours
-        </button>
-        <button className={tab === 'orientation' ? 'active' : ''} onClick={() => setTab('orientation')}>
-          <Icon name="compass" /> Orientation S2
-        </button>
+        {TABS.map((t) => (
+          <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+            <Icon name={t.icon} /> {t.label}
+          </button>
+        ))}
       </nav>
 
-      {tab === 'cours' ? (
+      {tab === 'annales' && <Annales />}
+      {tab === 'quiz' && <Quiz />}
+      {tab === 'orientation' && <Metiers />}
+      {tab === 'agenda' && <Agenda />}
+      {tab === 'outils' && <Outils />}
+      {tab === 'echanges' && <Echanges />}
+
+      {tab === 'cours' && (
         <main className="container">
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
@@ -128,8 +156,6 @@ export default function StudentApp() {
             </div>
           )}
         </main>
-      ) : (
-        <Metiers />
       )}
 
       {viewer && <Viewer c={viewer} onClose={() => setViewer(null)} />}
