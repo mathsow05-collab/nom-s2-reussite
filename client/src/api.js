@@ -34,10 +34,29 @@ export async function api(path, { method = 'GET', body, form = false } = {}) {
   return data;
 }
 
-export const MATIERES = [
+/* ---------- Filières & matières ---------- */
+export const MATIERES_S2 = [
   { id: 'maths', label: 'Maths', color: '#4f46e5' },
   { id: 'physique-chimie', label: 'Physique-Chimie', color: '#0891b2' },
   { id: 'francais', label: 'Français', color: '#d97706' },
   { id: 'histoire-geographie', label: 'Histoire-Géo', color: '#059669' },
 ];
+export const MATIERES_L2 = [
+  { id: 'francais', label: 'Français', color: '#d97706' },
+  { id: 'histoire-geographie', label: 'Histoire-Géo', color: '#059669' },
+  { id: 'philosophie', label: 'Philosophie', color: '#7c3aed' },
+  { id: 'anglais', label: 'Anglais', color: '#db2777' },
+];
+export const FILIERES = {
+  S2: { label: 'S2 · Sciences', matieres: MATIERES_S2 },
+  L2: { label: 'L2 · Lettres', matieres: MATIERES_L2 },
+};
+export const MATIERES = [
+  ...MATIERES_S2,
+  ...MATIERES_L2.filter((m) => !MATIERES_S2.some((s) => s.id === m.id)),
+];
 export const MATIERE_BY_ID = Object.fromEntries(MATIERES.map((m) => [m.id, m]));
+export const CLASSES = {
+  S2: ['Seconde S2', 'Première S2', 'Terminale S2'],
+  L2: ['Seconde L2', 'Première L2', 'Terminale L2'],
+};

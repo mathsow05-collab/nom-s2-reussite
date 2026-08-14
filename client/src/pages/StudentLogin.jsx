@@ -36,8 +36,8 @@ export default function StudentLogin() {
           Une seule plateforme.
         </h1>
         <p>
-          Maths, Physique-Chimie, Français et Histoire-Géographie en vidéos et fiches PDF, plus un catalogue complet
-          des métiers après le Bac.
+          Filière <strong>S2</strong> : Maths, Physique-Chimie, Français, Histoire-Géo. Filière <strong>L2</strong> :
+          Français, Philosophie, Histoire-Géo, Anglais. Vidéos, fiches PDF et catalogue des métiers après le Bac.
         </p>
         <ul className="auth-points">
           <li>

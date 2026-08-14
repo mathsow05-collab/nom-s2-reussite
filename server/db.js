@@ -67,4 +67,15 @@ CREATE INDEX IF NOT EXISTS idx_cours_matiere ON cours(matiere);
 CREATE INDEX IF NOT EXISTS idx_logs_created ON logs(created_at);
 `);
 
+/* Migrations légères : ajout de colonnes si elles manquent (filières S2/L2,
+   noms affichés et périmètre des admins). */
+function ensureColumn(table, col, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  if (!cols.includes(col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${ddl}`);
+}
+ensureColumn('eleves', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
+ensureColumn('cours', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
+ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
+ensureColumn('admins', 'display_name', 'TEXT');
+
 module.exports = db;

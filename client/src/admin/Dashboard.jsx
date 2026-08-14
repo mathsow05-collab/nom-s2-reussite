@@ -32,7 +32,10 @@ export default function Dashboard() {
 
   return (
     <div className="admin-page">
-      <h1>Tableau de bord</h1>
+      <h1>
+        Tableau de bord{' '}
+        {stats.filiere && stats.filiere !== 'all' && <span className={`filiere-badge fil-${stats.filiere}`}>{stats.filiere}</span>}
+      </h1>
       <div className="stat-grid">
         <div className="stat">
           <div className="stat-num">{stats.totalEleves}</div>

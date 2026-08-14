@@ -106,6 +106,30 @@ async function req(method, p, { body, token } = {}) {
   const metiers = await req('GET', '/api/eleve/metiers', { token: l4.data.token });
   check('Catalogue métiers', metiers.status === 200 && metiers.data.length > 0);
 
+  /* ---------- Filières L2 & périmètres admin ---------- */
+  const mLogin = await req('POST', '/api/admin/login', { body: { username: 'mouhamed', password: 'pelo2007' } });
+  check('Connexion admin L2 (mouhamed)', mLogin.status === 200);
+  if (mLogin.status === 200) {
+    const mt = mLogin.data.token;
+    const meM = await req('GET', '/api/admin/me', { token: mt });
+    check('Périmètre L2 pour mouhamed', meM.data.filiere === 'L2' && !!meM.data.displayName);
+    const elevesM = await req('GET', '/api/admin/eleves', { token: mt });
+    check('mouhamed ne voit que des élèves L2', elevesM.data.length > 0 && elevesM.data.every((e) => e.filiere === 'L2'));
+    const coursM = await req('GET', '/api/admin/cours', { token: mt });
+    check('mouhamed ne voit que des cours L2', coursM.data.length > 0 && coursM.data.every((c) => (c.filiere || 'S2') === 'L2'));
+  }
+
+  const l2Eleve = eleves.data.find((e) => e.filiere === 'L2');
+  if (l2Eleve) {
+    const lL2 = await req('POST', '/api/eleve/login', { body: { eleve_id: l2Eleve.eleve_id } });
+    const coursL2 = await req('GET', '/api/eleve/cours', { token: lL2.data.token });
+    check('Élève L2 : ne voit aucun cours S2', coursL2.data.length > 0 && coursL2.data.every((c) => !['maths', 'physique-chimie'].includes(c.matiere)));
+    const meL2 = await req('GET', '/api/eleve/me', { token: lL2.data.token });
+    check('Profil élève avec filière + nom', meL2.data.filiere === 'L2' && !!meL2.data.prenom);
+  } else {
+    check('Élève L2 de démo présent', false);
+  }
+
   console.log(`\nRésultat : ${pass} réussis, ${fail} échoués.`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => {

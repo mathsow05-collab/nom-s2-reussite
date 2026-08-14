@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { api, CLASSES, FILIERES } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner, CopyField } from '../ui.jsx';
 
-const CLASSES = ['Seconde S2', 'Première S2', 'Terminale S2'];
-
-export default function Eleves() {
+export default function Eleves({ adminScope = 'all' }) {
   const [list, setList] = useState(null);
   const [q, setQ] = useState('');
+  const [filtre, setFiltre] = useState(adminScope === 'all' ? 'all' : adminScope);
   const [showCreate, setShowCreate] = useState(false);
   const [newId, setNewId] = useState(null);
   const [err, setErr] = useState(null);
@@ -44,6 +43,7 @@ export default function Eleves() {
   }
 
   const filtered = (list || []).filter((e) => {
+    if (filtre !== 'all' && e.filiere !== filtre) return false;
     const s = `${e.eleve_id} ${e.prenom} ${e.nom} ${e.classe}`.toLowerCase();
     return s.includes(q.toLowerCase());
   });
@@ -57,6 +57,24 @@ export default function Eleves() {
         </button>
       </div>
       {err && <div className="alert alert-danger">{err}</div>}
+      {adminScope === 'all' && (
+        <div className="pills">
+          <button className={filtre === 'all' ? 'pill active' : 'pill'} onClick={() => setFiltre('all')}>
+            Toutes filières
+          </button>
+          <button className={filtre === 'S2' ? 'pill active' : 'pill'} onClick={() => setFiltre('S2')}>
+            S2 · Sciences
+          </button>
+          <button className={filtre === 'L2' ? 'pill active' : 'pill'} onClick={() => setFiltre('L2')}>
+            L2 · Lettres
+          </button>
+        </div>
+      )}
+      {adminScope !== 'all' && (
+        <div className="alert alert-warn">
+          Périmètre de gestion : <strong>{FILIERES[adminScope]?.label}</strong>
+        </div>
+      )}
       <input className="input search" placeholder="Rechercher (nom, ID, classe)…" value={q} onChange={(e) => setQ(e.target.value)} />
       {!list ? (
         <div className="page-loading">
@@ -69,6 +87,7 @@ export default function Eleves() {
               <tr>
                 <th>ID unique</th>
                 <th>Élève</th>
+                <th>Filière</th>
                 <th>Classe</th>
                 <th>Statut</th>
                 <th className="th-actions">Actions</th>
@@ -80,6 +99,9 @@ export default function Eleves() {
                   <td className="mono">{e.eleve_id}</td>
                   <td>
                     {e.prenom} {e.nom}
+                  </td>
+                  <td>
+                    <span className={`filiere-badge fil-${e.filiere}`}>{e.filiere}</span>
                   </td>
                   <td>{e.classe}</td>
                   <td>
@@ -114,7 +136,7 @@ export default function Eleves() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="empty">
+                  <td colSpan="6" className="empty">
                     Aucun élève trouvé.
                   </td>
                 </tr>
@@ -126,6 +148,7 @@ export default function Eleves() {
 
       {showCreate && (
         <CreateEleve
+          adminScope={adminScope}
           onClose={() => setShowCreate(false)}
           onCreated={(id) => {
             setShowCreate(false);
@@ -148,19 +171,25 @@ export default function Eleves() {
   );
 }
 
-function CreateEleve({ onClose, onCreated }) {
+function CreateEleve({ adminScope, onClose, onCreated }) {
   const [prenom, setPrenom] = useState('');
   const [nom, setNom] = useState('');
-  const [classe, setClasse] = useState('Terminale S2');
+  const [filiere, setFiliere] = useState(adminScope === 'all' ? 'S2' : adminScope);
+  const [classe, setClasse] = useState(CLASSES[adminScope === 'all' ? 'S2' : adminScope][2]);
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  function changeFiliere(f) {
+    setFiliere(f);
+    setClasse(CLASSES[f][2]);
+  }
 
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
     try {
-      const r = await api('/admin/eleves', { method: 'POST', body: { prenom, nom, classe } });
+      const r = await api('/admin/eleves', { method: 'POST', body: { prenom, nom, classe, filiere } });
       onCreated(r.eleve_id);
     } catch (ex) {
       setErr(ex.message);
@@ -175,9 +204,20 @@ function CreateEleve({ onClose, onCreated }) {
         <input className="input" value={prenom} onChange={(e) => setPrenom(e.target.value)} autoFocus />
         <label className="label">Nom</label>
         <input className="input" value={nom} onChange={(e) => setNom(e.target.value)} />
+        {adminScope === 'all' ? (
+          <>
+            <label className="label">Filière</label>
+            <select className="input" value={filiere} onChange={(e) => changeFiliere(e.target.value)}>
+              <option value="S2">S2 · Sciences</option>
+              <option value="L2">L2 · Lettres</option>
+            </select>
+          </>
+        ) : (
+          <div className="alert alert-warn">Filière : {FILIERES[adminScope]?.label}</div>
+        )}
         <label className="label">Classe</label>
         <select className="input" value={classe} onChange={(e) => setClasse(e.target.value)}>
-          {CLASSES.map((c) => (
+          {CLASSES[filiere].map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>

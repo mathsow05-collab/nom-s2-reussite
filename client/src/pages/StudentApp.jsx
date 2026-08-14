@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, getToken, clearToken, MATIERES, MATIERE_BY_ID } from '../api.js';
+import { api, getToken, clearToken, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
@@ -67,6 +67,8 @@ export default function StudentApp() {
       </div>
     );
 
+  const filiere = me.filiere || 'S2';
+  const matieres = (FILIERES[filiere] || FILIERES.S2).matieres;
   const visible = matiere === 'all' ? cours : cours.filter((c) => c.matiere === matiere);
 
   return (
@@ -78,7 +80,7 @@ export default function StudentApp() {
         <div className="topbar-user">
           <div className="topbar-id">
             <strong>
-              {me.prenom} {me.nom}
+              {me.prenom} {me.nom} <span className={`filiere-badge fil-${filiere}`}>{filiere}</span>
             </strong>
             <small>
               {me.classe} · {me.eleve_id}
@@ -105,7 +107,7 @@ export default function StudentApp() {
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
               Toutes
             </button>
-            {MATIERES.map((m) => (
+            {matieres.map((m) => (
               <button
                 key={m.id}
                 className={matiere === m.id ? 'pill active' : 'pill'}

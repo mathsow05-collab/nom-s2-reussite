@@ -60,15 +60,17 @@ router.get('/me', requireEleve(db), (req, res) => {
     prenom: req.eleve.prenom,
     nom: req.eleve.nom,
     classe: req.eleve.classe,
+    filiere: req.eleve.filiere || 'S2',
   });
 });
 
 router.get('/cours', requireEleve(db), (req, res) => {
+  const filiere = req.eleve.filiere || 'S2';
   const matiere = String(req.query.matiere || '');
   const rows =
     matiere && matiere !== 'all'
-      ? db.prepare('SELECT * FROM cours WHERE matiere = ? ORDER BY ordre, id').all(matiere)
-      : db.prepare('SELECT * FROM cours ORDER BY matiere, ordre, id').all();
+      ? db.prepare('SELECT * FROM cours WHERE matiere = ? AND filiere = ? ORDER BY ordre, id').all(matiere, filiere)
+      : db.prepare('SELECT * FROM cours WHERE filiere = ? ORDER BY matiere, ordre, id').all(filiere);
   res.json(
     rows.map((r) => ({
       id: r.id,

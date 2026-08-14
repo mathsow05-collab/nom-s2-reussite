@@ -16,9 +16,11 @@ function requireAdmin(db) {
     if (!payload || payload.role !== 'admin') {
       return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Authentification admin requise.' });
     }
-    const admin = db.prepare('SELECT id, username FROM admins WHERE id = ?').get(payload.sub);
+    const admin = db.prepare('SELECT id, username, display_name, filiere FROM admins WHERE id = ?').get(payload.sub);
     if (!admin) return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Compte admin introuvable.' });
     req.admin = admin;
+    // Périmètre de gestion : 'all' (toutes filières) ou une filière précise.
+    req.scope = admin.filiere === 'L2' || admin.filiere === 'S2' ? admin.filiere : 'all';
     return next();
   };
 }

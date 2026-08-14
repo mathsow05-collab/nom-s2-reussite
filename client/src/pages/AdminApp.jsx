@@ -49,6 +49,9 @@ export default function AdminApp() {
         <div className="admin-brand">
           <Icon name="cap" size={22} /> <span>S2 Réussite</span> <span className="badge badge-soft">Admin</span>
         </div>
+        <div className="admin-scope-note muted small">
+          {me.displayName} {me.filiere !== 'all' && <span className={`filiere-badge fil-${me.filiere}`}>{me.filiere}</span>}
+        </div>
         <nav className="admin-nav">
           {TABS.map((t) => (
             <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
@@ -67,8 +70,8 @@ export default function AdminApp() {
       </aside>
       <div className="admin-main">
         {tab === 'dash' && <Dashboard />}
-        {tab === 'eleves' && <Eleves />}
-        {tab === 'cours' && <Cours />}
+        {tab === 'eleves' && <Eleves adminScope={me.filiere} />}
+        {tab === 'cours' && <Cours adminScope={me.filiere} />}
         {tab === 'metiers' && <MetiersAdmin />}
       </div>
     </div>
