@@ -131,6 +131,7 @@ export default function StudentApp() {
 
       {tab === 'cours' && (
         <main className="container">
+          {filiere === 'AR' && <LexiqueArabe />}
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
               Toutes
@@ -225,6 +226,41 @@ function Viewer({ c, onClose }) {
         )}
       </div>
     </Modal>
+  );
+}
+
+// Bonus filière arabe : lexique interactif arabe-français.
+function LexiqueArabe() {
+  const [mots, setMots] = useState(null);
+  const [cat, setCat] = useState('all');
+  useEffect(() => {
+    api('/eleve/lexique').then(setMots).catch(() => setMots([]));
+  }, []);
+  if (!mots || mots.length === 0) return null;
+  const cats = [...new Set(mots.map((m) => m.categorie))];
+  const visible = cat === 'all' ? mots : mots.filter((m) => m.categorie === cat);
+  return (
+    <section className="panel" style={{ marginBottom: 16 }}>
+      <h2>📖 Lexique arabe – français</h2>
+      <div className="pills">
+        <button className={cat === 'all' ? 'pill active' : 'pill'} onClick={() => setCat('all')}>
+          Tout
+        </button>
+        {cats.map((c) => (
+          <button key={c} className={cat === c ? 'pill active' : 'pill'} onClick={() => setCat(c)}>
+            {c}
+          </button>
+        ))}
+      </div>
+      <div className="lexique-grid">
+        {visible.map((m) => (
+          <div className="lex-card" key={m.id}>
+            <div className="lex-ar">{m.mot_ar}</div>
+            <div className="lex-fr">{m.mot_fr}</div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

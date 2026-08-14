@@ -15,7 +15,9 @@ function seed(db, log = console.log) {
     const admins = [
       { username: process.env.ADMIN1_USERNAME || 'admin', password: process.env.ADMIN1_PASSWORD || 'Admin#S2-2026', display: 'Direction', filiere: 'all' },
       { username: process.env.ADMIN2_USERNAME || 'partenaire', password: process.env.ADMIN2_PASSWORD || 'Partenaire#S2-2026', display: 'Partenaire', filiere: 'all' },
+      { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
       { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
+      { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
     ];
     const ins = db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)');
     for (const a of admins) {
@@ -26,11 +28,17 @@ function seed(db, log = console.log) {
   } else {
     // Base existante : complète les nouvelles colonnes + ajoute Mouhamed si absent
     db.prepare("UPDATE admins SET display_name = username WHERE display_name IS NULL").run();
-    const has = db.prepare('SELECT 1 FROM admins WHERE username = ?').get('mouhamed');
-    if (!has) {
-      db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)')
-        .run('mouhamed', hashPassword('pelo2007'), 'Mouhamed Sy Sow', 'L2');
-      log('[seed] Compte admin « mouhamed » (L2) ajouté.');
+    const extra = [
+      { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
+      { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
+      { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
+    ];
+    for (const a of extra) {
+      if (!db.prepare('SELECT 1 FROM admins WHERE username = ?').get(a.username)) {
+        db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)')
+          .run(a.username, hashPassword(a.password), a.display, a.filiere);
+        log(`[seed] Compte admin « ${a.username} » (${a.filiere}) ajouté.`);
+      }
     }
   }
 
@@ -68,6 +76,22 @@ function seed(db, log = console.log) {
     }
     log('[seed] Élèves de démonstration L2 créés :');
     for (const e of result.createdIds.filter((x) => x.filiere === 'L2')) log(`   ${e.prenom} ${e.nom} (${e.classe}) -> ${e.id}`);
+  }
+  if (db.prepare("SELECT COUNT(*) c FROM eleves WHERE filiere = 'AR'").get().c === 0) {
+    const demo = [
+      { prenom: 'Khady', nom: 'Gueye', classe: 'Niveau 1', filiere: 'AR' },
+      { prenom: 'Omar', nom: 'Sow', classe: 'Niveau 2', filiere: 'AR' },
+    ];
+    const ins = db.prepare('INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere) VALUES (?, ?, ?, ?, ?)');
+    for (const d of demo) {
+      let id;
+      do {
+        id = generateEleveId();
+      } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
+      ins.run(id, d.nom, d.prenom, d.classe, d.filiere);
+      result.createdIds.push({ id, ...d });
+    }
+    log('[seed] Élèves de démonstration Arabe créés (niveaux 1 et 2).');
   }
 
   /* ---------------- Cours S2 (base vierge) ---------------- */
@@ -187,6 +211,57 @@ function seed(db, log = console.log) {
     const ins = db.prepare('INSERT INTO echeances (titre, categorie, date_debut, date_fin, lieu, description, conseils) VALUES (@titre, @categorie, @date_debut, @date_fin, @lieu, @description, @conseils)');
     for (const e of ech) ins.run(e);
     log(`[seed] ${ech.length} échéances créées.`);
+  }
+
+  /* ---------------- Cours d'arabe (par niveau 1/2/3) ---------------- */
+  if (db.prepare("SELECT COUNT(*) c FROM cours WHERE filiere = 'AR'").get().c === 0) {
+    const cours = [
+      { titre: 'L’alphabet arabe et la prononciation', matiere: 'lecture', niveau: 1, youtube_id: 'rgLli1ecwl8', pdf_file: 'arabe/niveau1-alphabet.pdf', description: 'Les 28 lettres, leurs formes isolées et attachées, les voyelles courtes (harakât).' },
+      { titre: 'Salutations et premiers mots', matiere: 'vocabulaire', niveau: 1, pdf_file: 'arabe/niveau1-salutations.pdf', description: 'Dire bonjour, se présenter, remercier : le kit de survie du débutant.' },
+      { titre: 'La phrase nominale (moubtada’ / khabar)', matiere: 'grammaire', niveau: 2, pdf_file: 'arabe/niveau2-phrase-nominale.pdf', description: 'Construire des phrases sans verbe : le sujet et son prédicat, avec exercices.' },
+      { titre: 'Le verbe au passé (mâdi)', matiere: 'conjugaison', niveau: 2, pdf_file: 'arabe/niveau2-madi.pdf', description: 'Conjuguer les verbes de base au passé : schémas, tableaux, pratique.' },
+      { titre: 'Lecture : comprendre un texte court', matiere: 'lecture', niveau: 3, pdf_file: 'arabe/niveau3-lecture.pdf', description: 'Méthode de lecture-compréhension avec un texte adapté et son lexique.' },
+      { titre: 'Expression : rédiger un petit paragraphe', matiere: 'vocabulaire', niveau: 3, pdf_file: 'arabe/niveau3-expression.pdf', description: 'Assembler ses acquis pour écrire : connecteurs, tournures utiles, exemples.' },
+    ];
+    const ins = db.prepare(
+      'INSERT INTO cours (titre, matiere, description, youtube_id, pdf_file, ordre, filiere, niveau) VALUES (@titre, @matiere, @description, @youtube_id, @pdf_file, @ordre, @filiere, @niveau)'
+    );
+    cours.forEach((c, i) => ins.run({ youtube_id: null, pdf_file: null, ...c, ordre: i + 1, filiere: 'AR' }));
+    const written = writeDemoPdfs(UPLOADS_DIR);
+    if (written.length) log(`[seed] ${written.length} PDF générés.`);
+    log(`[seed] ${cours.length} cours d'arabe créés (niveaux 1-3).`);
+  }
+
+  /* ---------------- Lexique arabe-français (bonus interactif) ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM lexique').get().c === 0) {
+    const mots = [
+      ['السَّلَامُ عَلَيْكُمْ', 'Bonjour (que la paix soit sur vous)', 'salutations'],
+      ['مَرْحَبًا', 'Bienvenue', 'salutations'],
+      ['شُكْرًا', 'Merci', 'salutations'],
+      ['عَفْوًا', 'De rien / pardon', 'salutations'],
+      ['مَا اسْمُكَ ؟', 'Comment tu t’appelles ? (à un garçon)', 'salutations'],
+      ['أَب', 'Père', 'famille'],
+      ['أُم', 'Mère', 'famille'],
+      ['أَخ', 'Frère', 'famille'],
+      ['أُخْت', 'Sœur', 'famille'],
+      ['جَد', 'Grand-père', 'famille'],
+      ['جَدَّة', 'Grand-mère', 'famille'],
+      ['كِتَاب', 'Livre', 'école'],
+      ['قَلَم', 'Stylo', 'école'],
+      ['مَدْرَسَة', 'École', 'école'],
+      ['أُسْتَاذ', 'Professeur', 'école'],
+      ['تِلْمِيذ', 'Élève', 'école'],
+      ['دَرْس', 'Leçon', 'école'],
+      ['وَاحِد', 'Un', 'nombres'],
+      ['اِثْنَان', 'Deux', 'nombres'],
+      ['ثَلَاثَة', 'Trois', 'nombres'],
+      ['أَرْبَعَة', 'Quatre', 'nombres'],
+      ['خَمْسَة', 'Cinq', 'nombres'],
+      ['عَشَرَة', 'Dix', 'nombres'],
+    ];
+    const ins = db.prepare('INSERT INTO lexique (mot_ar, mot_fr, categorie) VALUES (?, ?, ?)');
+    for (const [ar, fr, cat] of mots) ins.run(ar, fr, cat);
+    log(`[seed] Lexique arabe : ${mots.length} mots.`);
   }
 
   /* ---------------- Catalogue métiers (par filière, avec parcours d'études) ---------------- */

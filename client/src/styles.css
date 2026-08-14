@@ -145,6 +145,11 @@ input[type='file'].input { padding: 8px; }
 .filiere-badge { font-weight: 800; font-size: 0.66rem; padding: 2px 7px; border-radius: 999px; letter-spacing: 0.03em; }
 .fil-S2 { background: var(--brand-soft); color: var(--brand-dark); }
 .fil-L2 { background: #fdf2f8; color: #db2777; }
+.fil-AR { background: #ccfbf1; color: #0f766e; }
+.lexique-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.lex-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-align: center; }
+.lex-ar { font-size: 1.35rem; font-weight: 700; color: #0f766e; direction: rtl; }
+.lex-fr { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
 
 .seg { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 1100px; margin: 0 auto; }
 .seg button {

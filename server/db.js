@@ -105,6 +105,13 @@ CREATE TABLE IF NOT EXISTS idees (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS lexique (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mot_ar TEXT NOT NULL,
+  mot_fr TEXT NOT NULL,
+  categorie TEXT NOT NULL DEFAULT 'général'
+);
+
 CREATE TABLE IF NOT EXISTS echeances (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   titre TEXT NOT NULL,
@@ -135,5 +142,6 @@ ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('admins', 'display_name', 'TEXT');
 ensureColumn('metiers', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('metiers', 'parcours', 'TEXT');
+ensureColumn('cours', 'niveau', 'INTEGER');
 
 module.exports = db;

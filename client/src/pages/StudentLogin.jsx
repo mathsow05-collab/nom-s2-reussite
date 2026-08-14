@@ -37,7 +37,8 @@ export default function StudentLogin() {
         </h1>
         <p>
           Filière <strong>S2</strong> : Maths, Physique-Chimie, Français, Histoire-Géo. Filière <strong>L2</strong> :
-          Français, Philosophie, Histoire-Géo, Anglais. Vidéos, fiches PDF et catalogue des métiers après le Bac.
+          Français, Philosophie, Histoire-Géo, Anglais. Cours d'<strong>arabe</strong> par niveaux (1, 2, 3). Vidéos,
+          fiches PDF et catalogue des métiers après le Bac.
         </p>
         <ul className="auth-points">
           <li>

@@ -15,7 +15,7 @@ const UPLOADS = UPLOADS_DIR;
 const TMP_DIR = path.join(UPLOADS, 'tmp');
 fs.mkdirSync(TMP_DIR, { recursive: true });
 
-const MATIERES = ['maths', 'physique-chimie', 'francais', 'histoire-geographie'];
+const MATIERES = ['maths', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'lecture', 'grammaire', 'conjugaison', 'vocabulaire'];
 const admin = requireAdmin(db);
 
 /* ------------------------- helpers ------------------------- */
@@ -268,6 +268,25 @@ router.put('/cours/:id', admin, pdfUpload, (req, res) => {
   );
   addLog('cours_modifie', { source: 'admin', req, details: c.titre });
   return res.json({ ok: true });
+});
+
+/* ------------------------- Lexique arabe ------------------------- */
+router.get('/lexique', admin, (req, res) => {
+  res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());
+});
+
+router.post('/lexique', admin, (req, res) => {
+  const { mot_ar, mot_fr, categorie } = req.body || {};
+  if (!mot_ar || !String(mot_ar).trim() || !mot_fr || !String(mot_fr).trim())
+    return res.status(400).json({ error: 'Mot arabe et traduction obligatoires.' });
+  db.prepare('INSERT INTO lexique (mot_ar, mot_fr, categorie) VALUES (?, ?, ?)')
+    .run(String(mot_ar).trim(), String(mot_fr).trim(), String(categorie || 'général').trim());
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/lexique/:id', admin, (req, res) => {
+  db.prepare('DELETE FROM lexique WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
 });
 
 router.delete('/cours/:id', admin, (req, res) => {

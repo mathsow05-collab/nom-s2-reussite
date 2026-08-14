@@ -47,9 +47,16 @@ export const MATIERES_L2 = [
   { id: 'philosophie', label: 'Philosophie', color: '#7c3aed' },
   { id: 'anglais', label: 'Anglais', color: '#db2777' },
 ];
+export const MATIERES_AR = [
+  { id: 'lecture', label: 'Lecture & textes', color: '#0d9488' },
+  { id: 'grammaire', label: 'Grammaire', color: '#7c3aed' },
+  { id: 'conjugaison', label: 'Conjugaison', color: '#d97706' },
+  { id: 'vocabulaire', label: 'Vocabulaire & expression', color: '#db2777' },
+];
 export const FILIERES = {
   S2: { label: 'S2 · Sciences', matieres: MATIERES_S2 },
   L2: { label: 'L2 · Lettres', matieres: MATIERES_L2 },
+  AR: { label: 'Arabe · Niveaux', matieres: MATIERES_AR },
 };
 export const MATIERES = [
   ...MATIERES_S2,
@@ -59,4 +66,5 @@ export const MATIERE_BY_ID = Object.fromEntries(MATIERES.map((m) => [m.id, m]));
 export const CLASSES = {
   S2: ['Seconde S2', 'Première S2', 'Terminale S2'],
   L2: ['Seconde L2', 'Première L2', 'Terminale L2'],
+  AR: ['Niveau 1', 'Niveau 2', 'Niveau 3'],
 };

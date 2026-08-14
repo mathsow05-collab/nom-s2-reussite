@@ -67,10 +67,20 @@ router.get('/me', requireEleve(db), (req, res) => {
 router.get('/cours', requireEleve(db), (req, res) => {
   const filiere = req.eleve.filiere || 'S2';
   const matiere = String(req.query.matiere || '');
-  const rows =
-    matiere && matiere !== 'all'
-      ? db.prepare('SELECT * FROM cours WHERE matiere = ? AND filiere = ? ORDER BY ordre, id').all(matiere, filiere)
-      : db.prepare('SELECT * FROM cours WHERE filiere = ? ORDER BY matiere, ordre, id').all(filiere);
+  let sql = 'SELECT * FROM cours WHERE filiere = ?';
+  const args = [filiere];
+  if (matiere && matiere !== 'all') {
+    sql += ' AND matiere = ?';
+    args.push(matiere);
+  }
+  // Filière arabe : chaque élève ne voit que les leçons de SON niveau (1/2/3).
+  if (filiere === 'AR') {
+    const niveau = parseInt(String(req.eleve.classe || '').replace(/\D+/g, ''), 10) || 1;
+    sql += ' AND (niveau = ? OR niveau IS NULL)';
+    args.push(niveau);
+  }
+  sql += ' ORDER BY matiere, ordre, id';
+  const rows = db.prepare(sql).all(...args);
   res.json(
     rows.map((r) => ({
       id: r.id,
@@ -98,6 +108,8 @@ router.get('/cours/:id/pdf', requireEleve(db, { allowQuery: true }), (req, res) 
 
 router.get('/metiers', requireEleve(db), (req, res) => {
   const filiere = req.eleve.filiere || 'S2';
+  // La filière arabe voit tout le catalogue d'orientation (commun).
+  if (filiere === 'AR') return res.json(db.prepare('SELECT * FROM metiers ORDER BY ordre, id').all());
   res.json(
     db.prepare("SELECT * FROM metiers WHERE filiere = ? OR filiere = 'all' ORDER BY ordre, id").all(filiere)
   );
@@ -243,6 +255,11 @@ router.post('/idees', requireEleve(db), (req, res) => {
   db.prepare('INSERT INTO idees (eleve_db_id, eleve_ref, message) VALUES (?, ?, ?)').run(req.eleve.id, req.eleve.eleve_id, message);
   addLog('idee_envoyee', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req });
   res.status(201).json({ ok: true });
+});
+
+/* ------------------------- Lexique arabe (bonus) ------------------------- */
+router.get('/lexique', requireEleve(db), (req, res) => {
+  res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());
 });
 
 /* ------------------------- Agenda des échéances ------------------------- */

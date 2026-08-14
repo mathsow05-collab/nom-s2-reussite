@@ -96,6 +96,7 @@ function AnnalesForm({ form, adminScope, onClose, onSaved }) {
             <select className="input" value={f.filiere} onChange={(e) => set('filiere', e.target.value)}>
               <option value="S2">S2</option>
               <option value="L2">L2</option>
+              <option value="AR">Arabe</option>
             </select>
           </>
         )}
