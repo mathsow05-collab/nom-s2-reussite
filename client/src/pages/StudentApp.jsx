@@ -11,8 +11,10 @@ import Quiz from './Quiz.jsx';
 import Agenda from './Agenda.jsx';
 import Outils from './Outils.jsx';
 import Echanges from './Echanges.jsx';
+import ParcoursArabe from './ParcoursArabe.jsx';
 
 const TABS = [
+  { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
@@ -26,8 +28,7 @@ export default function StudentApp() {
   const [me, setMe] = useState(null);
   const [cours, setCours] = useState(null);
   const [lost, setLost] = useState(null); // raison de la déconnexion forcée
-  const [tab, setTab] = useState('cours');
-  const [matiere, setMatiere] = useState('all');
+  const [tab, setTab] = useState('cours');  const [matiere, setMatiere] = useState('all');
   const [viewer, setViewer] = useState(null);
 
   const load = useCallback(async () => {
@@ -117,13 +118,14 @@ export default function StudentApp() {
       </header>
 
       <nav className="seg">
-        {TABS.map((t) => (
+        {TABS.filter((t) => !t.arSeul || filiere === 'AR').map((t) => (
           <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
             <Icon name={t.icon} /> {t.label}
           </button>
         ))}
       </nav>
 
+      {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'annales' && <Annales />}
       {tab === 'quiz' && <Quiz />}
       {tab === 'orientation' && <Metiers />}

@@ -136,6 +136,13 @@ export default function Icon({ name, size = 18, className = '' }) {
         <polyline points="8.5 13 7 22 12 19.5 17 22 15.5 13" />
       </>
     ),
+    map: (
+      <>
+        <path d="M9 2 3 5v17l6-3 6 3 6-3V2l-6 3-6-3z" />
+        <line x1="9" y1="2" x2="9" y2="19" />
+        <line x1="15" y1="5" x2="15" y2="22" />
+      </>
+    ),
   };
   return (
     <svg
