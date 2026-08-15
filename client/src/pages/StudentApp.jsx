@@ -112,11 +112,18 @@ export default function StudentApp() {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].includes(k)) e.preventDefault();
       if (e.ctrlKey && k === 'c' && !['input', 'textarea'].includes(document.activeElement?.tagName?.toLowerCase())) e.preventDefault();
     };
+    const noCopy = (e) => e.preventDefault();
     document.addEventListener('contextmenu', noCtx);
     document.addEventListener('keydown', noKey);
+    document.addEventListener('copy', noCopy);
+    document.addEventListener('cut', noCopy);
+    document.addEventListener('dragstart', noCopy);
     return () => {
       document.removeEventListener('contextmenu', noCtx);
       document.removeEventListener('keydown', noKey);
+      document.removeEventListener('copy', noCopy);
+      document.removeEventListener('cut', noCopy);
+      document.removeEventListener('dragstart', noCopy);
     };
   }, []);
 
@@ -146,7 +153,7 @@ export default function StudentApp() {
       />
       <header className="topbar">
         <div className="topbar-brand">
-          <Icon name="cap" size={22} /> <span>S2 Réussite</span>
+          <Icon name="cap" size={22} /> <span>KAY DIANG</span>
         </div>
         <div className="topbar-user">
           <button className="avatar-btn" onClick={() => setProfil(true)} title="Mon profil">
@@ -154,7 +161,10 @@ export default function StudentApp() {
           </button>
           <div className="topbar-id">
             <strong>
-              {me.prenom} {me.nom} <span className={`filiere-badge fil-${filiere}`}>{filiere}</span>
+              <span className="topbar-name">
+                {me.prenom} {me.nom}
+              </span>{' '}
+              <span className={`filiere-badge fil-${filiere}`}>{filiere}</span>
             </strong>
             <small>
               {me.classe} · {me.eleve_id}

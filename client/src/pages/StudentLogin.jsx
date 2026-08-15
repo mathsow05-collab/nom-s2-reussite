@@ -26,7 +26,7 @@ export default function StudentLogin() {
     <div className="auth-wrap">
       <div className="auth-hero">
         <div className="auth-logo">
-          <Icon name="cap" size={30} /> S2 Réussite
+          <Icon name="cap" size={30} /> KAY DIANG
         </div>
         <h1>
           Ton lycée.

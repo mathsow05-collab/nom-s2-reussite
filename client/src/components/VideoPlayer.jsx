@@ -33,6 +33,7 @@ export default function VideoPlayer({ id, titre }) {
           <iframe
             title={titre}
             src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&hl=fr`}
+            referrerPolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />

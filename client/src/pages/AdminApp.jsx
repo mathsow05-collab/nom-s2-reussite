@@ -65,7 +65,7 @@ export default function AdminApp() {
     <div className="admin-shell">
       <aside className="admin-side">
         <div className="admin-brand">
-          <Icon name="cap" size={22} /> <span>S2 Réussite</span> <span className="badge badge-soft">Admin</span>
+          <Icon name="cap" size={22} /> <span>KAY DIANG</span> <span className="badge badge-soft">Admin</span>
         </div>
         <div className="admin-scope-note muted small">
           {me.displayName} {me.filiere !== 'all' && <span className={`filiere-badge fil-${me.filiere}`}>{me.filiere}</span>}
