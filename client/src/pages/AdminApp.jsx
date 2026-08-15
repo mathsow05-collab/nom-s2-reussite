@@ -12,9 +12,11 @@ import AgendaAdmin from '../admin/Agenda.jsx';
 import QuestionsAdmin from '../admin/Questions.jsx';
 import IdeesAdmin from '../admin/Idees.jsx';
 import CultureAdmin from '../admin/Culture.jsx';
+import IaSettings from '../admin/IaSettings.jsx';
 
 const TABS = [
   { id: 'dash', label: 'Tableau de bord', icon: 'grid' },
+  { id: 'ia', label: 'Assistant IA', icon: 'chat', directionSeul: true },
   { id: 'eleves', label: 'Élèves & accès', icon: 'users' },
   { id: 'cours', label: 'Cours & PDF', icon: 'book' },
   { id: 'culture', label: 'Culture du monde', icon: 'bulb' },
@@ -86,6 +88,7 @@ export default function AdminApp() {
       </aside>
       <div className="admin-main">
         {tab === 'dash' && <Dashboard />}
+        {tab === 'ia' && me.filiere === 'all' && <IaSettings />}
         {tab === 'eleves' && <Eleves adminScope={me.filiere} />}
         {tab === 'cours' && <Cours adminScope={me.filiere} />}
         {tab === 'culture' && <CultureAdmin />}

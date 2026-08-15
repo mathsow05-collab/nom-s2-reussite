@@ -13,8 +13,10 @@ import Outils from './Outils.jsx';
 import Echanges from './Echanges.jsx';
 import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
+import Assistant from './Assistant.jsx';
 
 const TABS = [
+  { id: 'ia', label: 'Prof IA', icon: 'chat' },
   { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
   { id: 'culture', label: 'Culture', icon: 'bulb', l2Seul: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
@@ -127,6 +129,7 @@ export default function StudentApp() {
         ))}
       </nav>
 
+      {tab === 'ia' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'culture' && filiere === 'L2' && <Culture />}
       {tab === 'annales' && <Annales />}

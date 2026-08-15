@@ -210,6 +210,18 @@ input[type='file'].input { padding: 8px; }
 .culture-list { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 800px) { .culture-list { grid-template-columns: 1fr 1fr; } }
 
+/* ---------- Chat Assistant IA ---------- */
+.chat-box { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; max-height: 55dvh; overflow-y: auto; display: grid; gap: 10px; }
+.chat-msg { display: flex; }
+.chat-msg.moi { justify-content: flex-end; }
+.chat-bulle { max-width: 85%; border-radius: 14px; padding: 10px 14px; font-size: 0.93rem; line-height: 1.55; white-space: pre-wrap; }
+.chat-msg.ia .chat-bulle { background: #f1f5f9; }
+.chat-msg.moi .chat-bulle { background: var(--brand); color: #fff; }
+.typing { opacity: 0.7; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.35; } }
+.chat-form { display: flex; gap: 8px; margin-top: 10px; }
+.chat-form .input { flex: 1; }
+
 .seg { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 1100px; margin: 0 auto; }
 .seg button {
   display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card);
