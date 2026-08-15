@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
@@ -24,99 +24,274 @@ export function parseBlocs(texte) {
   return blocs;
 }
 
-// Catalogue d'orientation : carrousel de métiers + filières universitaires.
-export default function Metiers() {
-  const [metiers, setMetiers] = useState(null);
-  const [open, setOpen] = useState(null);
-  const [parcours, setParcours] = useState([]);
-  const [openP, setOpenP] = useState(null);
-  const rail = useRef(null);
+const norm = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
-  useEffect(() => {
-    api('/eleve/metiers')
-      .then(setMetiers)
-      .catch(() => setMetiers([]));
-    api('/eleve/parcours-univ')
-      .then(setParcours)
-      .catch(() => setParcours([]));
-  }, []);
+/* ------------------------- Test d'orientation ------------------------- */
+const QUIZ = [
+  {
+    q: 'Ce qui te motive le plus, c’est…',
+    r: [
+      ['Soigner et aider les gens', 'sante'],
+      ['Construire des choses concrètes', 'btp'],
+      ['Comprendre comment tout fonctionne', 'sciences'],
+      ['Défendre, protéger, servir', 'defense'],
+      ['Créer, écrire, communiquer', 'lettres'],
+      ['Gérer, entreprendre, compter', 'finance'],
+    ],
+  },
+  {
+    q: 'Ta matière préférée au lycée ?',
+    r: [
+      ['SVT / biologie', 'sante'],
+      ['Maths', 'sciences'],
+      ['Physique-chimie', 'btp'],
+      ['Français / philo', 'lettres'],
+      ['Histoire-géo', 'defense'],
+      ['Éco / gestion', 'finance'],
+    ],
+  },
+  {
+    q: 'Dans un projet de groupe, tu es plutôt…',
+    r: [
+      ['Celui qui organise tout', 'finance'],
+      ['Celui qui explique aux autres', 'lettres'],
+      ['Celui qui répare et expérimente', 'sciences'],
+      ['Celui qui prend soin de l’équipe', 'sante'],
+      ['Celui qui sécurise le plan', 'defense'],
+      ['Celui qui dessine la solution', 'btp'],
+    ],
+  },
+  {
+    q: 'Ton environnement de travail rêvé ?',
+    r: [
+      ['Un hôpital / un labo', 'sante'],
+      ['Un grand chantier', 'btp'],
+      ['Un bureau avec des écrans de données', 'sciences'],
+      ['Sur le terrain, en uniforme', 'defense'],
+      ['Une rédaction, un plateau, une scène', 'lettres'],
+      ['Une banque ou ma propre entreprise', 'finance'],
+    ],
+  },
+  {
+    q: 'Ce qui te rendrait le plus fier ?',
+    r: [
+      ['Sauver des vies', 'sante'],
+      ['Voir un bâtiment que j’ai conçu', 'btp'],
+      ['Découvrir quelque chose de nouveau', 'sciences'],
+      ['Protéger mon pays', 'defense'],
+      ['Toucher les gens par mes mots', 'lettres'],
+      ['Réussir un grand projet', 'finance'],
+    ],
+  },
+];
+const TAG_DOMAINES = {
+  sante: ['sant', 'médec', 'pharma'],
+  btp: ['btp', 'bâtiment', 'urban', 'architecture', 'génie'],
+  sciences: ['scienc', 'data', 'numéri', 'tech', 'recherche', 'terre'],
+  defense: ['défense', 'sécurité', 'militaire', 'mer', 'ciel'],
+  lettres: ['lettre', 'média', 'édit', 'comm', 'droit', 'justice'],
+  finance: ['finan', 'écon', 'gestion', 'compt'],
+};
 
-  function scroll(dir) {
-    rail.current?.scrollBy({ left: dir * rail.current.clientWidth * 0.8, behavior: 'smooth' });
+function OrientationQuiz({ metiers, onPick, onClose }) {
+  const [i, setI] = useState(0);
+  const [scores, setScores] = useState({});
+  const [resultat, setResultat] = useState(null);
+
+  function repondre(tag) {
+    const s = { ...scores, [tag]: (scores[tag] || 0) + 1 };
+    setScores(s);
+    if (i + 1 >= QUIZ.length) {
+      const top = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([t]) => t);
+      const sugg = [];
+      for (const t of top) {
+        for (const m of metiers) {
+          const dom = norm(m.domaine);
+          if ((TAG_DOMAINES[t] || []).some((k) => dom.includes(norm(k))) && !sugg.find((x) => x.id === m.id)) sugg.push(m);
+        }
+      }
+      setResultat((sugg.length ? sugg : metiers.slice(0, 3)).slice(0, 3));
+    } else setI(i + 1);
   }
 
-  if (!metiers)
+  return (
+    <Modal title="🎯 Quel métier te ressemble ?" onClose={onClose}>
+      {resultat ? (
+        <>
+          <p className="muted">D'après tes réponses, ces métiers pourraient te plaire :</p>
+          <div className="quiz-sugg">
+            {resultat.map((m) => (
+              <button key={m.id} className="sugg-card" onClick={() => onPick(m)}>
+                {m.image && <img src={m.image} alt="" />}
+                <strong>{m.titre}</strong>
+                <span className="muted small">{m.domaine}</span>
+              </button>
+            ))}
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-outline" onClick={() => { setI(0); setScores({}); setResultat(null); }}>
+              <Icon name="refresh" size={15} /> Refaire le test
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="muted small" style={{ marginBottom: 8 }}>
+            Question {i + 1}/{QUIZ.length}
+          </div>
+          <div className="quiz-bar">
+            <div style={{ width: `${((i + 1) / QUIZ.length) * 100}%` }} />
+          </div>
+          <h3 style={{ margin: '10px 0 14px' }}>{QUIZ[i].q}</h3>
+          <div className="quiz-choices">
+            {QUIZ[i].r.map(([label, tag]) => (
+              <button key={label} className="quiz-choice" onClick={() => repondre(tag)}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+}
+
+/* ------------------------- Page Orientation ------------------------- */
+export default function Metiers() {
+  const [me, setMe] = useState(null);
+  const [metiers, setMetiers] = useState(null);
+  const [parcours, setParcours] = useState([]);
+  const [q, setQ] = useState('');
+  const [domaine, setDomaine] = useState('all');
+  const [favOnly, setFavOnly] = useState(false);
+  const [favs, setFavs] = useState({});
+  const [open, setOpen] = useState(null);
+  const [openP, setOpenP] = useState(null);
+  const [quiz, setQuiz] = useState(false);
+
+  useEffect(() => {
+    api('/eleve/me').then((m) => {
+      setMe(m);
+      try {
+        setFavs(JSON.parse(localStorage.getItem('s2r_fav_' + m.eleve_id) || '{}'));
+      } catch {
+        setFavs({});
+      }
+    });
+    api('/eleve/metiers').then(setMetiers).catch(() => setMetiers([]));
+    api('/eleve/parcours-univ').then(setParcours).catch(() => setParcours([]));
+  }, []);
+
+  function toggleFav(m) {
+    setFavs((f) => {
+      const next = { ...f, [m.id]: !f[m.id] };
+      if (me) localStorage.setItem('s2r_fav_' + me.eleve_id, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  const domaines = useMemo(() => {
+    const set = new Map();
+    (metiers || []).forEach((m) => {
+      const d = (m.domaine || 'Autre').split('&')[0].trim();
+      set.set(d, (set.get(d) || 0) + 1);
+    });
+    return [...set.keys()];
+  }, [metiers]);
+
+  if (!metiers || !me)
     return (
       <div className="page-loading">
         <Spinner />
       </div>
     );
 
+  const nq = norm(q);
+  const filtres = metiers.filter((m) => {
+    if (favOnly && !favs[m.id]) return false;
+    if (domaine !== 'all' && !(m.domaine || '').startsWith(domaine)) return false;
+    if (nq && !norm(m.titre + ' ' + m.domaine + ' ' + m.description + ' ' + (m.parcours || '')).includes(nq)) return false;
+    return true;
+  });
+  const parcoursFiltres = parcours.filter((p) => !nq || norm(p.titre + ' ' + p.intro + ' ' + p.blocs).includes(nq));
+
   return (
-    <main className="container orientation">
-      <section className="banner">
-        <h2>Où t'emmène le Bac S2 ?</h2>
-        <p>
-          Découvre des métiers concrets, les études qui y mènent et les débouchés au Sénégal et à l'international.
-          Fais défiler le catalogue.
-        </p>
+    <main className="container orient">
+      <section className="orient-hero">
+        <h1>Ton avenir commence ici ✨</h1>
+        <p>Explore les métiers, découvre les filières universitaires, garde tes favoris et trouve le métier qui te ressemble.</p>
+        <div className="orient-search">
+          <Icon name="eye" size={17} />
+          <input
+            placeholder="Rechercher un métier, un domaine, une filière… (ex. médecin, droit, data)"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          {q && (
+            <button className="icon-btn" onClick={() => setQ('')}>
+              <Icon name="x" size={15} />
+            </button>
+          )}
+        </div>
+        <button className="btn btn-light" onClick={() => setQuiz(true)}>
+          🎯 Je ne sais pas encore — fais-moi un test !
+        </button>
       </section>
 
-      <div className="carousel-wrap">
-        <button className="car-arrow" onClick={() => scroll(-1)} aria-label="Précédent">
-          <Icon name="left" />
+      <div className="pills">
+        <button className={favOnly ? 'pill active' : 'pill'} onClick={() => setFavOnly(!favOnly)}>
+          ❤️ Mes favoris
         </button>
-        <div className="carousel" ref={rail}>
-          {metiers.map((met) => (
-            <article className="metier-card" key={met.id}>
-              <div className="metier-img">
-                {met.image ? (
-                  <img src={met.image} alt={met.titre} loading="lazy" />
-                ) : (
-                  <div className="metier-img-fallback">
-                    <Icon name="cap" size={40} />
-                  </div>
-                )}
-              </div>
-              <div className="metier-body">
-                {met.domaine && <span className="badge badge-soft">{met.domaine}</span>}
-                <h3>{met.titre}</h3>
-                <p className="muted clamp3">{met.description}</p>
-                <button className="btn btn-outline" onClick={() => setOpen(met)}>
-                  Découvrir la fiche <Icon name="right" size={15} />
-                </button>
-              </div>
+        <button className={domaine === 'all' ? 'pill active' : 'pill'} onClick={() => setDomaine('all')}>
+          Tous les domaines
+        </button>
+        {domaines.map((d) => (
+          <button key={d} className={domaine === d ? 'pill active' : 'pill'} onClick={() => setDomaine(domaine === d ? 'all' : d)}>
+            {d}
+          </button>
+        ))}
+      </div>
+
+      <h2 className="orient-title">💼 Métiers ({filtres.length})</h2>
+      {filtres.length === 0 ? (
+        <div className="empty">Aucun résultat pour « {q} ». Essaie un autre mot, ou lance le test d'orientation !</div>
+      ) : (
+        <div className="orient-grid">
+          {filtres.map((m) => (
+            <article className="orient-card" key={m.id}>
+              <button className="orient-fav" onClick={() => toggleFav(m)} aria-label="Favori">
+                {favs[m.id] ? '❤️' : '🤍'}
+              </button>
+              <button className="orient-img" onClick={() => setOpen(m)}>
+                {m.image ? <img src={m.image} alt="" loading="lazy" /> : <Icon name="cap" size={34} />}
+                <div className="orient-shade">
+                  <span className="badge">{m.domaine}</span>
+                  <strong>{m.titre}</strong>
+                </div>
+              </button>
             </article>
           ))}
         </div>
-        <button className="car-arrow" onClick={() => scroll(1)} aria-label="Suivant">
-          <Icon name="right" />
-        </button>
-      </div>
+      )}
 
-      {parcours.length > 0 && (
+      {parcoursFiltres.length > 0 && (
         <>
-          <section className="banner" style={{ marginTop: 18 }}>
-            <h2>🎓 Les filières universitaires après le Bac</h2>
-            <p>Chaque filière d'études ouvre une famille de métiers. Touche une carte pour voir tous les débouchés.</p>
-          </section>
-          <div className="grid-cards">
-            {parcours.map((p) => (
-              <button className="card cours-card" key={p.id} onClick={() => setOpenP(p)} style={{ '--mc': '#4338ca' }}>
-                <div className="cours-top">
-                  <span className="badge" style={{ background: '#4338ca' }}>
-                    Filière {p.cible}
-                  </span>
-                  <Icon name="cap" size={16} />
-                </div>
-                <h3>{p.titre}</h3>
-                <p className="muted clamp3">{p.intro}</p>
-                <div className="cours-actions">
-                  <span className="btn btn-outline">
-                    Voir les métiers <Icon name="right" size={15} />
-                  </span>
-                </div>
-              </button>
+          <h2 className="orient-title">🎓 Filières universitaires après le Bac</h2>
+          <div className="orient-grid">
+            {parcoursFiltres.map((p) => (
+              <article className="orient-card" key={p.id}>
+                <button className="orient-img uni" onClick={() => setOpenP(p)}>
+                  <span className="uni-icon">🎓</span>
+                  <div className="orient-shade">
+                    <span className="badge badge-soft">Filière {p.cible}</span>
+                    <strong>{p.titre}</strong>
+                  </div>
+                </button>
+              </article>
             ))}
           </div>
         </>
@@ -124,31 +299,37 @@ export default function Metiers() {
 
       {open && (
         <Modal title={open.titre} onClose={() => setOpen(null)} wide>
-          {open.image && <img className="metier-modal-img" src={open.image} alt={open.titre} />}
-          {open.domaine && (
-            <div style={{ margin: '10px 0' }}>
-              <span className="badge badge-soft">{open.domaine}</span>
+          <div className="modal-hero">
+            {open.image && <img src={open.image} alt="" />}
+            <div className="modal-hero-shade">
+              <span className="badge">{open.domaine}</span>
+              <h3>{open.titre}</h3>
             </div>
-          )}
-          <p>{open.description}</p>
+            <button className="orient-fav on-img" onClick={() => toggleFav(open)}>
+              {favs[open.id] ? '❤️' : '🤍'}
+            </button>
+          </div>
+          <p style={{ marginTop: 12 }}>{open.description}</p>
           {open.parcours && (
             <>
-              <h4 className="h4">🎓 Études après le Bac S2</h4>
+              <h4 className="h4">🎓 Études après le Bac</h4>
               <p className="parcours-box">{open.parcours}</p>
             </>
           )}
           {open.debouches && (
             <>
-              <h4 className="h4">Débouchés</h4>
-              <ul className="debouches">
+              <h4 className="h4">💼 Débouchés</h4>
+              <div className="pills" style={{ marginBottom: 0 }}>
                 {open.debouches
                   .split(';')
                   .map((d) => d.trim())
                   .filter(Boolean)
                   .map((d, i) => (
-                    <li key={i}>{d}</li>
+                    <span className="pill" style={{ cursor: 'default' }} key={i}>
+                      {d}
+                    </span>
                   ))}
-              </ul>
+              </div>
             </>
           )}
         </Modal>
@@ -165,14 +346,36 @@ export default function Metiers() {
               {b.sous && <h4 className="h4">{b.sous}</h4>}
               <div className="pills" style={{ marginBottom: 0 }}>
                 {b.metiers.map((m, j) => (
-                  <span key={j} className="pill" style={{ cursor: 'default' }}>
+                  <button
+                    key={j}
+                    className="pill"
+                    onClick={() => {
+                      const hit = metiers.find((x) => norm(x.titre).includes(norm(m).split(' ')[0]) || norm(m).includes(norm(x.titre).split(' ')[0]));
+                      if (hit) {
+                        setOpenP(null);
+                        setOpen(hit);
+                      }
+                    }}
+                    title="Voir la fiche métier si elle existe"
+                  >
                     {m}
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
           ))}
         </Modal>
+      )}
+
+      {quiz && (
+        <OrientationQuiz
+          metiers={metiers}
+          onClose={() => setQuiz(false)}
+          onPick={(m) => {
+            setQuiz(false);
+            setOpen(m);
+          }}
+        />
       )}
     </main>
   );
