@@ -11,11 +11,13 @@ import QuizAdmin from '../admin/Quiz.jsx';
 import AgendaAdmin from '../admin/Agenda.jsx';
 import QuestionsAdmin from '../admin/Questions.jsx';
 import IdeesAdmin from '../admin/Idees.jsx';
+import CultureAdmin from '../admin/Culture.jsx';
 
 const TABS = [
   { id: 'dash', label: 'Tableau de bord', icon: 'grid' },
   { id: 'eleves', label: 'Élèves & accès', icon: 'users' },
   { id: 'cours', label: 'Cours & PDF', icon: 'book' },
+  { id: 'culture', label: 'Culture du monde', icon: 'bulb' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
@@ -55,7 +57,7 @@ export default function AdminApp() {
 
   // Le périmètre Arabe ne voit que l'essentiel : pas d'annales/quiz/agenda/métiers.
   const visibleTabs =
-    me.filiere === 'AR' ? TABS.filter((t) => !['annales', 'quiz', 'agenda', 'metiers'].includes(t.id)) : TABS;
+    me.filiere === 'AR' ? TABS.filter((t) => !['annales', 'quiz', 'agenda', 'metiers', 'culture'].includes(t.id)) : TABS;
 
   return (
     <div className="admin-shell">
@@ -86,6 +88,7 @@ export default function AdminApp() {
         {tab === 'dash' && <Dashboard />}
         {tab === 'eleves' && <Eleves adminScope={me.filiere} />}
         {tab === 'cours' && <Cours adminScope={me.filiere} />}
+        {tab === 'culture' && <CultureAdmin />}
         {tab === 'annales' && <AnnalesAdmin adminScope={me.filiere} />}
         {tab === 'quiz' && <QuizAdmin adminScope={me.filiere} />}
         {tab === 'agenda' && <AgendaAdmin />}

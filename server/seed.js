@@ -272,6 +272,45 @@ function seed(db, log = console.log) {
     log(`[seed] Lexique arabe : ${mots.length} mots.`);
   }
 
+  /* ---------------- Culture du monde (L2) : une publication par jour ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM culture').get().c === 0) {
+    const jour = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+    const C = (categorie, titre, contenu, n) => ({ categorie, titre, contenu, date_publi: jour(n) });
+    const culture = [
+      C('actualite', 'Lire l’actualité comme un pro',
+        "Réflexes de vérification : 1) qui parle (source) ? 2) quelle date ? 3) est-ce confirmé par un deuxième média ? 4) fait ou opinion ? En histoire-géo comme en philo, citer une info fiable vaut des points ; citer une rumeur en fait perdre.", 0),
+      C('histoire', 'Un jour dans l’histoire : 15 août 1960',
+        "Indépendance du Congo (Brazzaville), après la loi-cadre Defferre et le référendum de 1958. En un mois d’août 1960, 17 pays africains accèdent à la souveraineté : c’est le cœur de la « décolonisation éclair » à maîtriser pour le Bac.", 1),
+      C('pratique', 'La méthode Pomodoro pour réviser',
+        "25 minutes de travail concentré (téléphone hors de la pièce) + 5 minutes de pause, 4 fois, puis une longue pause. Ton cerveau retient mieux en séances courtes et régulières qu’en nuits blanches. Teste ce soir sur la dissertation.", 2),
+      C('figure', 'Cheikh Anta Diop, l’historien qui a renversé le regard',
+        "Sénégalais (1923-1986), il a défendu l’idée que l’Égypte antique est africaine dans « Nations nègres et cultures ». L’UNESCO a repris ses intuitions sur le peuplement de la vallée du Nil. Un modèle de rigueur et de courage intellectuel.", 3),
+      C('langue', 'Ces mots français venus de l’arabe',
+        "Algorithme (al-Khwârizmî, mathématicien), algèbre (al-jabr), alcool (al-kuhl), amiral (amîr al-bahr), coton (qutn), sucre (sukkar). La langue française s’est nourrie de l’arabe médiéval : un pont parfait entre nos filières S2, L2 et arabe !", 4),
+      C('geo', 'Le Sénégal en 5 chiffres',
+        "196 722 km² · environ 18 millions d’habitants · 700 km de côte atlantique · 5 frontières (Mauritanie, Mali, Guinée, Guinée-Bissau, Gambie) · 1 enclave : la Gambie. À placer sans faute en introduction de copie.", 5),
+      C('actualite', 'ZLECAf : le grand marché africain, expliqué simple',
+        "La Zone de libre-échange continentale africaine vise un marché unique de 1,3 milliard de consommateurs. En jeu : baisser les barrières douanières et commercer entre voisins. Sujet chaud pour les dissertations de géo.", 6),
+      C('figure', 'Mariama Bâ et « Une si longue lettre »',
+        "Écrivaine sénégalaise (1929-1981), son roman épistolaire (1979) dénonce la polygamie et défend l’éducation des filles. Prix Noma. Un monument de la littérature africaine, au programme de nombreuses universités.", 7),
+      C('histoire', 'Bandung 1955 : la naissance des non-alignés',
+        "29 pays d’Asie et d’Afrique se réunissent en Indonésie et refusent de choisir entre Washington et Moscou. Conséquence directe : un élan pour les indépendances africaines des années 1960.", 8),
+      C('pratique', '3 ressources gratuites pour la L2',
+        "Gallica (BnF) : textes et journaux anciens en ligne. Khan Academy : grammaire et logique. FUN MOOC : cours d’universités francophones. Trois mines d’or pour exposés et commentaires composés.", 9),
+      C('debat', 'Le débat du jour : faut-il réguler les réseaux sociaux ?',
+        "Pour : lutte contre la désinformation, protection des mineurs. Contre : liberté d’expression, risque de censure. Entraîne-toi à construire thèse/antithèse en 10 minutes chrono, comme au Bac.", 10),
+      C('langue', 'L’anaphore, figure des grands discours',
+        "Répéter un même mot en tête de phrase : « Je fais un rêve… » (Martin Luther King). Effet : marteler, émouvoir, fédérer. Repère-la dans un discours et explique son effet = points assurés au commentaire.", 11),
+      C('figure', 'David Diop, le Goncourt de « Frère d’âme »',
+        "Enseignant-chercheur franco-sénégalais, il a reçu le Prix Goncourt des lycéens puis l’International Booker pour « Frère d’âme » (2018), roman sur les tirailleurs sénégalais de 14-18. La preuve que la L2 mène au sommet.", 12),
+      C('pratique', 'Bourses après le Bac : les bons réflexes',
+        "Surveille : bourses nationales (MESRI), Campus Sénégal, AUF (études francophones), Campus France (bourses d’excellence). Astuce : prépare ton dossier (bulletins, CNI, projet motivé) AVANT les annonces, les places partent vite.", 13),
+    ];
+    const ins = db.prepare('INSERT INTO culture (categorie, titre, contenu, date_publi) VALUES (@categorie, @titre, @contenu, @date_publi)');
+    for (const c of culture) ins.run(c);
+    log(`[seed] Culture du monde : ${culture.length} publications.`);
+  }
+
   /* ---------------- Catalogue métiers (par filière, avec parcours d'études) ---------------- */
   const hasNewCatalog = db.prepare("SELECT COUNT(*) c FROM metiers WHERE filiere IN ('S2','L2')").get().c > 0;
   if (!hasNewCatalog) {

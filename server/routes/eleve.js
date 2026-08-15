@@ -257,6 +257,11 @@ router.post('/idees', requireEleve(db), (req, res) => {
   res.status(201).json({ ok: true });
 });
 
+/* ------------------------- Culture du monde (L2) ------------------------- */
+router.get('/culture', requireEleve(db), (req, res) => {
+  res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());
+});
+
 /* ------------------------- Lexique arabe (bonus) ------------------------- */
 router.get('/lexique', requireEleve(db), (req, res) => {
   res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());

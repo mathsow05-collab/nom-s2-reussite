@@ -12,9 +12,11 @@ import Agenda from './Agenda.jsx';
 import Outils from './Outils.jsx';
 import Echanges from './Echanges.jsx';
 import ParcoursArabe from './ParcoursArabe.jsx';
+import Culture from './Culture.jsx';
 
 const TABS = [
   { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
+  { id: 'culture', label: 'Culture', icon: 'bulb', l2Seul: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
@@ -118,7 +120,7 @@ export default function StudentApp() {
       </header>
 
       <nav className="seg">
-        {TABS.filter((t) => !t.arSeul || filiere === 'AR').map((t) => (
+        {TABS.filter((t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2')).map((t) => (
           <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
             <Icon name={t.icon} /> {t.label}
           </button>
@@ -126,6 +128,7 @@ export default function StudentApp() {
       </nav>
 
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
+      {tab === 'culture' && filiere === 'L2' && <Culture />}
       {tab === 'annales' && <Annales />}
       {tab === 'quiz' && <Quiz />}
       {tab === 'orientation' && <Metiers />}

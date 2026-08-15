@@ -277,6 +277,32 @@ router.put('/cours/:id', admin, pdfUpload, (req, res) => {
   return res.json({ ok: true });
 });
 
+/* ------------------------- Culture du monde ------------------------- */
+router.get('/culture', admin, refuseAR, (req, res) => {
+  res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());
+});
+
+router.post('/culture', admin, refuseAR, (req, res) => {
+  const { categorie, titre, contenu } = req.body || {};
+  if (!titre || !String(titre).trim() || !contenu || !String(contenu).trim())
+    return res.status(400).json({ error: 'Titre et contenu obligatoires.' });
+  const auj = new Date().toISOString().slice(0, 10);
+  db.prepare('INSERT INTO culture (categorie, titre, contenu, date_publi) VALUES (?, ?, ?, ?)')
+    .run(
+      ['actualite', 'histoire', 'pratique', 'figure', 'geo', 'langue', 'debat'].includes(categorie) ? categorie : 'actualite',
+      String(titre).trim(),
+      String(contenu).trim(),
+      auj
+    );
+  addLog('culture_publiee', { source: 'admin', req, details: titre });
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/culture/:id', admin, refuseAR, (req, res) => {
+  db.prepare('DELETE FROM culture WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 /* ------------------------- Lexique arabe ------------------------- */
 router.get('/lexique', admin, (req, res) => {
   res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());
