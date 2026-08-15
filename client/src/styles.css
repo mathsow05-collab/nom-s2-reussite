@@ -327,7 +327,59 @@ input[type='file'].input { padding: 8px; }
 }
 .jeu-hero .badge-light { background: rgba(255, 255, 255, 0.18); color: #fff; }
 
-/* ---------- Citations ---------- */
+/* ---------- Simulateur de moyenne (cartes) ---------- */
+.sim-summary {
+  display: flex; align-items: center; gap: 16px; border-radius: 14px; padding: 14px 18px; margin: 12px 0 16px;
+  background: linear-gradient(120deg, #065f46, #0d9488); color: #fff; box-shadow: var(--shadow);
+}
+.sim-summary.vide { background: linear-gradient(120deg, #334155, #64748b); }
+.sim-summary.i { background: linear-gradient(120deg, #b91c1c, #ef4444); }
+.sim-summary.p { background: linear-gradient(120deg, #b45309, #f59e0b); }
+.sim-summary.ab { background: linear-gradient(120deg, #0369a1, #0ea5e9); }
+.sim-summary.b { background: linear-gradient(120deg, #047857, #10b981); }
+.sim-summary.tb { background: linear-gradient(120deg, #6d28d9, #a855f7); }
+.sim-big { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+.sim-infos strong { font-size: 1rem; }
+.sim-cards { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 700px) { .sim-cards { grid-template-columns: 1fr 1fr; } }
+.sim-card { border: 1px solid var(--line); border-top: 4px solid var(--mc, var(--brand)); border-radius: 12px; padding: 10px 12px; background: #fff; }
+.sim-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sim-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mc, var(--brand)); flex: none; }
+.sim-coef { margin-left: auto; font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.sim-coef input { width: 46px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 7px; font-size: 0.85rem; }
+.sim-notes { display: grid; grid-template-columns: 1fr 1fr 64px; gap: 8px; align-items: end; }
+.sim-notes label { font-size: 0.7rem; color: var(--muted); display: grid; gap: 3px; }
+.sim-notes input { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 1rem; }
+.sim-moy { font-size: 1.25rem; font-weight: 800; text-align: center; border-radius: 8px; background: #f1f5f9; color: var(--muted); padding: 6px 0; }
+.sim-moy.ok { background: #dcfce7; color: var(--ok); }
+.sim-moy.ko { background: #fee2e2; color: var(--danger); }
+
+/* ---------- Planning premium ---------- */
+.plan-hero {
+  display: flex; justify-content: space-between; align-items: center; margin: 14px 0;
+  background: linear-gradient(120deg, #312e81, #7c3aed); color: #fff; border-radius: 14px; padding: 14px 18px;
+}
+.plan-hero .muted { color: #ddd6fe; }
+.plan-emoji { font-size: 2rem; }
+.plan-week { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 14px; background: #fff; }
+.plan-week-head { background: #f8fafc; padding: 10px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.plan-recap { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-recap-chip { font-size: 0.72rem; font-weight: 700; color: var(--mc); background: #f8fafc; border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; }
+@supports (background: color-mix(in srgb, red 10%, white)) {
+  .plan-recap-chip { background: color-mix(in srgb, var(--mc) 12%, white); border-color: color-mix(in srgb, var(--mc) 35%, white); }
+}
+.plan-jour { display: flex; gap: 12px; padding: 10px 14px; border-bottom: 1px dashed var(--line); }
+.plan-jour:last-child { border-bottom: none; }
+.plan-jour-date { display: grid; justify-items: center; min-width: 44px; }
+.pj-weekday { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; }
+.pj-day { font-size: 1.2rem; font-weight: 800; color: var(--brand-dark); }
+.plan-jour-body { display: grid; gap: 5px; flex: 1; }
+.plan-sessions { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-session { border-left: 4px solid var(--mc); background: #f8fafc; border-radius: 8px; padding: 5px 10px; font-size: 0.85rem; }
+@supports (background: color-mix(in srgb, red 10%, white)) {
+  .plan-session { background: color-mix(in srgb, var(--mc) 10%, white); }
+}
+.plan-session b { color: var(--mc); }
 .quote-text {
   font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; line-height: 1.5;
   margin: 2px 0; color: #1e1b4b;
