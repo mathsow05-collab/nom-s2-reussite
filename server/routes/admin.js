@@ -15,7 +15,7 @@ const UPLOADS = UPLOADS_DIR;
 const TMP_DIR = path.join(UPLOADS, 'tmp');
 fs.mkdirSync(TMP_DIR, { recursive: true });
 
-const MATIERES = ['maths', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'lecture', 'sourates', 'tajwid', 'tafsir'];
+const MATIERES = ['maths', 'physique', 'chimie', 'svt', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'espagnol', 'economie', 'lecture', 'sourates', 'tajwid', 'tafsir'];
 
 // Le périmètre Arabe (ex. Moustapha) ne gère QUE élèves + cours Coran :
 // annales, quiz, agenda et catalogue métiers lui sont fermés.
@@ -330,7 +330,7 @@ router.post('/culture', admin, refuseAR, (req, res) => {
   const auj = new Date().toISOString().slice(0, 10);
   db.prepare('INSERT INTO culture (categorie, titre, contenu, date_publi) VALUES (?, ?, ?, ?)')
     .run(
-      ['actualite', 'histoire', 'pratique', 'figure', 'geo', 'langue', 'debat'].includes(categorie) ? categorie : 'actualite',
+      ['actualite', 'histoire', 'pratique', 'figure', 'geo', 'langue', 'debat', 'citation'].includes(categorie) ? categorie : 'actualite',
       String(titre).trim(),
       String(contenu).trim(),
       auj

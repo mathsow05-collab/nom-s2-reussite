@@ -97,6 +97,8 @@ function seed(db, log = console.log) {
   }
 
   /* ---------------- Cours S2 (base vierge) ---------------- */
+  // Migration douce : la S2 a désormais Physique et Chimie séparées.
+  db.prepare("UPDATE cours SET matiere = 'physique' WHERE filiere = 'S2' AND matiere = 'physique-chimie'").run();
   if (db.prepare('SELECT COUNT(*) c FROM cours').get().c === 0) {
     const cours = [
       { titre: 'Tableaux de signes – méthode complète', matiere: 'maths', youtube_id: '50CByVTP4ig', description: 'Dresser et lire un tableau de signes : la méthode pas à pas avec des exemples corrigés.' },
@@ -249,6 +251,26 @@ function seed(db, log = console.log) {
     log(`[seed] ${ech.length} échéances créées.`);
   }
 
+  /* ---------------- Cours complémentaires (toutes les matières) ---------------- */
+  const complement = [
+    { filiere: 'S2', matiere: 'chimie', titre: 'Réactions chimiques : équilibrer', pdf_file: 'chimie/reactions.pdf', description: "La méthode pas à pas pour équilibrer n'importe quelle équation." },
+    { filiere: 'S2', matiere: 'svt', titre: 'La cellule et ses constituants', pdf_file: 'svt/cellule.pdf', description: 'Membrane, noyau, organites : la base de toute la SVT.' },
+    { filiere: 'S2', matiere: 'anglais', titre: 'English : grammaire clé pour le Bac', pdf_file: 'anglais/revision-s2.pdf', description: "Present perfect, comparatifs, connecteurs : l'essentiel." },
+    { filiere: 'S2', matiere: 'philosophie', titre: "La conscience et l'inconscient", pdf_file: 'philosophie/conscience.pdf', description: 'Descartes face à Freud : un classique des sujets de Bac.' },
+    { filiere: 'L2', matiere: 'maths', titre: 'Maths L2 : statistiques et pourcentages', pdf_file: 'maths/stats-pourcentages.pdf', description: 'Les outils maths dont un élève de Lettres a vraiment besoin.' },
+    { filiere: 'L2', matiere: 'physique-chimie', titre: "Sciences L2 : l'essentiel pour comprendre", pdf_file: 'physique-chimie/bases-sciences-l2.pdf', description: 'Matière, énergie, mélanges : lire le monde scientifiquement.' },
+    { filiere: 'L2', matiere: 'svt', titre: 'SVT : corps humain et santé', pdf_file: 'svt/corps-sante.pdf', description: "Circulation, respiration, hygiène de vie : le programme utile." },
+    { filiere: 'L2', matiere: 'economie', titre: 'Économie : offre, demande et marché', pdf_file: 'economie/offre-demande.pdf', description: "Comprendre les prix, les pénuries, et l'actualité économique." },
+    { filiere: 'L2', matiere: 'espagnol', titre: 'Español : les bases pour démarrer', pdf_file: 'espagnol/bases.pdf', description: "Saluer, se présenter, conjuguer : ta première semaine d'espagnol." },
+  ];
+  for (const c of complement) {
+    if (db.prepare('SELECT 1 FROM cours WHERE filiere = ? AND matiere = ?').get(c.filiere, c.matiere)) continue;
+    db.prepare('INSERT INTO cours (titre, matiere, description, pdf_file, ordre, filiere) VALUES (?, ?, ?, ?, 90, ?)')
+      .run(c.titre, c.matiere, c.description, c.pdf_file, c.filiere);
+  }
+  const writtenMatieres = writeDemoPdfs(UPLOADS_DIR);
+  if (writtenMatieres.length) log(`[seed] ${writtenMatieres.length} PDF de matières générés.`);
+
   /* ---------------- Cours Coran / arabe (niveaux 1-3) ---------------- */
   const hasCoran = db.prepare("SELECT COUNT(*) c FROM cours WHERE filiere = 'AR' AND matiere = 'sourates'").get().c > 0;
   if (!hasCoran) {
@@ -340,9 +362,62 @@ function seed(db, log = console.log) {
       C('pratique', 'Bourses après le Bac : les bons réflexes',
         "Surveille : bourses nationales (MESRI), Campus Sénégal, AUF (études francophones), Campus France (bourses d’excellence). Astuce : prépare ton dossier (bulletins, CNI, projet motivé) AVANT les annonces, les places partent vite.", 13),
     ];
+    culture.push(
+      C('citation', '« Je pense donc je suis. » — Descartes',
+        "Le point de départ de toute la philosophie moderne : même si je doute de tout, je ne peux pas douter que je suis en train de penser. À placer en intro d'une dissert sur la conscience, la vérité ou le doute.", 14),
+      C('citation', '« L’homme est condamné à être libre. » — Sartre',
+        "Pour Sartre, on ne choisit pas de naître, mais une fois né, on est responsable de tout ce qu'on fait : pas d'excuse toute faite. Parfait pour les sujets sur la liberté et la responsabilité.", 15),
+      C('citation', "« Le futur a plusieurs noms : pour les faibles, il est l’impossible ; pour les timides, l’inconnu ; pour les vaillants, l’idéal. » — Victor Hugo",
+        "Une citation en or pour une dissert de français ou de philo sur l'espoir, le courage ou l'avenir. Retiens aussi le procédé : c'est une anaphore + gradation.", 16),
+      C('citation', "« Écoutez, dans la nuit du monde, l’immense chanson d’Amour ! » — Léopold Sédar Senghor",
+        "Le premier Africain élu à l'Académie française (1983). À citer pour montrer qu'on connaît les auteurs africains : effet garanti devant un correcteur.", 17),
+      C('figure', 'Franklin D. Roosevelt (1882-1945)',
+        "Président des États-Unis pendant la crise de 1929 puis la Seconde Guerre mondiale. Son « New Deal » relance l'économie par de grands travaux ; il est le seul président élu 4 fois. Incontournable sur le XXe siècle.", 18),
+      C('figure', 'Nelson Mandela (1918-2013)',
+        "27 ans de prison pour avoir lutté contre l'apartheid, puis premier président noir d'Afrique du Sud (1994) et prix Nobel de la paix. Symbole mondial du pardon et de la réconciliation.", 19),
+      C('figure', 'Abraham Lincoln (1809-1865)',
+        "Président américain qui abolit l'esclavage (1865) et préserve l'Union pendant la guerre de Sécession. Son discours de Gettysburg (« le gouvernement du peuple, par le peuple, pour le peuple ») est un monument.", 20),
+      C('actualite', 'Pourquoi le pétrole est-il parfois si cher ?',
+        "Le prix du baril dépend de 3 choses : 1) l'offre (les pays producteurs de l'OPEP+ décident combien ils pompent) ; 2) la demande (quand la Chine ou les États-Unis tournent à fond, ça monte) ; 3) les tensions (guerre, détroit bloqué = peur de pénurie). Le sais-tu ? Ton plein de carburant et le prix du transport suivent ce baril.", 21),
+      C('actualite', 'Comprendre le conflit israélo-palestinien en 3 repères',
+        "Pour y voir clair sans prendre parti : 1) 1947-1967 : création d'Israël, guerres, occupation des territoires palestiniens ; 2) 1993 : accords d'Oslo, espoir de deux États, puis blocage ; 3) aujourd'hui : colonies, blocus de Gaza et cycles de violences. À retenir pour le Bac : c'est un conflit de territoires, de sécurité et de droits nationaux, suivi par l'ONU depuis 1947.", 22),
+      C('actualite', "Climat : c’est quoi El Niño dont tout le monde parle ?",
+        "El Niño, c'est un réchauffement inhabituel de l'océan Pacifique qui dérègle la météo mondiale : sécheresses ici, pluies énormes là-bas. Pour le Sahel et le Sénégal, cela peut changer le calendrier des pluies — donc les récoltes. Un excellent exemple du lien climat-économie à citer en géo.", 23)
+    );
     const ins = db.prepare('INSERT INTO culture (categorie, titre, contenu, date_publi) VALUES (@categorie, @titre, @contenu, @date_publi)');
     for (const c of culture) ins.run(c);
-    log(`[seed] Culture du monde : ${culture.length} publications.`);
+    log(`[seed] Culture du monde : ${culture.length} publications (dont citations, biographies, actus).`);
+  }
+
+  /* Ajout des citations/biographies/actus sur une base déjà existante. */
+  if (db.prepare("SELECT COUNT(*) c FROM culture WHERE categorie IN ('citation','figure') AND titre LIKE '%—%'").get().c === 0) {
+    const jour2 = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+    const C2 = (categorie, titre, contenu, n) => ({ categorie, titre, contenu, date_publi: jour2(n) });
+    const extra = [
+      C2('citation', '« Je pense donc je suis. » — Descartes',
+        "Le point de départ de toute la philosophie moderne : même si je doute de tout, je ne peux pas douter que je suis en train de penser. À placer en intro d'une dissert sur la conscience, la vérité ou le doute.", 14),
+      C2('citation', '« L’homme est condamné à être libre. » — Sartre',
+        "Pour Sartre, on ne choisit pas de naître, mais une fois né, on est responsable de tout ce qu'on fait : pas d'excuse toute faite. Parfait pour les sujets sur la liberté et la responsabilité.", 15),
+      C2('citation', '« Le futur a plusieurs noms : pour les faibles, il est l’impossible ; pour les timides, l’inconnu ; pour les vaillants, l’idéal. » — Victor Hugo',
+        "Une citation en or pour une dissert de français ou de philo sur l'espoir, le courage ou l'avenir. Retiens aussi le procédé : c'est une anaphore + gradation.", 16),
+      C2('citation', '« Écoutez, dans la nuit du monde, l’immense chanson d’Amour ! » — Léopold Sédar Senghor',
+        "Le premier Africain élu à l'Académie française (1983). À citer pour montrer qu'on connaît les auteurs africains : effet garanti devant un correcteur.", 17),
+      C2('figure', 'Franklin D. Roosevelt (1882-1945)',
+        "Président des États-Unis pendant la crise de 1929 puis la Seconde Guerre mondiale. Son « New Deal » relance l'économie par de grands travaux ; il est le seul président élu 4 fois. Incontournable sur le XXe siècle.", 18),
+      C2('figure', 'Nelson Mandela (1918-2013)',
+        "27 ans de prison pour avoir lutté contre l'apartheid, puis premier président noir d'Afrique du Sud (1994) et prix Nobel de la paix. Symbole mondial du pardon et de la réconciliation.", 19),
+      C2('figure', 'Abraham Lincoln (1809-1865)',
+        "Président américain qui abolit l'esclavage (1865) et préserve l'Union pendant la guerre de Sécession. Son discours de Gettysburg (« le gouvernement du peuple, par le peuple, pour le peuple ») est un monument.", 20),
+      C2('actualite', 'Pourquoi le pétrole est-il parfois si cher ?',
+        "Le prix du baril dépend de 3 choses : 1) l'offre (les pays producteurs de l'OPEP+ décident combien ils pompent) ; 2) la demande (quand la Chine ou les États-Unis tournent à fond, ça monte) ; 3) les tensions (guerre, détroit bloqué = peur de pénurie). Le sais-tu ? Ton plein de carburant et le prix du transport suivent ce baril.", 21),
+      C2('actualite', 'Comprendre le conflit israélo-palestinien en 3 repères',
+        "Pour y voir clair sans prendre parti : 1) 1947-1967 : création d'Israël, guerres, occupation des territoires palestiniens ; 2) 1993 : accords d'Oslo, espoir de deux États, puis blocage ; 3) aujourd'hui : colonies, blocus de Gaza et cycles de violences. À retenir pour le Bac : c'est un conflit de territoires, de sécurité et de droits nationaux, suivi par l'ONU depuis 1947.", 22),
+      C2('actualite', 'Climat : c’est quoi El Niño dont tout le monde parle ?',
+        "El Niño, c'est un réchauffement inhabituel de l'océan Pacifique qui dérègle la météo mondiale : sécheresses ici, pluies énormes là-bas. Pour le Sahel et le Sénégal, cela peut changer le calendrier des pluies — donc les récoltes. Un excellent exemple du lien climat-économie à citer en géo.", 23),
+    ];
+    const ins2 = db.prepare('INSERT INTO culture (categorie, titre, contenu, date_publi) VALUES (@categorie, @titre, @contenu, @date_publi)');
+    for (const c of extra) ins2.run(c);
+    log(`[seed] Culture : +${extra.length} (citations, biographies, actus).`);
   }
 
   /* ---------------- Catalogue métiers (par filière, avec parcours d'études) ---------------- */

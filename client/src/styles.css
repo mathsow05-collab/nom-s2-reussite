@@ -304,6 +304,36 @@ input[type='file'].input { padding: 8px; }
 .tag-chip.link { border-color: #c7d2fe; background: var(--brand-soft); color: var(--brand-dark); font-weight: 600; cursor: pointer; }
 .tag-chip.link:hover { background: #e0e7ff; }
 
+/* ---------- Mini-jeu Histoire-Géo ---------- */
+.jeu-hero {
+  background: linear-gradient(120deg, #065f46, #0d9488 70%, #65a30d);
+  color: #fff; border-radius: 16px; padding: 18px; margin-bottom: 16px;
+  display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  box-shadow: var(--shadow);
+}
+.jeu-hero h2 { margin: 0 0 6px; }
+.jeu-hero p { margin: 0; color: #d1fae5; max-width: 62ch; }
+.jeu-hero.fin, .jeu-hero.jeu-en-cours { display: block; }
+.jeu-score { font-size: 2.4rem; font-weight: 800; }
+.jeu-rang { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+.jeu-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.jeu-timer { font-weight: 800; background: rgba(255, 255, 255, 0.16); padding: 4px 10px; border-radius: 999px; }
+.jeu-timer.rouge { background: #dc2626; animation: blink 0.6s infinite; }
+.jeu-q { margin: 4px 0 12px; font-size: 1.08rem; }
+.jeu-en-cours .quiz-choice { background: #fff; }
+.jeu-explication {
+  margin-top: 12px; background: rgba(255, 255, 255, 0.95); color: var(--ink); border-radius: 12px;
+  padding: 12px 14px; display: grid; gap: 10px; justify-items: start; font-size: 0.92rem;
+}
+.jeu-hero .badge-light { background: rgba(255, 255, 255, 0.18); color: #fff; }
+
+/* ---------- Citations ---------- */
+.quote-text {
+  font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; line-height: 1.5;
+  margin: 2px 0; color: #1e1b4b;
+}
+.quote-card { border-left: 6px solid #7c3aed; }
+
 .seg { display: flex; gap: 8px; padding: 12px 16px 0; max-width: 1100px; margin: 0 auto; }
 .seg button {
   display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card);

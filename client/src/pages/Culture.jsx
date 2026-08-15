@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Spinner } from '../ui.jsx';
+import MiniJeu from '../components/MiniJeu.jsx';
 
 export const CATS = {
-  actualite: { label: 'Actualité', icon: '🌍' },
+  actualite: { label: 'Actu expliquée', icon: '🌍' },
+  citation: { label: 'Citations', icon: '✒️' },
+  figure: { label: 'Biographies', icon: '🧑🏾‍🏫' },
   histoire: { label: 'Un jour dans l’histoire', icon: '📜' },
   pratique: { label: 'Info pratique', icon: '🛠️' },
-  figure: { label: 'Grande figure', icon: '✨' },
   geo: { label: 'Géo en chiffres', icon: '🗺️' },
   langue: { label: 'Langue & style', icon: '📖' },
   debat: { label: 'Débat du jour', icon: '💬' },
@@ -38,8 +40,10 @@ export default function Culture() {
     <main className="container">
       <section className="banner">
         <h2>🌍 Culture du monde</h2>
-        <p>Chaque jour, une info utile : actualité expliquée, histoire, figures, méthodes… pour briller en dissert et dans la vie.</p>
+        <p>Chaque jour, une info utile : actu expliquée, citations, biographies, méthodes… et apprends en jouant avec le challenge Histoire-Géo !</p>
       </section>
+
+      <MiniJeu />
 
       <div className="pills">
         <button className={cat === 'all' ? 'pill active' : 'pill'} onClick={() => setCat('all')}>
@@ -53,14 +57,14 @@ export default function Culture() {
       </div>
 
       {une && (
-        <article className="card culture-card a-la-une">
+        <article className={une.categorie === 'citation' ? 'card culture-card a-la-une quote-card' : 'card culture-card a-la-une'}>
           <div className="culture-head">
             <span className="badge">📌 À la une · {fmt(une.date_publi)}</span>
             <span className="badge badge-soft">
               {(CATS[une.categorie] || CATS.actualite).icon} {(CATS[une.categorie] || CATS.actualite).label}
             </span>
           </div>
-          <h3>{une.titre}</h3>
+          {une.categorie === 'citation' ? <p className="quote-text">{une.titre}</p> : <h3>{une.titre}</h3>}
           <p>{une.contenu}</p>
         </article>
       )}
@@ -74,7 +78,7 @@ export default function Culture() {
                 {(CATS[c.categorie] || CATS.actualite).icon} {(CATS[c.categorie] || CATS.actualite).label}
               </span>
             </div>
-            <h3>{c.titre}</h3>
+            {c.categorie === 'citation' ? <p className="quote-text">{c.titre}</p> : <h3>{c.titre}</h3>}
             <p className="clamp3">{c.contenu}</p>
           </article>
         ))}

@@ -37,15 +37,24 @@ export async function api(path, { method = 'GET', body, form = false } = {}) {
 /* ---------- Filières & matières ---------- */
 export const MATIERES_S2 = [
   { id: 'maths', label: 'Maths', color: '#4f46e5' },
-  { id: 'physique-chimie', label: 'Physique-Chimie', color: '#0891b2' },
+  { id: 'physique', label: 'Physique', color: '#0ea5e9' },
+  { id: 'chimie', label: 'Chimie', color: '#16a34a' },
+  { id: 'svt', label: 'SVT', color: '#65a30d' },
+  { id: 'anglais', label: 'Anglais', color: '#db2777' },
+  { id: 'philosophie', label: 'Philosophie', color: '#7c3aed' },
   { id: 'francais', label: 'Français', color: '#d97706' },
   { id: 'histoire-geographie', label: 'Histoire-Géo', color: '#059669' },
 ];
 export const MATIERES_L2 = [
+  { id: 'maths', label: 'Maths', color: '#4f46e5' },
+  { id: 'physique-chimie', label: 'Physique-Chimie', color: '#0891b2' },
+  { id: 'svt', label: 'SVT', color: '#65a30d' },
+  { id: 'anglais', label: 'Anglais', color: '#db2777' },
+  { id: 'philosophie', label: 'Philosophie', color: '#7c3aed' },
   { id: 'francais', label: 'Français', color: '#d97706' },
   { id: 'histoire-geographie', label: 'Histoire-Géo', color: '#059669' },
-  { id: 'philosophie', label: 'Philosophie', color: '#7c3aed' },
-  { id: 'anglais', label: 'Anglais', color: '#db2777' },
+  { id: 'economie', label: 'Économie', color: '#0d9488' },
+  { id: 'espagnol', label: 'Espagnol', color: '#ea580c' },
 ];
 export const MATIERES_AR = [
   { id: 'lecture', label: 'Lecture & makharij', color: '#0d9488' },
