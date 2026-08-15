@@ -380,6 +380,91 @@ input[type='file'].input { padding: 8px; }
   .plan-session { background: color-mix(in srgb, var(--mc) 10%, white); }
 }
 .plan-session b { color: var(--mc); }
+
+/* ---------- Profil & avatars ---------- */
+.avatar-btn {
+  border: 2px solid var(--brand); background: var(--brand-soft); border-radius: 50%;
+  width: 40px; height: 40px; font-size: 1.25rem; cursor: pointer; line-height: 1;
+}
+.profil-head { display: flex; gap: 14px; align-items: center; margin-bottom: 6px; }
+.profil-avatar {
+  width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #eef2ff, #fce7f3);
+  display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid var(--brand);
+}
+.avatar-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+@media (max-width: 480px) { .avatar-grid { grid-template-columns: repeat(6, 1fr); } }
+.avatar-pick {
+  font-size: 1.4rem; border: 2px solid var(--line); background: #fff; border-radius: 12px;
+  padding: 6px 0; cursor: pointer; transition: transform 0.1s;
+}
+.avatar-pick:active { transform: scale(0.94); }
+.avatar-pick.actif { border-color: var(--brand); background: var(--brand-soft); }
+
+/* ---------- Filigrane & anti-capture ---------- */
+.watermark { position: fixed; inset: 0; pointer-events: none; z-index: 999; background-repeat: repeat; }
+.student, .student * { -webkit-user-select: none; user-select: none; }
+.student input, .student textarea, .student input * { -webkit-user-select: text; user-select: text; }
+.student img { -webkit-user-drag: none; }
+
+/* ---------- Lecteur vidéo sans fuite ---------- */
+.vp-box { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
+.vp-facade {
+  width: 100%; aspect-ratio: 16 / 9; border: none; cursor: pointer; background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.vp-facade::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55)); }
+.vp-play {
+  position: relative; z-index: 2; width: 64px; height: 64px; border-radius: 50%; background: var(--brand);
+  color: #fff; font-size: 1.4rem; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); padding-left: 6px;
+}
+.vp-label { position: absolute; z-index: 2; bottom: 10px; left: 12px; right: 12px; color: #fff; font-weight: 700; text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
+.vp-wrap { position: relative; aspect-ratio: 16 / 9; }
+.vp-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.vp-shield { position: absolute; top: 0; left: 0; right: 0; height: 58px; z-index: 3; cursor: default; }
+.vp-full {
+  position: absolute; top: 8px; right: 8px; z-index: 5; border: none; background: rgba(0, 0, 0, 0.6);
+  color: #fff; border-radius: 8px; width: 34px; height: 34px; font-size: 1.05rem; cursor: pointer;
+}
+.pdf-full-wrap { position: relative; }
+.pdf-full-wrap:fullscreen { overflow: auto; background: #525659; padding: 10px; }
+.pdf-full-wrap:fullscreen .pdf-pages { max-height: none; }
+.pdf-full-btn { position: absolute; top: 8px; right: 8px; }
+
+/* ---------- Annales redesign ---------- */
+.annale-card { display: flex; gap: 0; overflow: hidden; padding: 0; }
+.annale-year {
+  writing-mode: vertical-rl; transform: rotate(180deg); color: #fff; font-weight: 800; font-size: 1.05rem;
+  display: flex; align-items: center; justify-content: center; padding: 14px 8px; letter-spacing: 0.08em;
+}
+.annale-body { padding: 14px; display: grid; gap: 8px; justify-items: start; flex: 1; }
+.annale-body h3 { margin: 0; font-size: 1rem; }
+
+/* ---------- Agenda timeline ---------- */
+.timeline { position: relative; padding-left: 22px; display: grid; gap: 14px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 6px; bottom: 6px; width: 3px; background: linear-gradient(#4f46e5, #db2777); border-radius: 99px; }
+.timeline .agenda-card { position: relative; }
+.timeline .agenda-card::before {
+  content: ''; position: absolute; left: -20px; top: 22px; width: 13px; height: 13px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--brand);
+}
+
+/* ---------- Échanges en bulles ---------- */
+.qa-thread { display: grid; gap: 14px; }
+.thread-item { display: grid; gap: 6px; }
+.thread-sujet { display: inline-block; background: rgba(255, 255, 255, 0.25); border-radius: 999px; padding: 1px 9px; font-size: 0.72rem; margin-right: 6px; }
+.reponse-admin { background: #ecfdf5; border: 1px solid #a7f3d0; }
+.thread-from { display: block; font-size: 0.72rem; color: var(--ok); font-weight: 700; margin-bottom: 3px; }
+.thread-wait { color: var(--muted); font-size: 0.8rem; padding-left: 8px; }
+
+/* ---------- Cartes cours jolies ---------- */
+.cours-card { border-top: none; position: relative; overflow: hidden; }
+.cours-card::before { content: ''; display: block; height: 6px; background: linear-gradient(90deg, var(--mc, var(--brand)), transparent 130%); margin: -16px -16px 12px; }
+.cours-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12); transition: 0.15s; }
+
+/* ---------- Quiz config hero ---------- */
+.quiz-config { border: none; background: linear-gradient(140deg, #eef2ff, #fdf2f8); }
+.quiz-config h2 { display: flex; gap: 8px; align-items: center; }
 .quote-text {
   font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; line-height: 1.5;
   margin: 2px 0; color: #1e1b4b;

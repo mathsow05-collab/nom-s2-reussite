@@ -88,20 +88,24 @@ export default function Echanges() {
         ) : questions.length === 0 ? (
           <p className="muted">Tu n'as pas encore posé de question.</p>
         ) : (
-          <div className="qa-list">
+          <div className="qa-thread">
             {questions.map((q) => (
-              <div className={q.statut === 'repondu' ? 'qa-item ok-border' : 'qa-item'} key={q.id}>
-                <div className="qa-q">
-                  <strong>{q.sujet ? `${q.sujet} — ` : ''}</strong>
-                  {q.message}
-                  <span className={q.statut === 'repondu' ? 'badge badge-ok' : 'badge badge-soft'} style={{ marginLeft: 8 }}>
-                    {q.statut === 'repondu' ? 'Répondu' : 'En attente'}
-                  </span>
-                </div>
-                {q.reponse && (
-                  <div className="qa-r">
-                    <Icon name="check" size={15} /> {q.reponse}
+              <div className="thread-item" key={q.id}>
+                <div className="chat-msg moi">
+                  <div className="chat-bulle">
+                    {q.sujet && <span className="thread-sujet"> {q.sujet}</span>}
+                    {q.message}
                   </div>
+                </div>
+                {q.reponse ? (
+                  <div className="chat-msg ia">
+                    <div className="chat-bulle reponse-admin">
+                      <span className="thread-from">🧑🏾‍🏫 Administration</span>
+                      {q.reponse}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="thread-wait">⏳ L'administration prépare sa réponse…</div>
                 )}
               </div>
             ))}

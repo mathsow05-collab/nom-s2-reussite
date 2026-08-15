@@ -70,24 +70,26 @@ export default function Annales() {
             const m = MATIERE_BY_ID[a.matiere] || { label: a.matiere, color: '#64748b' };
             return (
               <article className="card annale-card" key={a.id} style={{ '--mc': m.color }}>
-                <div className="cours-top">
+                <div className="annale-year" style={{ background: m.color }}>
+                  {a.annee}
+                </div>
+                <div className="annale-body">
                   <span className="badge" style={{ background: m.color }}>
                     {m.label}
                   </span>
-                  <span className="badge badge-soft">Session {a.annee}</span>
-                </div>
-                <h3>{a.titre}</h3>
-                <div className="cours-actions">
-                  {a.has_sujet && (
-                    <button className="btn btn-primary" onClick={() => setViewer({ a, type: 'sujet' })}>
-                      <Icon name="file" size={16} /> Sujet
-                    </button>
-                  )}
-                  {a.has_corrige && (
-                    <button className="btn btn-outline" onClick={() => setViewer({ a, type: 'corrige' })}>
-                      <Icon name="check" size={16} /> Corrigé
-                    </button>
-                  )}
+                  <h3>{a.titre}</h3>
+                  <div className="cours-actions">
+                    {a.has_sujet && (
+                      <button className="btn btn-primary" onClick={() => setViewer({ a, type: 'sujet' })}>
+                        <Icon name="file" size={16} /> Sujet
+                      </button>
+                    )}
+                    {a.has_corrige && (
+                      <button className="btn btn-outline" onClick={() => setViewer({ a, type: 'corrige' })}>
+                        <Icon name="check" size={16} /> Corrigé
+                      </button>
+                    )}
+                  </div>
                 </div>
               </article>
             );

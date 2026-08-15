@@ -61,7 +61,15 @@ router.get('/me', requireEleve(db), (req, res) => {
     nom: req.eleve.nom,
     classe: req.eleve.classe,
     filiere: req.eleve.filiere || 'S2',
+    avatar: req.eleve.avatar || null,
   });
+});
+
+// L'élève personnalise son profil (avatar).
+router.post('/profil', requireEleve(db), (req, res) => {
+  const avatar = String(req.body?.avatar || '').slice(0, 8);
+  db.prepare('UPDATE eleves SET avatar = ? WHERE id = ?').run(avatar, req.eleve.id);
+  res.json({ ok: true, avatar });
 });
 
 router.get('/cours', requireEleve(db), (req, res) => {

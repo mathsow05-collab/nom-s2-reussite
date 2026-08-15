@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, getToken, clearToken, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
+import VideoPlayer from '../components/VideoPlayer.jsx';
 import AudioCoran from '../components/AudioCoran.jsx';
 import QuizAyat from '../components/QuizAyat.jsx';
 import Metiers from './Metiers.jsx';
@@ -14,6 +15,8 @@ import Echanges from './Echanges.jsx';
 import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
+
+export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
 
 const TABS = [
   { id: 'ia', label: 'Prof IA', icon: 'chat' },
@@ -82,11 +85,40 @@ export default function StudentApp() {
     return () => clearInterval(t);
   }, [me]);
 
+  const [profil, setProfil] = useState(false);
+
   function logout() {
     api('/eleve/logout').catch(() => {});
     clearToken();
     window.location.hash = '#/';
   }
+
+  // Protections anti-capture : pas de menu contextuel, pas de sélection,
+  // raccourcis d'impression/capture bloqués. (Aucune méthode web n'est 100 %
+  // efficace contre une capture système : le filigrane identifie donc chaque fuite.)
+  useEffect(() => {
+    const noCtx = (e) => e.preventDefault();
+    const noKey = (e) => {
+      const k = e.key.toLowerCase();
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        try {
+          navigator.clipboard?.writeText('');
+        } catch {
+          /* ignore */
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u'].includes(k)) e.preventDefault();
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].includes(k)) e.preventDefault();
+      if (e.ctrlKey && k === 'c' && !['input', 'textarea'].includes(document.activeElement?.tagName?.toLowerCase())) e.preventDefault();
+    };
+    document.addEventListener('contextmenu', noCtx);
+    document.addEventListener('keydown', noKey);
+    return () => {
+      document.removeEventListener('contextmenu', noCtx);
+      document.removeEventListener('keydown', noKey);
+    };
+  }, []);
 
   if (lost) return <SessionLost reason={lost} />;
   if (!me || !cours)
@@ -100,13 +132,26 @@ export default function StudentApp() {
   const matieres = (FILIERES[filiere] || FILIERES.S2).matieres;
   const visible = matiere === 'all' ? cours : cours.filter((c) => c.matiere === matiere);
 
+  const wm = encodeURIComponent(me.eleve_id);
+
   return (
     <div className="student">
+      {/* Filigrane discret anti-fuite : identifie l'élève sur toute capture */}
+      <div
+        className="watermark"
+        aria-hidden="true"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='180'%3E%3Ctext x='14' y='96' fill='%23000' fill-opacity='0.045' font-size='15' transform='rotate(-18 130 90)'%3E${wm}%3C/text%3E%3C/svg%3E")`,
+        }}
+      />
       <header className="topbar">
         <div className="topbar-brand">
           <Icon name="cap" size={22} /> <span>S2 Réussite</span>
         </div>
         <div className="topbar-user">
+          <button className="avatar-btn" onClick={() => setProfil(true)} title="Mon profil">
+            {me.avatar || '🧑🏾‍🎓'}
+          </button>
           <div className="topbar-id">
             <strong>
               {me.prenom} {me.nom} <span className={`filiere-badge fil-${filiere}`}>{filiere}</span>
@@ -173,7 +218,52 @@ export default function StudentApp() {
       )}
 
       {viewer && <Viewer c={viewer} onClose={() => setViewer(null)} />}
+      {profil && (
+        <ProfilModal
+          me={me}
+          onClose={() => setProfil(false)}
+          onAvatar={(a) => setMe((m) => ({ ...m, avatar: a }))}
+        />
+      )}
     </div>
+  );
+}
+
+function ProfilModal({ me, onClose, onAvatar }) {
+  const [busy, setBusy] = useState(false);
+  async function choisir(a) {
+    setBusy(true);
+    try {
+      await api('/eleve/profil', { method: 'POST', body: { avatar: a } });
+      onAvatar(a);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal title="Mon profil" onClose={onClose}>
+      <div className="profil-head">
+        <div className="profil-avatar">{me.avatar || '🧑🏾‍🎓'}</div>
+        <div>
+          <strong>
+            {me.prenom} {me.nom}
+          </strong>
+          <div className="muted small">
+            {me.classe} · Filière {me.filiere}
+          </div>
+          <div className="muted small mono">{me.eleve_id}</div>
+        </div>
+      </div>
+      <label className="label">Choisis ton avatar</label>
+      <div className="avatar-grid">
+        {AVATARS.map((a) => (
+          <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} disabled={busy} onClick={() => choisir(a)}>
+            {a}
+          </button>
+        ))}
+      </div>
+      <p className="hint">Ton avatar s'affiche en haut de ton espace, sur tous tes appareils.</p>
+    </Modal>
   );
 }
 
@@ -211,20 +301,26 @@ function CoursCard({ c, onOpen }) {
 function Viewer({ c, onClose }) {
   const pdfUrl = c.has_pdf ? `/api/eleve/cours/${c.id}/pdf?token=${encodeURIComponent(getToken())}` : null;
   const [showPdf, setShowPdf] = useState(!!pdfUrl && !c.youtube_id);
+  const pdfRef = useRef(null);
+
+  function pleinEcranPdf() {
+    const el = pdfRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen?.();
+  }
 
   return (
     <Modal title={c.titre} onClose={onClose} wide>
-      {c.youtube_id && !showPdf && (
-        <div className="ratio">
-          <iframe
-            title={c.titre}
-            src={`https://www.youtube-nocookie.com/embed/${c.youtube_id}?rel=0&modestbranding=1&playsinline=1&hl=fr`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+      {c.youtube_id && !showPdf && <VideoPlayer id={c.youtube_id} titre={c.titre} />}
+      {pdfUrl && showPdf && (
+        <div ref={pdfRef} className="pdf-full-wrap">
+          <PdfViewer url={pdfUrl} />
+          <button className="vp-full pdf-full-btn" onClick={pleinEcranPdf} title="Plein écran">
+            ⛶
+          </button>
         </div>
       )}
-      {pdfUrl && showPdf && <PdfViewer url={pdfUrl} />}
       <div className="viewer-foot">
         {c.youtube_id && pdfUrl && (
           <button className="btn btn-outline" onClick={() => setShowPdf((s) => !s)}>

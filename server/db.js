@@ -166,5 +166,6 @@ ensureColumn('admins', 'display_name', 'TEXT');
 ensureColumn('metiers', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('metiers', 'parcours', 'TEXT');
 ensureColumn('cours', 'niveau', 'INTEGER');
+ensureColumn('eleves', 'avatar', 'TEXT');
 
 module.exports = db;

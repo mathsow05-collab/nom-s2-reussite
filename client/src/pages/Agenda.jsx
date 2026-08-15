@@ -46,7 +46,7 @@ export default function Agenda() {
         <h2>Agenda des échéances</h2>
         <p>Bac, concours, compositions : les dates clés, ce qu'il faut faire et où ça se passe. Touche une carte pour le détail.</p>
       </section>
-      <div className="agenda-list">
+      <div className="agenda-list timeline">
         {list.map((e) => {
           const s = statut(e);
           const cat = CAT[e.categorie] || CAT.autre;
