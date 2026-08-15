@@ -7,15 +7,37 @@ export default function MetiersAdmin({ adminScope = 'all' }) {
   const [list, setList] = useState(null);
   const [form, setForm] = useState(null);
   const [err, setErr] = useState(null);
+  const [parcours, setParcours] = useState(null);
+  const [formP, setFormP] = useState(null);
 
-  const load = () =>
+  const load = () => {
     api('/admin/metiers')
       .then(setList)
       .catch((e) => setErr(e.message));
+    api('/admin/parcours-univ')
+      .then(setParcours)
+      .catch(() => setParcours([]));
+  };
 
   useEffect(() => {
     load();
   }, []);
+
+  async function delP(p) {
+    if (!window.confirm(`Supprimer la filière « ${p.titre} » ?`)) return;
+    await api(`/admin/parcours-univ/${p.id}`, { method: 'DELETE' });
+    load();
+  }
+
+  async function ajouterP() {
+    try {
+      await api('/admin/parcours-univ', { method: 'POST', body: formP });
+      setFormP(null);
+      load();
+    } catch (e) {
+      setErr(e.message);
+    }
+  }
 
   async function del(m) {
     if (!window.confirm(`Supprimer la fiche « ${m.titre} » ?`)) return;
@@ -98,6 +120,64 @@ export default function MetiersAdmin({ adminScope = 'all' }) {
             load();
           }}
         />
+      )}
+
+      <section className="panel" style={{ marginTop: 22 }}>
+        <div className="page-head">
+          <h2>🎓 Filières universitaires (orientation)</h2>
+          <button className="btn btn-outline" onClick={() => setFormP({ cible: 'S2', titre: '', intro: '', blocs: '' })}>
+            <Icon name="plus" size={16} /> Ajouter une filière
+          </button>
+        </div>
+        <div className="cours-list">
+          {(parcours || []).map((p) => (
+            <div className="cours-row" key={p.id}>
+              <div className="cours-row-main">
+                <strong>{p.titre}</strong>
+                <div className="cours-row-meta">
+                  <span className={`filiere-badge fil-${p.cible === 'all' ? 'S2' : p.cible}`}>{p.cible}</span>
+                  <span className="muted clamp1">{p.intro}</span>
+                </div>
+              </div>
+              <button className="btn btn-sm btn-ghost icon-only" onClick={() => delP(p)} title="Supprimer">
+                <Icon name="trash" size={14} />
+              </button>
+            </div>
+          ))}
+          {parcours && parcours.length === 0 && <div className="empty">Aucune filière.</div>}
+        </div>
+      </section>
+
+      {formP && (
+        <Modal title="Nouvelle filière universitaire" onClose={() => setFormP(null)}>
+          <label className="label">Pour quelle filière d'élèves ?</label>
+          <select className="input" value={formP.cible} onChange={(e) => setFormP({ ...formP, cible: e.target.value })}>
+            <option value="S2">S2</option>
+            <option value="L2">L2</option>
+            <option value="all">Les deux</option>
+          </select>
+          <label className="label">Titre *</label>
+          <input className="input" value={formP.titre} onChange={(e) => setFormP({ ...formP, titre: e.target.value })} placeholder="Ex. Droit et Sciences Politiques" />
+          <label className="label">Introduction</label>
+          <textarea className="input" rows="2" value={formP.intro} onChange={(e) => setFormP({ ...formP, intro: e.target.value })} />
+          <label className="label">Sous-domaines et métiers *</label>
+          <textarea
+            className="input"
+            rows="7"
+            value={formP.blocs}
+            onChange={(e) => setFormP({ ...formP, blocs: e.target.value })}
+            placeholder={'Droit Privé :\nAvocat;Notaire;Huissier\nDroit Public :\nGreffier;Inspecteur des impôts'}
+          />
+          <p className="hint">Une ligne qui se termine par « : » = sous-domaine ; les métiers sont séparés par « ; ».</p>
+          <div className="form-actions">
+            <button type="button" className="btn btn-ghost" onClick={() => setFormP(null)}>
+              Annuler
+            </button>
+            <button className="btn btn-primary" disabled={!formP.titre.trim() || !formP.blocs.trim()} onClick={ajouterP}>
+              Enregistrer
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

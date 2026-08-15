@@ -136,6 +136,40 @@ function seed(db, log = console.log) {
     log(`[seed] ${cours.length} cours L2 créés.`);
   }
 
+  /* ---------------- Filières universitaires (orientation S2 & L2) ---------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM parcours_univ').get().c === 0) {
+    const P = (cible, titre, intro, blocs) => ({ cible, titre, intro, blocs });
+    const parcours = [
+      P('L2', 'Droit et Sciences Politiques',
+        "Le droit et la science politique forment aux métiers de la justice, de l'administration et du conseil. Après une licence à l'UCAD (FSJP) ou à l'UGB, ouvre-toi aux masters et écoles professionnelles.",
+        "Droit Privé et Sciences Criminelles :\nAvocat (barreau judiciaire ou pénal);Notaire;Huissier de justice;Magistrat;Clerc de notaire;Juriste;Juriste en entreprise;Juriste en banque;Avocat en banque;Legal tech;Métiers du secteur privé;Juriste d'entreprise;Juriste en banque;Avocat en banque;Legal tech\nDroit Public et Administration :\nGreffier des tribunaux;Inspecteur du tribunal;Inspecteur des établissements pénitentiaires;Inspecteur des impôts;Inspecteur territorial;Commissaire de police;Officier de police;Gendarmerie;OMS;Collectivités territoriales;Juriste en droit public;Consultant en administration publique;Attaché territorial\nScience Politique et Relations Internationales :\nPolitologue;Diplomate;Analyste politique;Chargé de mission aux Nations Unies;Conseiller aux affaires étrangères (consul)"),
+      P('L2', 'Lettres, Langues et Civilisations',
+        "Les filières lettres développent une maîtrise rédactionnelle, une analyse textuelle et une communication publique recherchées dans tout le secteur culturel et numérique.",
+        "Lettres Modernes / Lettres Classiques :\nÉcrivain;Enseignant;Rédacteur web;Éditeur;Correcteur;Relecteur;Concepteur-rédacteur en publicité;Biographe;Métiers de la culture;Critique littéraire;Animateur d'ateliers d'écriture;Médiateur culturel\nLangues Étrangères (Anglais, Espagnol, Arabe, Portugais…) :\nTraducteur littéraire;Traducteur technique;Interprète de conférence;Métiers du commerce international\nLangues Étrangères Appliquées (LEA) :\nAssistant en commerce international;Assistant trilingue;Chargé de clientèle internationale;Traducteur;Logisticien"),
+      P('L2', 'Sciences Humaines et Sociales',
+        "Ces filières étudient l'humain et la société : comprendre, enquêter, accompagner. Très utiles dans les ONG, les collectivités et la recherche.",
+        "Sociologie et Anthropologie :\nChercheur en sociologie et anthropologie;Sociologue;Chargé d'études;Socio-économiste;Enquêteur en urbanisme\nMétiers du développement social et social :\nConsultant en développement communautaire;Assistant social;Chef de projet RSE (Responsabilité Sociétale des Entreprises);Médiateur social\nGéographie et Aménagement du Territoire :\nGéographe;Urbaniste;Cartographe;Analyste SIG;Enseignant d'histoire-géographie"),
+      P('L2', 'Journalisme, Communication et Arts',
+        "Informer et créer : presse, radio, TV, web, entreprises. Le CESTI de Dakar et les licences de communication sont les portes d'entrée classiques.",
+        "Journalisme et médias :\nJournaliste presse écrite;Journaliste radio/TV;Présentateur;Reporter;Community manager\nCommunication et création :\nChargé de communication;Attaché de presse;Designer graphique;Photographe;Réalisateur;Métiers du cinéma et de l'audiovisuel"),
+      P('S2', 'Sciences de la Santé',
+        "Médecine, pharmacie, odontologie, maïeutique : des concours exigeants après le Bac S2, puis de longues études qui mènent à des métiers essentiels et respectés.",
+        "Médecine et spécialités :\nMédecin généraliste;Chirurgien;Pédiatre;Cardiologue;Médecin militaire\nPharmacie et odontologie :\nPharmacien;Biologiste médical;Chirurgien-dentiste\nMaïeutique et soins :\nSage-femme;Infirmier d'État;Kinésithérapeute"),
+      P('S2', 'Sciences et Technologies',
+        "Mathématiques, physique, chimie, biologie, géologie : la voie des chercheurs, enseignants et ingénieurs, à l'UCAD, l'UGB ou en écoles (ESP, EPT, ENSA).",
+        "Mathématiques et Physique :\nEnseignant-chercheur;Actuaire;Statisticien;Data scientist;Ingénieur d'études\nChimie, Biologie et Géologie :\nBiologiste;Chimiste;Géologue;Hydrologue;Technicien de laboratoire;Ingénieur agronome;Vétérinaire"),
+      P('S2', 'Ingénierie et Numérique',
+        "Les écoles d'ingénieurs (ESP, EPT, ESI, ENSUT) recrutent sur les profils S2 : bâtiments, énergie, réseaux, logiciel. Emploi rapide et salaires parmi les plus élevés.",
+        "Génie civil et BTP :\nIngénieur civil;Technicien supérieur en génie civil;Architecte;Conducteur de travaux;Géomètre\nÉlectricité, télécoms et informatique :\nIngénieur électrotechnique;Ingénieur en télécommunications;Ingénieur en informatique;Développeur;Expert en cybersécurité"),
+      P('S2', 'Économie, Gestion et Finance',
+        "Comprendre l'argent, les marchés et les organisations : banques, assurances, entreprises et administrations recrutent massivement ces profils.",
+        "Finance et gestion :\nExpert-comptable;Auditeur;Analyste financier;Banquier;Gestionnaire\nÉconomie et commerce :\nÉconomiste;Chargé d'études;Chef de produit;Entrepreneur;Cadre commercial"),
+    ];
+    const ins = db.prepare('INSERT INTO parcours_univ (cible, titre, intro, blocs) VALUES (@cible, @titre, @intro, @blocs)');
+    for (const q of parcours) ins.run(q);
+    log(`[seed] Orientation : ${parcours.length} filières universitaires (S2 & L2).`);
+  }
+
   /* ---------------- Annales (sujets + corrigés) ---------------- */
   if (db.prepare('SELECT COUNT(*) c FROM annales').get().c === 0) {
     const annales = [

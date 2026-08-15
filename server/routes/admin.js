@@ -298,6 +298,26 @@ router.delete('/settings/ia', admin, (req, res) => {
   res.json({ ok: true });
 });
 
+/* ------------------------- Filières universitaires ------------------------- */
+router.get('/parcours-univ', admin, refuseAR, (req, res) => {
+  res.json(db.prepare('SELECT * FROM parcours_univ ORDER BY id').all());
+});
+
+router.post('/parcours-univ', admin, refuseAR, (req, res) => {
+  const { cible, titre, intro, blocs } = req.body || {};
+  if (!titre || !String(titre).trim() || !blocs || !String(blocs).trim())
+    return res.status(400).json({ error: 'Titre et contenu obligatoires.' });
+  db.prepare('INSERT INTO parcours_univ (cible, titre, intro, blocs) VALUES (?, ?, ?, ?)')
+    .run(['S2', 'L2', 'all'].includes(cible) ? cible : 'all', String(titre).trim(), String(intro || '').trim(), String(blocs).trim());
+  addLog('filiere_univ_ajoutee', { source: 'admin', req, details: titre });
+  res.status(201).json({ ok: true });
+});
+
+router.delete('/parcours-univ/:id', admin, refuseAR, (req, res) => {
+  db.prepare('DELETE FROM parcours_univ WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 /* ------------------------- Culture du monde ------------------------- */
 router.get('/culture', admin, refuseAR, (req, res) => {
   res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());

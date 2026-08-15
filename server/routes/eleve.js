@@ -320,6 +320,14 @@ router.post('/ia', requireEleve(db), iaLimiter, async (req, res) => {
   }
 });
 
+/* ------------------------- Filières universitaires (orientation) ------------------------- */
+router.get('/parcours-univ', requireEleve(db), (req, res) => {
+  const f = req.eleve.filiere || 'S2';
+  res.json(
+    db.prepare("SELECT * FROM parcours_univ WHERE cible = ? OR cible = 'all' ORDER BY id").all(f)
+  );
+});
+
 /* ------------------------- Culture du monde (L2) ------------------------- */
 router.get('/culture', requireEleve(db), (req, res) => {
   res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());

@@ -105,6 +105,15 @@ CREATE TABLE IF NOT EXISTS idees (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS parcours_univ (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cible TEXT NOT NULL DEFAULT 'all',
+  titre TEXT NOT NULL,
+  intro TEXT,
+  blocs TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
