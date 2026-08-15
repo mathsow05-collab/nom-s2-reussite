@@ -336,34 +336,52 @@ export default function Metiers() {
       )}
 
       {openP && (
-        <Modal title={`🎓 ${openP.titre}`} onClose={() => setOpenP(null)} wide>
-          <div style={{ marginBottom: 10 }}>
-            <span className="badge badge-soft">Filière {openP.cible}</span>
+        <Modal title="Filière universitaire" onClose={() => setOpenP(null)} wide>
+          <div className="uni-hero">
+            <span className="uni-hero-icon">🎓</span>
+            <div>
+              <span className="badge badge-light">Filière {openP.cible}</span>
+              <h3>{openP.titre}</h3>
+            </div>
           </div>
-          {openP.intro && <p className="muted">{openP.intro}</p>}
+          {openP.intro && <p className="muted" style={{ marginTop: 12 }}>{openP.intro}</p>}
           {parseBlocs(openP.blocs).map((b, i) => (
-            <div key={i} style={{ marginTop: 14 }}>
-              {b.sous && <h4 className="h4">{b.sous}</h4>}
-              <div className="pills" style={{ marginBottom: 0 }}>
-                {b.metiers.map((m, j) => (
-                  <button
-                    key={j}
-                    className="pill"
-                    onClick={() => {
-                      const hit = metiers.find((x) => norm(x.titre).includes(norm(m).split(' ')[0]) || norm(m).includes(norm(x.titre).split(' ')[0]));
-                      if (hit) {
-                        setOpenP(null);
-                        setOpen(hit);
-                      }
-                    }}
-                    title="Voir la fiche métier si elle existe"
-                  >
-                    {m}
-                  </button>
-                ))}
+            <div className="bloc-card" key={i}>
+              {b.sous && (
+                <div className="bloc-head">
+                  <span className="bloc-num">{i + 1}</span>
+                  <strong>{b.sous}</strong>
+                  <span className="muted small">{b.metiers.length} métiers</span>
+                </div>
+              )}
+              <div className="tags-wrap">
+                {b.metiers.map((m, j) => {
+                  const hit = metiers.find(
+                    (x) => norm(x.titre).includes(norm(m).split(' ')[0]) || norm(m).includes(norm(x.titre).split(' ')[0])
+                  );
+                  return (
+                    <button
+                      key={j}
+                      className={hit ? 'tag-chip link' : 'tag-chip'}
+                      title={hit ? 'Ouvrir la fiche métier' : undefined}
+                      onClick={() => {
+                        if (hit) {
+                          setOpenP(null);
+                          setOpen(hit);
+                        }
+                      }}
+                    >
+                      {m}
+                      {hit && <Icon name="right" size={12} />}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
+          <p className="hint" style={{ marginTop: 10 }}>
+            💡 Les métiers marqués d'une flèche ont une fiche complète sur la plateforme : touche-les pour l'ouvrir.
+          </p>
         </Modal>
       )}
 
