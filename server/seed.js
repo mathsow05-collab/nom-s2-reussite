@@ -173,35 +173,42 @@ function seed(db, log = console.log) {
   /* --------- Images des filières + bloc « Formations » (idempotent) --------- */
   const PIMG = {
     'Droit et Sciences Politiques': '/metiers/juriste.jpg',
-    'Lettres, Langues et Civilisations': '/metiers/lettres.svg',
-    'Sciences Humaines et Sociales': '/metiers/campus.svg',
-    'Journalisme, Communication et Arts': '/metiers/media.svg',
+    'Lettres, Langues et Civilisations': '/metiers/lettres.jpg',
+    'Sciences Humaines et Sociales': '/metiers/campus.jpg',
+    'Journalisme, Communication et Arts': '/metiers/media.jpg',
     'Sciences de la Santé': '/metiers/medecin.jpg',
     'Sciences et Technologies': '/metiers/labo.jpg',
     'Ingénierie et Numérique': '/metiers/info.jpg',
-    'Économie, Gestion et Finance': '/metiers/finance.svg',
+    'Économie, Gestion et Finance': '/metiers/finance.jpg',
+    'Étudier à l’étranger : bourses & mobilité': '/metiers/ciel.jpg',
   };
   const upP = db.prepare('UPDATE parcours_univ SET image = ? WHERE titre = ?');
   for (const [t, img] of Object.entries(PIMG)) upP.run(img, t);
 
-  if (!db.prepare("SELECT 1 FROM parcours_univ WHERE titre LIKE 'Grandes écoles%'").get()) {
-    const F = (titre, intro, blocs) => ({ cible: 'all', titre, intro, blocs });
-    const forms = [
-      F('Grandes écoles & instituts du Sénégal',
-        'Les écoles publiques d’excellence recrutent juste après le Bac (concours ou dossier). Diplômes reconnus, frais raisonnables, excellent tremplin.',
-        "Écoles d'ingénieurs et techniques :\nESP Dakar (polytechnique);EPT Thiès (polytechnique);ENSA Thiès (agriculture);ENSUT (textile & industries);ESI;Institut Supérieur d'Informatique\nSanté :\nFMPOS UCAD (médecine, pharmacie, dentaire);Faculté de Médecine de Thiès et Ziguinchor;Écoles nationales d'infirmiers et sages-femmes\nGestion, statistiques, journalisme, enseignement :\nENSAE Dakar (statistique & économie);CESTI (journalisme);FASTEF (enseignants);Sup de Co / ISM (commerce)"),
-      F('BTS, DUT & licences pro : études courtes qui recrutent',
-        '2 à 3 ans d’études pratiques pour entrer vite dans la vie active, avec des passerelles vers la licence puis le master.',
-        "Bâtiment, industrie, énergie :\nDUT génie civil;BTS bâtiment;DUT maintenance industrielle;Licence pro énergies renouvelables\nGestion, commerce, finance :\nBTS Management (MCO);BTS comptabilité-gestion;DUT techniques de commercialisation;Licence pro banque-assurance\nNumérique et communication :\nBTS informatique (SIO);DUT réseaux & télécoms;Licence pro développement web;Community management"),
-      F('Étudier à l’étranger : bourses & mobilité',
-        'Des milliers de Sénégalais étudient chaque année à l’étranger grâce aux bourses. Un dossier solide + de l’anticipation = tes chances.',
-        "Destinations qui offrent des bourses :\nMaroc (bourses royales, médecine);Cuba (médecine);Chine (bourses du gouvernement);Turquie (bourses Türkiye);France (Campus France, bourses d'excellence);Inde et Russie (sciences)\nProgrammes et conseils :\nCampus France Sénégal;Bourses d'excellence AUF et Erasmus+;Apprendre l'anglais tôt;Construire un bon dossier (relevés, lettre de motivation, projet clair)"),
-    ];
-    const insF = db.prepare('INSERT INTO parcours_univ (cible, titre, intro, blocs, image) VALUES (@cible, @titre, @intro, @blocs, @image)');
-    const FIMG = ['/metiers/campus.svg', '/metiers/ecole.svg', '/metiers/ciel.svg'];
-    forms.forEach((f, i) => insF.run({ ...f, image: FIMG[i] }));
-    log(`[seed] Orientation : ${forms.length} cartes « Formations » ajoutées.`);
-  }
+  /* Formations reconstruites par filière : logique (S2 = sciences, L2 = lettres). */
+  db.prepare("DELETE FROM parcours_univ WHERE titre LIKE 'Grandes écoles%' OR titre LIKE 'BTS, DUT%'").run();
+  const F = (cible, titre, intro, blocs, image) => ({ cible, titre, intro, blocs, image });
+  const forms = [
+    F('S2', 'Grandes écoles scientifiques & techniques',
+      'Les écoles publiques d’excellence réservées aux Bac S2 : concours ou dossier, diplômes reconnus, emploi rapide.',
+      "Ingénierie :\nESP Dakar (École Supérieure Polytechnique);EPT Thiès (École Polytechnique);ENSA Thiès (agronomie);ENSUT;Écoles d'ingénieurs privées reconnues\nSanté :\nFMPOS UCAD (médecine, pharmacie, dentaire);Facultés de médecine de Thiès et Ziguinchor;Écoles d'infirmiers et sages-femmes\nSciences, statistiques & gestion :\nENSAE Dakar (statistique, économie);Faculté des Sciences (licence-master);Institut Supérieur d'Informatique",
+      '/metiers/campus.jpg'),
+    F('L2', 'Grandes écoles littéraires, juridiques & médias',
+      'Les écoles d’excellence réservées aux Bac L2 : droit, enseignement, journalisme, langues.',
+      "Droit, science politique & administration :\nFSJP UCAD (licence-master droit);ENAM (administration publique);Centre des hautes études de sécurité\nEnseignement, lettres & langues :\nFASTEF (professeurs);FLASH UCAD (lettres, langues, histoire, géographie);École normale supérieure\nJournalisme, communication & interprétariat :\nCESTI Dakar (journalisme);École supérieure de journalisme et communication;Traduction-interprétariat (UCAD, instituts)",
+      '/metiers/enseignant.jpg'),
+    F('S2', 'BTS, DUT & licences pro scientifiques',
+      '2 à 3 ans d’études pratiques pour les Bac S2, emploi rapide et passerelles vers licence/master.',
+      "Industrie & BTP :\nDUT génie civil;BTS bâtiment;DUT génie électrique;DUT maintenance industrielle;Licence pro énergies renouvelables\nNumérique & data :\nBTS SIO (informatique);DUT réseaux & télécoms;Licence pro développement web;Licence pro statistique",
+      '/metiers/ecole.jpg'),
+    F('L2', 'BTS, DUT & licences pro tertiaires & créatives',
+      '2 à 3 ans d’études pratiques pour les Bac L2 : commerce, tourisme, communication, design.',
+      "Gestion, commerce & tourisme :\nBTS MCO (commerce);BTS comptabilité-gestion;BTS tourisme;DUT techniques de commercialisation;Licence pro banque-assurance\nCommunication, design & lettres :\nLicence pro communication digitale;Design graphique (écoles d'art);Métiers du livre et de l'édition;Community management",
+      '/metiers/design.jpg'),
+  ];
+  const insF = db.prepare('INSERT INTO parcours_univ (cible, titre, intro, blocs, image) VALUES (@cible, @titre, @intro, @blocs, @image)');
+  for (const f of forms) insF.run(f);
+  log(`[seed] Orientation : ${forms.length} cartes « Formations » par filière (S2/L2).`);
 
   /* ---------------- Annales (sujets + corrigés) ---------------- */
   if (db.prepare('SELECT COUNT(*) c FROM annales').get().c === 0) {
@@ -584,7 +591,7 @@ function seed(db, log = console.log) {
   /* --------- Images variées par métier (idempotent, base neuve ou existante) --------- */
   const IMG = {
     'Médecin': '/metiers/medecin.jpg',
-    'Médecin militaire': '/metiers/militaire.svg',
+    'Médecin militaire': '/metiers/militaire.jpg',
     'Pharmacien': '/metiers/labo.jpg',
     'Chirurgien-dentiste': '/metiers/dentiste.jpg',
     'Vétérinaire': '/metiers/veto.jpg',
@@ -600,18 +607,26 @@ function seed(db, log = console.log) {
     'Architecte': '/metiers/architecte.jpg',
     'Technicien supérieur en génie civil': '/metiers/chantier.jpg',
     'Géologue': '/metiers/labo.jpg',
-    'Chercheur': '/metiers/data.jpg',
-    'Actuaire': '/metiers/finance.svg',
+    'Chercheur': '/metiers/labo.jpg',
+    'Actuaire': '/metiers/finance.jpg',
     'Statisticien': '/metiers/data.jpg',
-    'Expert-comptable': '/metiers/finance.svg',
-    'Officier de gendarmerie': '/metiers/militaire.svg',
-    'Sous-officier (Armée de terre)': '/metiers/militaire.svg',
-    'Marin (Marine nationale)': '/metiers/mer.svg',
-    'Aviateur (Armée de l’air)': '/metiers/ciel.svg',
+    'Expert-comptable': '/metiers/finance.jpg',
+    'Officier de gendarmerie': '/metiers/militaire.jpg',
+    'Sous-officier (Armée de terre)': '/metiers/militaire.jpg',
+    'Marin (Marine nationale)': '/metiers/mer.jpg',
+    'Aviateur (Armée de l’air)': '/metiers/ciel.jpg',
     'Avocat·e / Juriste': '/metiers/juriste.jpg',
-    'Enseignant·e': '/metiers/enseignant.svg',
-    'Journaliste / Communicant': '/metiers/media.svg',
-    'Écrivain·e / Éditeur·rice': '/metiers/lettres.svg',
+    'Enseignant·e': '/metiers/enseignant.jpg',
+    'Journaliste / Communicant': '/metiers/media.jpg',
+    'Écrivain·e / Éditeur·rice': '/metiers/lettres.jpg',
+    'Traducteur·rice / Interprète': '/metiers/campus.jpg',
+    'Psychologue': '/metiers/psy.jpg',
+    'Diplomate': '/metiers/diplomate.jpg',
+    'Community manager / Designer graphique': '/metiers/design.jpg',
+    'Photographe / Réalisateur': '/metiers/photo.jpg',
+    'Bibliothécaire / Archiviste': '/metiers/lettres.jpg',
+    'Guide touristique / Hôtellerie': '/metiers/tourisme.jpg',
+    'Historien·ne / Archéologue': '/metiers/campus.jpg',
   };
   const upImg = db.prepare('UPDATE metiers SET image = ? WHERE titre = ?');
   for (const [t, img] of Object.entries(IMG)) upImg.run(img, t);

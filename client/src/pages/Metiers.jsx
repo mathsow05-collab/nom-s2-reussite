@@ -262,8 +262,7 @@ export default function Metiers() {
       <div className="orient-tabs" role="tablist">
         {[
           ['metiers', `💼 Métiers (${metiers.length})`],
-          ['univ', `🎓 Universités (${univ.length})`],
-          ['formations', `🏫 Formations (${formations.length})`],
+          ['etudes', `🎓 Études → Métiers (${parcours.length})`],
         ].map(([id, lbl]) => (
           <button key={id} className={vue === id ? 'otab active' : 'otab'} onClick={() => setVue(id)}>
             {lbl}
@@ -309,46 +308,49 @@ export default function Metiers() {
         </div>
       )}
 
-      {vue === 'univ' && (
-        <div className="vue-anim" key="u">
-          {univFiltres.length === 0 ? (
+      {vue === 'etudes' && (
+        <div className="vue-anim" key="e">
+          {univFiltres.length === 0 && formFiltres.length === 0 ? (
             <div className="empty">Aucune filière trouvée pour « {q} ».</div>
           ) : (
-            <div className="orient-grid">
-              {univFiltres.map((p, i) => (
-                <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
-                  <button className="orient-img" onClick={() => setOpenP(p)}>
-                    {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🎓</span>}
-                    <div className="orient-shade">
-                      <span className="badge badge-soft">Filière {p.cible}</span>
-                      <strong>{p.titre}</strong>
-                    </div>
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {vue === 'formations' && (
-        <div className="vue-anim" key="f">
-          {formFiltres.length === 0 ? (
-            <div className="empty">Aucune formation trouvée pour « {q} ».</div>
-          ) : (
-            <div className="orient-grid">
-              {formFiltres.map((p, i) => (
-                <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
-                  <button className="orient-img" onClick={() => setOpenP(p)}>
-                    {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🏫</span>}
-                    <div className="orient-shade">
-                      <span className="badge badge-soft">Pour tous</span>
-                      <strong>{p.titre}</strong>
-                    </div>
-                  </button>
-                </article>
-              ))}
-            </div>
+            <>
+              {univFiltres.length > 0 && (
+                <>
+                  <h2 className="orient-title">🎓 Universités & grandes filières</h2>
+                  <div className="orient-grid">
+                    {univFiltres.map((p, i) => (
+                      <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
+                        <button className="orient-img" onClick={() => setOpenP(p)}>
+                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🎓</span>}
+                          <div className="orient-shade">
+                            <span className="badge badge-soft">Bac {p.cible}</span>
+                            <strong>{p.titre}</strong>
+                          </div>
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+              {formFiltres.length > 0 && (
+                <>
+                  <h2 className="orient-title">🏫 Écoles, BTS & mobilité</h2>
+                  <div className="orient-grid">
+                    {formFiltres.map((p, i) => (
+                      <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
+                        <button className="orient-img" onClick={() => setOpenP(p)}>
+                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🏫</span>}
+                          <div className="orient-shade">
+                            <span className="badge badge-soft">{p.cible === 'all' ? 'Pour tous' : `Bac ${p.cible}`}</span>
+                            <strong>{p.titre}</strong>
+                          </div>
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
       )}
@@ -364,6 +366,13 @@ export default function Metiers() {
             <button className="orient-fav on-img" onClick={() => toggleFav(open)}>
               {favs[open.id] ? '❤️' : '🤍'}
             </button>
+          </div>
+          <div className="mini-path">
+            <span className="mp-step">🎒 Bac {open.filiere === 'all' ? '' : open.filiere}</span>
+            <span className="mp-arrow">→</span>
+            <span className="mp-step">🏛️ Études</span>
+            <span className="mp-arrow">→</span>
+            <span className="mp-step on">💼 {open.titre}</span>
           </div>
           <p style={{ marginTop: 12 }}>{open.description}</p>
           {open.parcours && (
@@ -392,7 +401,7 @@ export default function Metiers() {
       )}
 
       {openP && (
-        <Modal title={vue === 'formations' ? 'Formation' : 'Filière universitaire'} onClose={() => setOpenP(null)} wide>
+        <Modal title="Ton parcours, étape par étape" onClose={() => setOpenP(null)} wide>
           <div className="uni-hero">
             {openP.image ? (
               <img className="uni-hero-img" src={openP.image} alt="" />
@@ -400,48 +409,62 @@ export default function Metiers() {
               <span className="uni-hero-icon">🎓</span>
             )}
             <div>
-              <span className="badge badge-light">{openP.cible === 'all' ? 'Pour tous' : `Filière ${openP.cible}`}</span>
+              <span className="badge badge-light">{openP.cible === 'all' ? 'Pour tous les Bac' : `Réservé aux Bac ${openP.cible}`}</span>
               <h3>{openP.titre}</h3>
             </div>
           </div>
           {openP.intro && <p className="muted" style={{ marginTop: 12 }}>{openP.intro}</p>}
-          {parseBlocs(openP.blocs).map((b, i) => (
-            <div className="bloc-card" key={i}>
-              {b.sous && (
-                <div className="bloc-head">
-                  <span className="bloc-num">{i + 1}</span>
-                  <strong>{b.sous}</strong>
-                  <span className="muted small">{b.metiers.length} débouchés</span>
-                </div>
-              )}
-              <div className="tags-wrap">
-                {b.metiers.map((m, j) => {
-                  const hit = metiers.find(
-                    (x) => norm(x.titre).includes(norm(m).split(' ')[0]) || norm(m).includes(norm(x.titre).split(' ')[0])
-                  );
-                  return (
-                    <button
-                      key={j}
-                      className={hit ? 'tag-chip link' : 'tag-chip'}
-                      title={hit ? 'Ouvrir la fiche métier' : undefined}
-                      onClick={() => {
-                        if (hit) {
-                          setOpenP(null);
-                          setOpen(hit);
-                        }
-                      }}
-                    >
-                      {m}
-                      {hit && <Icon name="right" size={12} />}
-                    </button>
-                  );
-                })}
+          <div className="path-timeline">
+            <div className="pstep">
+              <span className="pstep-dot">🎒</span>
+              <div>
+                <strong>Étape 1 — Ton Bac {openP.cible === 'all' ? '' : openP.cible}</strong>
+                <p className="muted small">Le point de départ de ce parcours.</p>
               </div>
             </div>
-          ))}
-          <p className="hint" style={{ marginTop: 10 }}>
-            💡 Les métiers marqués d'une flèche ont une fiche complète sur la plateforme : touche-les pour l'ouvrir.
-          </p>
+            {parseBlocs(openP.blocs).map((b, i) => (
+              <div className="pstep" key={i}>
+                <span className="pstep-dot">🏛️</span>
+                <div>
+                  <strong>
+                    Étape {i + 2} — {b.sous || 'Ta formation'}
+                  </strong>
+                  <div className="tags-wrap" style={{ marginTop: 6 }}>
+                    {b.metiers.map((m, j) => {
+                      const hit = metiers.find(
+                        (x) => norm(x.titre).includes(norm(m).split(' ')[0]) || norm(m).includes(norm(x.titre).split(' ')[0])
+                      );
+                      return (
+                        <button
+                          key={j}
+                          className={hit ? 'tag-chip link' : 'tag-chip'}
+                          title={hit ? 'Ouvrir la fiche métier' : undefined}
+                          onClick={() => {
+                            if (hit) {
+                              setOpenP(null);
+                              setOpen(hit);
+                            }
+                          }}
+                        >
+                          {m}
+                          {hit && <Icon name="right" size={12} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="pstep">
+              <span className="pstep-dot">💼</span>
+              <div>
+                <strong>Et après → ton métier</strong>
+                <p className="muted small">
+                  Chaque formation ci-dessus mène à des métiers précis : touche ceux qui ont une flèche pour ouvrir leur fiche complète.
+                </p>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
 
