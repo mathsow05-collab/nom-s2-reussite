@@ -254,6 +254,23 @@ input[type='file'].input { padding: 8px; }
 .orient-img:active { transform: scale(0.98); }
 .orient-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .orient-img.uni { background: linear-gradient(160deg, #4338ca, #7c3aed); color: #fff; }
+/* Orientation v2 : onglets animés + transitions + zoom images */
+.orient-tabs {
+  display: flex; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px; margin: 14px 0; position: sticky; top: 64px; z-index: 15;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+.otab { flex: 1; border: none; background: transparent; border-radius: 999px; padding: 9px 4px; font-weight: 700; font-size: 0.78rem; color: var(--muted); cursor: pointer; transition: all 0.25s; }
+.otab.active { background: linear-gradient(135deg, #4f46e5, #db2777); color: #fff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35); }
+.vue-anim { animation: vue-in 0.35s ease both; }
+@keyframes vue-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.orient-card.anim { animation: tile-pop 0.5s both; animation-delay: calc(var(--i) * 55ms); }
+.orient-img { overflow: hidden; }
+.orient-img img { transition: transform 0.4s ease; }
+.orient-card:hover .orient-img img { transform: scale(1.07); }
+.orient-card:hover { transform: translateY(-3px); transition: 0.2s; }
+.orient-emoji { font-size: 2.4rem; }
+.uni-hero-img { width: 84px; height: 84px; border-radius: 16px; object-fit: cover; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25); }
 .uni-icon { font-size: 2.4rem; position: absolute; top: 14px; left: 14px; }
 .orient-shade {
   position: absolute; inset: auto 0 0 0; padding: 34px 12px 12px;

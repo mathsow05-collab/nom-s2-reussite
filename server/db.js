@@ -164,6 +164,7 @@ ensureColumn('cours', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('admins', 'display_name', 'TEXT');
 ensureColumn('metiers', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
+ensureColumn('parcours_univ', 'image', 'TEXT');
 ensureColumn('metiers', 'parcours', 'TEXT');
 ensureColumn('cours', 'niveau', 'INTEGER');
 ensureColumn('eleves', 'avatar', 'TEXT');

@@ -170,6 +170,39 @@ function seed(db, log = console.log) {
     log(`[seed] Orientation : ${parcours.length} filières universitaires (S2 & L2).`);
   }
 
+  /* --------- Images des filières + bloc « Formations » (idempotent) --------- */
+  const PIMG = {
+    'Droit et Sciences Politiques': '/metiers/juriste.jpg',
+    'Lettres, Langues et Civilisations': '/metiers/lettres.svg',
+    'Sciences Humaines et Sociales': '/metiers/campus.svg',
+    'Journalisme, Communication et Arts': '/metiers/media.svg',
+    'Sciences de la Santé': '/metiers/medecin.jpg',
+    'Sciences et Technologies': '/metiers/labo.jpg',
+    'Ingénierie et Numérique': '/metiers/info.jpg',
+    'Économie, Gestion et Finance': '/metiers/finance.svg',
+  };
+  const upP = db.prepare('UPDATE parcours_univ SET image = ? WHERE titre = ?');
+  for (const [t, img] of Object.entries(PIMG)) upP.run(img, t);
+
+  if (!db.prepare("SELECT 1 FROM parcours_univ WHERE titre LIKE 'Grandes écoles%'").get()) {
+    const F = (titre, intro, blocs) => ({ cible: 'all', titre, intro, blocs });
+    const forms = [
+      F('Grandes écoles & instituts du Sénégal',
+        'Les écoles publiques d’excellence recrutent juste après le Bac (concours ou dossier). Diplômes reconnus, frais raisonnables, excellent tremplin.',
+        "Écoles d'ingénieurs et techniques :\nESP Dakar (polytechnique);EPT Thiès (polytechnique);ENSA Thiès (agriculture);ENSUT (textile & industries);ESI;Institut Supérieur d'Informatique\nSanté :\nFMPOS UCAD (médecine, pharmacie, dentaire);Faculté de Médecine de Thiès et Ziguinchor;Écoles nationales d'infirmiers et sages-femmes\nGestion, statistiques, journalisme, enseignement :\nENSAE Dakar (statistique & économie);CESTI (journalisme);FASTEF (enseignants);Sup de Co / ISM (commerce)"),
+      F('BTS, DUT & licences pro : études courtes qui recrutent',
+        '2 à 3 ans d’études pratiques pour entrer vite dans la vie active, avec des passerelles vers la licence puis le master.',
+        "Bâtiment, industrie, énergie :\nDUT génie civil;BTS bâtiment;DUT maintenance industrielle;Licence pro énergies renouvelables\nGestion, commerce, finance :\nBTS Management (MCO);BTS comptabilité-gestion;DUT techniques de commercialisation;Licence pro banque-assurance\nNumérique et communication :\nBTS informatique (SIO);DUT réseaux & télécoms;Licence pro développement web;Community management"),
+      F('Étudier à l’étranger : bourses & mobilité',
+        'Des milliers de Sénégalais étudient chaque année à l’étranger grâce aux bourses. Un dossier solide + de l’anticipation = tes chances.',
+        "Destinations qui offrent des bourses :\nMaroc (bourses royales, médecine);Cuba (médecine);Chine (bourses du gouvernement);Turquie (bourses Türkiye);France (Campus France, bourses d'excellence);Inde et Russie (sciences)\nProgrammes et conseils :\nCampus France Sénégal;Bourses d'excellence AUF et Erasmus+;Apprendre l'anglais tôt;Construire un bon dossier (relevés, lettre de motivation, projet clair)"),
+    ];
+    const insF = db.prepare('INSERT INTO parcours_univ (cible, titre, intro, blocs, image) VALUES (@cible, @titre, @intro, @blocs, @image)');
+    const FIMG = ['/metiers/campus.svg', '/metiers/ecole.svg', '/metiers/ciel.svg'];
+    forms.forEach((f, i) => insF.run({ ...f, image: FIMG[i] }));
+    log(`[seed] Orientation : ${forms.length} cartes « Formations » ajoutées.`);
+  }
+
   /* ---------------- Annales (sujets + corrigés) ---------------- */
   if (db.prepare('SELECT COUNT(*) c FROM annales').get().c === 0) {
     const annales = [
@@ -546,6 +579,88 @@ function seed(db, log = console.log) {
     );
     metiers.forEach((m, i) => ins.run({ ...m, ordre: i + 1 }));
     log(`[seed] Catalogue métiers renouvelé : ${metiers.length} fiches (S2 + L2) avec parcours d'études.`);
+  }
+
+  /* --------- Images variées par métier (idempotent, base neuve ou existante) --------- */
+  const IMG = {
+    'Médecin': '/metiers/medecin.jpg',
+    'Médecin militaire': '/metiers/militaire.svg',
+    'Pharmacien': '/metiers/labo.jpg',
+    'Chirurgien-dentiste': '/metiers/dentiste.jpg',
+    'Vétérinaire': '/metiers/veto.jpg',
+    'Sage-femme': '/metiers/soins.jpg',
+    'Infirmier diplômé d’État': '/metiers/medecin.jpg',
+    'Biologiste': '/metiers/labo.jpg',
+    'Ingénieur en informatique': '/metiers/info.jpg',
+    'Data scientist': '/metiers/data.jpg',
+    'Ingénieur civil': '/metiers/chantier.jpg',
+    'Ingénieur électrotechnique': '/metiers/energie.jpg',
+    'Ingénieur en télécommunications': '/metiers/info.jpg',
+    'Ingénieur agronome': '/metiers/agronome.jpg',
+    'Architecte': '/metiers/architecte.jpg',
+    'Technicien supérieur en génie civil': '/metiers/chantier.jpg',
+    'Géologue': '/metiers/labo.jpg',
+    'Chercheur': '/metiers/data.jpg',
+    'Actuaire': '/metiers/finance.svg',
+    'Statisticien': '/metiers/data.jpg',
+    'Expert-comptable': '/metiers/finance.svg',
+    'Officier de gendarmerie': '/metiers/militaire.svg',
+    'Sous-officier (Armée de terre)': '/metiers/militaire.svg',
+    'Marin (Marine nationale)': '/metiers/mer.svg',
+    'Aviateur (Armée de l’air)': '/metiers/ciel.svg',
+    'Avocat·e / Juriste': '/metiers/juriste.jpg',
+    'Enseignant·e': '/metiers/enseignant.svg',
+    'Journaliste / Communicant': '/metiers/media.svg',
+    'Écrivain·e / Éditeur·rice': '/metiers/lettres.svg',
+  };
+  const upImg = db.prepare('UPDATE metiers SET image = ? WHERE titre = ?');
+  for (const [t, img] of Object.entries(IMG)) upImg.run(img, t);
+
+  /* --------- Compléments L2 (idempotent) --------- */
+  if (!db.prepare("SELECT 1 FROM metiers WHERE titre LIKE 'Traducteur%'").get()) {
+    const X = (titre, domaine, image, description, parcours, debouches) => ({
+      filiere: 'L2', titre, domaine, image, description, parcours, debouches,
+    });
+    const extras = [
+      X('Traducteur·rice / Interprète', 'Langues & Traduction', '/metiers/lettres.svg',
+        'Traduire textes et discours entre plusieurs langues. Un atout rare dans les organisations internationales et le commerce.',
+        'Bac L2 → licence de langues (UCAD) + master en traduction/interprétation ( Dakar, Genève, Paris).',
+        'Organisations internationales;Ambassades;Entreprises exportatrices;Traduction web et littéraire'),
+      X('Psychologue', 'Santé & Social', '/metiers/soins.jpg',
+        'Écouter, accompagner, comprendre le fonctionnement humain. Profession en forte croissance au Sénégal.',
+        'Bac L2 (ou S2) → licence + master de psychologie (UCAD), 5 ans. Stages en milieu clinique obligatoires.',
+        'Cabinets privés;Hôpitaux et CMP;Écoles et ONG;Ressources humaines'),
+      X('Diplomate', 'Relations internationales', '/metiers/campus.svg',
+        'Représenter le Sénégal à l’étranger, négocier, protéger les Sénégalais de la diaspora. Prestige et voyages.',
+        'Bac L2 → licence/master en droit ou science politique (UCAD FSJP) + concours du ministère des Affaires étrangères.',
+        'Ambassades et consulats;ONU et CEDEAO;Coopération internationale'),
+      X('Community manager / Designer graphique', 'Création & Web', '/metiers/info.jpg',
+        'Créer l’image des marques : visuels, réseaux sociaux, campagnes. Le métier qui explose avec le numérique africain.',
+        'Bac L2 → écoles de design/communication (Dakar) ou formation en ligne + portfolio. La créativité prime sur le diplôme.',
+        'Agences de pub;Start-ups;Freelance international;Médias'),
+      X('Photographe / Réalisateur', 'Arts & Audiovisuel', '/metiers/media.svg',
+        'Raconter en images : clips, documentaires, pub, mariages, mode. L’industrie créative sénégalaise recrute.',
+        'Bac L2 → écoles de cinéma/audiovisuel (Dakar, Kouribga…) ou apprentissage sur le terrain + matériel progressif.',
+        'Productions audiovisuelles;Presse et médias;Mode et événementiel;Cinéma'),
+      X('Bibliothécaire / Archiviste', 'Culture & Patrimoine', '/metiers/lettres.svg',
+        'Organiser, conserver et transmettre livres et archives : mémoire des entreprises, de l’État et de la culture.',
+        'Bac L2 → licence/master en documentation ou histoire (UCAD) + formation aux archives (Bibliothèque nationale, FLASH).',
+        'Bibliothèques universitaires et publiques;Archives nationales;Entreprises et ONG'),
+      X('Guide touristique / Hôtellerie', 'Tourisme & Accueil', '/metiers/tourisme.svg',
+        'Faire découvrir le Sénégal (Gorée, Saint-Louis, Saly, Casamance) et accueillir le monde. Secteur clé de l’économie.',
+        'Bac L2 → écoles de tourisme et d’hôtellerie (Dakar, Saly) ou BTS tourisme. Les langues sont ton trésor.',
+        'Hôtels et resorts;Agences de voyage;Sites historiques;Écotourisme'),
+      X('Historien·ne / Archéologue', 'Sciences humaines', '/metiers/campus.svg',
+        'Fouiller le passé pour éclairer le présent : patrimoine, recherches, musées, enseignement.',
+        'Bac L2 → licence/master en histoire et archéologie (UCAD FLASH), fouilles avec l’IFAN.',
+        'Musées (IFAN, Gorée);Enseignement et recherche;Patrimoine et culture'),
+    ];
+    const insX = db.prepare(
+      'INSERT INTO metiers (titre, domaine, description, debouches, image, ordre, filiere, parcours) VALUES (@titre, @domaine, @description, @debouches, @image, @ordre, @filiere, @parcours)'
+    );
+    const maxOrdre = db.prepare('SELECT MAX(ordre) m FROM metiers').get().m || 0;
+    extras.forEach((m, i) => insX.run({ ...m, ordre: maxOrdre + i + 1 }));
+    log(`[seed] Orientation : ${extras.length} métiers L2 ajoutés.`);
   }
 
   return result;

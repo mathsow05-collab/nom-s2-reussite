@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
@@ -29,6 +29,19 @@ const norm = (s) =>
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
+
+const DOM_EMOJI = {
+  sant: '🩺', déf: '🛡️', mer: '⚓', ciel: '✈️', num: '💻', data: '📊', btp: '🏗️',
+  bât: '📐', énerg: '⚡', agric: '🌱', terre: '🪨', scienc: '🔬', finan: '💰',
+  écon: '📈', droit: '⚖️', éduc: '🧑‍', médi: '️', lettre: '', tour: '',
+  psych: '🧠', dipl: '🌍', comm: '📣', bibl: '🗃️', hist: '🏺', trad: '',
+  phot: '', santé: '',
+};
+function domEmoji(d) {
+  const n = norm(d || '');
+  for (const [k, e] of Object.entries(DOM_EMOJI)) if (n.startsWith(k)) return e;
+  return '💼';
+}
 
 /* ------------------------- Test d'orientation ------------------------- */
 const QUIZ = [
@@ -89,12 +102,12 @@ const QUIZ = [
   },
 ];
 const TAG_DOMAINES = {
-  sante: ['sant', 'médec', 'pharma'],
+  sante: ['sant', 'médec', 'pharma', 'psych'],
   btp: ['btp', 'bâtiment', 'urban', 'architecture', 'génie'],
-  sciences: ['scienc', 'data', 'numéri', 'tech', 'recherche', 'terre'],
-  defense: ['défense', 'sécurité', 'militaire', 'mer', 'ciel'],
-  lettres: ['lettre', 'média', 'édit', 'comm', 'droit', 'justice'],
-  finance: ['finan', 'écon', 'gestion', 'compt'],
+  sciences: ['scienc', 'data', 'numéri', 'tech', 'recherche', 'terre', 'stat'],
+  defense: ['défense', 'sécurité', 'militaire', 'mer', 'ciel', 'dipl'],
+  lettres: ['lettre', 'média', 'édit', 'comm', 'droit', 'justice', 'trad', 'hist', 'éduc'],
+  finance: ['finan', 'écon', 'gestion', 'compt', 'tour'],
 };
 
 function OrientationQuiz({ metiers, onPick, onClose }) {
@@ -172,6 +185,7 @@ export default function Metiers() {
   const [open, setOpen] = useState(null);
   const [openP, setOpenP] = useState(null);
   const [quiz, setQuiz] = useState(false);
+  const [vue, setVue] = useState('metiers');
 
   useEffect(() => {
     api('/eleve/me').then((m) => {
@@ -217,17 +231,20 @@ export default function Metiers() {
     if (nq && !norm(m.titre + ' ' + m.domaine + ' ' + m.description + ' ' + (m.parcours || '')).includes(nq)) return false;
     return true;
   });
-  const parcoursFiltres = parcours.filter((p) => !nq || norm(p.titre + ' ' + p.intro + ' ' + p.blocs).includes(nq));
+  const univ = parcours.filter((p) => p.cible !== 'all');
+  const formations = parcours.filter((p) => p.cible === 'all');
+  const univFiltres = univ.filter((p) => !nq || norm(p.titre + ' ' + p.intro + ' ' + p.blocs).includes(nq));
+  const formFiltres = formations.filter((p) => !nq || norm(p.titre + ' ' + p.intro + ' ' + p.blocs).includes(nq));
 
   return (
     <main className="container orient">
       <section className="orient-hero">
         <h1>Ton avenir commence ici ✨</h1>
-        <p>Explore les métiers, découvre les filières universitaires, garde tes favoris et trouve le métier qui te ressemble.</p>
+        <p>Métiers, universités, formations : explore, garde tes favoris et trouve la voie qui te ressemble.</p>
         <div className="orient-search">
           <Icon name="eye" size={17} />
           <input
-            placeholder="Rechercher un métier, un domaine, une filière… (ex. médecin, droit, data)"
+            placeholder="Rechercher (ex. médecin, droit, data, bourse…)"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -242,59 +259,98 @@ export default function Metiers() {
         </button>
       </section>
 
-      <div className="pills">
-        <button className={favOnly ? 'pill active' : 'pill'} onClick={() => setFavOnly(!favOnly)}>
-          ❤️ Mes favoris
-        </button>
-        <button className={domaine === 'all' ? 'pill active' : 'pill'} onClick={() => setDomaine('all')}>
-          Tous les domaines
-        </button>
-        {domaines.map((d) => (
-          <button key={d} className={domaine === d ? 'pill active' : 'pill'} onClick={() => setDomaine(domaine === d ? 'all' : d)}>
-            {d}
+      <div className="orient-tabs" role="tablist">
+        {[
+          ['metiers', `💼 Métiers (${metiers.length})`],
+          ['univ', `🎓 Universités (${univ.length})`],
+          ['formations', `🏫 Formations (${formations.length})`],
+        ].map(([id, lbl]) => (
+          <button key={id} className={vue === id ? 'otab active' : 'otab'} onClick={() => setVue(id)}>
+            {lbl}
           </button>
         ))}
       </div>
 
-      <h2 className="orient-title">💼 Métiers ({filtres.length})</h2>
-      {filtres.length === 0 ? (
-        <div className="empty">Aucun résultat pour « {q} ». Essaie un autre mot, ou lance le test d'orientation !</div>
-      ) : (
-        <div className="orient-grid">
-          {filtres.map((m) => (
-            <article className="orient-card" key={m.id}>
-              <button className="orient-fav" onClick={() => toggleFav(m)} aria-label="Favori">
-                {favs[m.id] ? '❤️' : '🤍'}
+      {vue === 'metiers' && (
+        <div className="vue-anim" key="m">
+          <div className="pills">
+            <button className={favOnly ? 'pill active' : 'pill'} onClick={() => setFavOnly(!favOnly)}>
+              ❤️ Mes favoris
+            </button>
+            <button className={domaine === 'all' ? 'pill active' : 'pill'} onClick={() => setDomaine('all')}>
+              Tous les domaines
+            </button>
+            {domaines.map((d) => (
+              <button key={d} className={domaine === d ? 'pill active' : 'pill'} onClick={() => setDomaine(domaine === d ? 'all' : d)}>
+                {domEmoji(d)} {d}
               </button>
-              <button className="orient-img" onClick={() => setOpen(m)}>
-                {m.image ? <img src={m.image} alt="" loading="lazy" /> : <Icon name="cap" size={34} />}
-                <div className="orient-shade">
-                  <span className="badge">{m.domaine}</span>
-                  <strong>{m.titre}</strong>
-                </div>
-              </button>
-            </article>
-          ))}
+            ))}
+          </div>
+          {filtres.length === 0 ? (
+            <div className="empty">Aucun résultat pour « {q} ». Essaie un autre mot, ou lance le test d'orientation !</div>
+          ) : (
+            <div className="orient-grid">
+              {filtres.map((m, i) => (
+                <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={m.id}>
+                  <button className="orient-fav" onClick={() => toggleFav(m)} aria-label="Favori">
+                    {favs[m.id] ? '❤️' : '🤍'}
+                  </button>
+                  <button className="orient-img" onClick={() => setOpen(m)}>
+                    {m.image ? <img src={m.image} alt="" loading="lazy" /> : <span className="orient-emoji">{domEmoji(m.domaine)}</span>}
+                    <div className="orient-shade">
+                      <span className="badge">{m.domaine}</span>
+                      <strong>{m.titre}</strong>
+                    </div>
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {parcoursFiltres.length > 0 && (
-        <>
-          <h2 className="orient-title">🎓 Filières universitaires après le Bac</h2>
-          <div className="orient-grid">
-            {parcoursFiltres.map((p) => (
-              <article className="orient-card" key={p.id}>
-                <button className="orient-img uni" onClick={() => setOpenP(p)}>
-                  <span className="uni-icon">🎓</span>
-                  <div className="orient-shade">
-                    <span className="badge badge-soft">Filière {p.cible}</span>
-                    <strong>{p.titre}</strong>
-                  </div>
-                </button>
-              </article>
-            ))}
-          </div>
-        </>
+      {vue === 'univ' && (
+        <div className="vue-anim" key="u">
+          {univFiltres.length === 0 ? (
+            <div className="empty">Aucune filière trouvée pour « {q} ».</div>
+          ) : (
+            <div className="orient-grid">
+              {univFiltres.map((p, i) => (
+                <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
+                  <button className="orient-img" onClick={() => setOpenP(p)}>
+                    {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🎓</span>}
+                    <div className="orient-shade">
+                      <span className="badge badge-soft">Filière {p.cible}</span>
+                      <strong>{p.titre}</strong>
+                    </div>
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {vue === 'formations' && (
+        <div className="vue-anim" key="f">
+          {formFiltres.length === 0 ? (
+            <div className="empty">Aucune formation trouvée pour « {q} ».</div>
+          ) : (
+            <div className="orient-grid">
+              {formFiltres.map((p, i) => (
+                <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
+                  <button className="orient-img" onClick={() => setOpenP(p)}>
+                    {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🏫</span>}
+                    <div className="orient-shade">
+                      <span className="badge badge-soft">Pour tous</span>
+                      <strong>{p.titre}</strong>
+                    </div>
+                  </button>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {open && (
@@ -336,11 +392,15 @@ export default function Metiers() {
       )}
 
       {openP && (
-        <Modal title="Filière universitaire" onClose={() => setOpenP(null)} wide>
+        <Modal title={vue === 'formations' ? 'Formation' : 'Filière universitaire'} onClose={() => setOpenP(null)} wide>
           <div className="uni-hero">
-            <span className="uni-hero-icon">🎓</span>
+            {openP.image ? (
+              <img className="uni-hero-img" src={openP.image} alt="" />
+            ) : (
+              <span className="uni-hero-icon">🎓</span>
+            )}
             <div>
-              <span className="badge badge-light">Filière {openP.cible}</span>
+              <span className="badge badge-light">{openP.cible === 'all' ? 'Pour tous' : `Filière ${openP.cible}`}</span>
               <h3>{openP.titre}</h3>
             </div>
           </div>
@@ -351,7 +411,7 @@ export default function Metiers() {
                 <div className="bloc-head">
                   <span className="bloc-num">{i + 1}</span>
                   <strong>{b.sous}</strong>
-                  <span className="muted small">{b.metiers.length} métiers</span>
+                  <span className="muted small">{b.metiers.length} débouchés</span>
                 </div>
               )}
               <div className="tags-wrap">
@@ -391,6 +451,7 @@ export default function Metiers() {
           onClose={() => setQuiz(false)}
           onPick={(m) => {
             setQuiz(false);
+            setVue('metiers');
             setOpen(m);
           }}
         />
