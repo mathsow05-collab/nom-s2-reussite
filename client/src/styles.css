@@ -431,8 +431,25 @@ input[type='file'].input { padding: 8px; }
 }
 .vp-label { position: absolute; z-index: 2; bottom: 10px; left: 12px; right: 12px; color: #fff; font-weight: 700; text-align: left; text-shadow: 0 2px 8px rgba(0,0,0,0.8); }
 .vp-wrap { position: relative; aspect-ratio: 16 / 9; }
-.vp-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.vp-shield { position: absolute; top: 0; left: 0; right: 0; height: 58px; z-index: 3; cursor: default; }
+.vp-wrap iframe, .vp-holder { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* Bandeau maison opaque : remplace visuellement la barre YouTube du haut */
+.vp-shield {
+  position: absolute; top: 0; left: 0; right: 0; height: 46px; z-index: 3; cursor: default;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.88));
+  display: flex; align-items: center; gap: 8px; padding: 0 52px 0 12px;
+}
+.vp-shield-titre { color: #fff; font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vp-shield-badge {
+  flex: 0 0 auto; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.09em; color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #db2777); padding: 3px 8px; border-radius: 999px;
+}
+/* Cache noir maison sur le logo YouTube en bas à droite */
+.vp-shield-br {
+  position: absolute; right: 0; bottom: 0; width: 122px; height: 54px; z-index: 3; cursor: default;
+  background: #000; border-top-left-radius: 14px; color: rgba(255, 255, 255, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em;
+}
 .vp-full {
   position: absolute; top: 8px; right: 8px; z-index: 5; border: none; background: rgba(0, 0, 0, 0.6);
   color: #fff; border-radius: 8px; width: 34px; height: 34px; font-size: 1.05rem; cursor: pointer;
@@ -476,6 +493,49 @@ input[type='file'].input { padding: 8px; }
 /* ---------- Quiz config hero ---------- */
 .quiz-config { border: none; background: linear-gradient(140deg, #eef2ff, #fdf2f8); }
 .quiz-config h2 { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- Accueil moderne ---------- */
+.home { padding-bottom: 96px; }
+.hero {
+  margin: 14px 0 16px; padding: 22px 18px; border-radius: 22px; color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed 55%, #db2777);
+  box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
+  animation: tile-pop 0.4s both;
+}
+.hero-hello { font-size: 1.35rem; font-weight: 800; }
+.hero-sub { opacity: 0.92; margin-top: 4px; font-size: 0.88rem; }
+.home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile {
+  border: none; border-radius: 20px; padding: 16px 14px; text-align: left; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px; min-height: 112px; color: #1e293b;
+  background: var(--tb, #eef2ff); box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  animation: tile-pop 0.45s both; animation-delay: calc(var(--i) * 50ms);
+  transition: transform 0.12s;
+}
+.tile:active { transform: scale(0.96); }
+.tile-emoji { font-size: 1.7rem; }
+.tile-titre { font-weight: 800; font-size: 1rem; margin-top: 8px; }
+.tile-sub { font-size: 0.72rem; color: #475569; }
+@keyframes tile-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.t-indigo { --tb: linear-gradient(150deg, #e0e7ff, #c7d2fe); }
+.t-amber { --tb: linear-gradient(150deg, #fef3c7, #fde68a); }
+.t-rose { --tb: linear-gradient(150deg, #ffe4e6, #fecdd3); }
+.t-sky { --tb: linear-gradient(150deg, #e0f2fe, #bae6fd); }
+.t-green { --tb: linear-gradient(150deg, #dcfce7, #bbf7d0); }
+.t-violet { --tb: linear-gradient(150deg, #ede9fe, #ddd6fe); }
+.t-teal { --tb: linear-gradient(150deg, #ccfbf1, #99f6e4); }
+.t-orange { --tb: linear-gradient(150deg, #ffedd5, #fed7aa); }
+.t-emerald { --tb: linear-gradient(150deg, #d1fae5, #a7f3d0); }
+.t-pink { --tb: linear-gradient(150deg, #fce7f3, #fbcfe8); }
+.home-fab {
+  position: fixed; right: 16px; bottom: 18px; z-index: 30; width: 54px; height: 54px;
+  border-radius: 50%; border: none; background: linear-gradient(135deg, #4f46e5, #db2777);
+  color: #fff; font-size: 1.35rem; box-shadow: 0 10px 26px rgba(79, 70, 229, 0.45); cursor: pointer;
+}
+.home-fab:active { transform: scale(0.94); }
 .quote-text {
   font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; line-height: 1.5;
   margin: 2px 0; color: #1e1b4b;

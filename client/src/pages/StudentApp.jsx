@@ -35,7 +35,8 @@ export default function StudentApp() {
   const [me, setMe] = useState(null);
   const [cours, setCours] = useState(null);
   const [lost, setLost] = useState(null); // raison de la déconnexion forcée
-  const [tab, setTab] = useState('cours');  const [matiere, setMatiere] = useState('all');
+  const [tab, setTab] = useState('accueil');
+  const [matiere, setMatiere] = useState('all');
   const [viewer, setViewer] = useState(null);
 
   const load = useCallback(async () => {
@@ -152,9 +153,9 @@ export default function StudentApp() {
         }}
       />
       <header className="topbar">
-        <div className="topbar-brand">
+        <button className="topbar-brand" onClick={() => setTab('accueil')} title="Accueil">
           <Icon name="cap" size={22} /> <span>KAY DIANG</span>
-        </div>
+        </button>
         <div className="topbar-user">
           <button className="avatar-btn" onClick={() => setProfil(true)} title="Mon profil">
             {me.avatar || '🧑🏾‍🎓'}
@@ -176,13 +177,12 @@ export default function StudentApp() {
         </div>
       </header>
 
-      <nav className="seg">
-        {TABS.filter((t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2')).map((t) => (
-          <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-            <Icon name={t.icon} /> {t.label}
-          </button>
-        ))}
-      </nav>
+      {tab === 'accueil' && <Home me={me} filiere={filiere} onOpen={setTab} />}
+      {tab !== 'accueil' && (
+        <button className="home-fab" onClick={() => setTab('accueil')} title="Retour à l’accueil">
+          🏠
+        </button>
+      )}
 
       {tab === 'ia' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
@@ -236,6 +236,44 @@ export default function StudentApp() {
         />
       )}
     </div>
+  );
+}
+
+// Écran d'accueil : grandes cartes colorées, une par section.
+const TUILES = [
+  { id: 'cours', emoji: '📚', titre: 'Cours', sub: 'Vidéos & fiches PDF', cls: 't-indigo' },
+  { id: 'annales', emoji: '📝', titre: 'Annales', sub: 'Sujets d’examens', cls: 't-amber' },
+  { id: 'quiz', emoji: '🎯', titre: 'Quiz', sub: 'Teste-toi en t’amusant', cls: 't-rose' },
+  { id: 'agenda', emoji: '📅', titre: 'Agenda', sub: 'Événements à venir', cls: 't-sky' },
+  { id: 'echanges', emoji: '💬', titre: 'Échanges', sub: 'Écris à l’administration', cls: 't-green' },
+  { id: 'outils', emoji: '🧮', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
+  { id: 'orientation', emoji: '🧭', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
+  { id: 'ia', emoji: '🤖', titre: 'Prof IA', sub: 'Pose toutes tes questions', cls: 't-orange' },
+  { id: 'parcours', emoji: '🕌', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
+  { id: 'culture', emoji: '🌍', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
+];
+
+function Home({ me, filiere, onOpen }) {
+  const h = new Date().getHours();
+  const salut = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  return (
+    <main className="container home">
+      <section className="hero">
+        <div className="hero-hello">
+          {salut} {me.prenom} {me.avatar || '👋'}
+        </div>
+        <div className="hero-sub">Choisis une carte pour commencer à travailler.</div>
+      </section>
+      <div className="home-grid">
+        {TUILES.filter((t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2')).map((t, i) => (
+          <button key={t.id} className={`tile ${t.cls}`} style={{ '--i': i }} onClick={() => onOpen(t.id)}>
+            <span className="tile-emoji">{t.emoji}</span>
+            <span className="tile-titre">{t.titre}</span>
+            <span className="tile-sub">{t.sub}</span>
+          </button>
+        ))}
+      </div>
+    </main>
   );
 }
 

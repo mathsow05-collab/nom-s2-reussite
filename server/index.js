@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https://i.ytimg.com; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
+    "default-src 'self'; img-src 'self' data: https://i.ytimg.com; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.youtube.com; " +
       "connect-src 'self'; media-src 'self' https://cdn.islamic.network; object-src 'none'; base-uri 'self'; form-action 'self'; " +
       "worker-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com"
   );
