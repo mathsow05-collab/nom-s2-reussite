@@ -4,7 +4,6 @@ import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
-import { Aurora, Marquee, Shiny, Spot } from '../components/Fx.jsx';
 import AudioCoran from '../components/AudioCoran.jsx';
 import QuizAyat from '../components/QuizAyat.jsx';
 import Metiers from './Metiers.jsx';
@@ -254,36 +253,35 @@ const TUILES = [
   { id: 'culture', emoji: '🌍', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
 ];
 
-const MQ = [
-  '📚 Cours & PDF', '📝 Annales', '🎯 Quiz', '📅 Agenda', '💬 Échanges',
-  '🧮 Simulateur de notes', '🧭 Orientation', '🤖 Prof IA', '🕌 Coran & arabe', '🌍 Culture du monde',
-];
-
 function Home({ me, filiere, onOpen }) {
   const h = new Date().getHours();
-  const salut = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const salut = h < 12 ? 'Salam' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const tiles = TUILES.filter(
+    (t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2') && (!t.pasL2 || filiere !== 'L2')
+  );
   return (
-    <main className="container home">
-      <Aurora />
-      <section className="hero">
-        <div className="hero-hello">
-          <Shiny>
-            {salut} {me.prenom}
-          </Shiny>{' '}
-          {me.avatar || '👋'}
-        </div>
-        <div className="hero-sub">Choisis une carte pour commencer à travailler.</div>
-      </section>
-      <Marquee items={MQ} />
-      <div className="home-grid">
-        {TUILES.filter(
-          (t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2') && (!t.pasL2 || filiere !== 'L2')
-        ).map((t, i) => (
-          <Spot as="button" key={t.id} className={`tile ${t.cls}`} style={{ '--i': i }} onClick={() => onOpen(t.id)}>
-            <span className="tile-emoji">{t.emoji}</span>
-            <span className="tile-titre">{t.titre}</span>
-            <span className="tile-sub">{t.sub}</span>
-          </Spot>
+    <main className="container home3">
+      <header className="hello3">
+        <h1>
+          {salut}, {me.prenom} <span className="wave">{me.avatar || '👋'}</span>
+        </h1>
+        <p>Prêt·e pour ta session de travail du jour ?</p>
+      </header>
+      <div className="bento">
+        {tiles.map((t, i) => (
+          <button
+            key={t.id}
+            className={t.id === 'cours' ? 'bcard feat' : 'bcard'}
+            style={{ '--i': i }}
+            onClick={() => onOpen(t.id)}
+          >
+            <span className={`bico ${t.cls}`}>{t.emoji}</span>
+            {t.id === 'cours' && <span className="bgo">→</span>}
+            <span className="btxt">
+              <strong>{t.titre}</strong>
+              <small>{t.id === 'cours' ? 'Vidéos de cours et fiches PDF, par matière' : t.sub}</small>
+            </span>
+          </button>
         ))}
       </div>
     </main>
