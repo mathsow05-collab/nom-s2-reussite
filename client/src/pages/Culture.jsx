@@ -4,14 +4,14 @@ import { Spinner } from '../ui.jsx';
 import MiniJeu from '../components/MiniJeu.jsx';
 
 export const CATS = {
-  actualite: { label: 'Actu expliquée', icon: '🌍' },
-  citation: { label: 'Citations', icon: '✒️' },
-  figure: { label: 'Biographies', icon: '🧑🏾‍🏫' },
-  histoire: { label: 'Un jour dans l’histoire', icon: '📜' },
-  pratique: { label: 'Info pratique', icon: '🛠️' },
-  geo: { label: 'Géo en chiffres', icon: '🗺️' },
-  langue: { label: 'Langue & style', icon: '📖' },
-  debat: { label: 'Débat du jour', icon: '💬' },
+  actualite: { label: 'Actu expliquée', icon: '' },
+  citation: { label: 'Citations', icon: '' },
+  figure: { label: 'Biographies', icon: '' },
+  histoire: { label: 'Un jour dans l’histoire', icon: '' },
+  pratique: { label: 'Info pratique', icon: '' },
+  geo: { label: 'Géo en chiffres', icon: '' },
+  langue: { label: 'Langue & style', icon: '' },
+  debat: { label: 'Débat du jour', icon: '' },
 };
 
 function fmt(d) {
@@ -39,7 +39,7 @@ export default function Culture() {
   return (
     <main className="container">
       <section className="banner">
-        <h2>🌍 Culture du monde</h2>
+        <h2>Culture du monde</h2>
         <p>Chaque jour, une info utile : actu expliquée, citations, biographies, méthodes… et apprends en jouant avec le challenge Histoire-Géo !</p>
       </section>
 
@@ -59,7 +59,7 @@ export default function Culture() {
       {une && (
         <article className={une.categorie === 'citation' ? 'card culture-card a-la-une quote-card' : 'card culture-card a-la-une'}>
           <div className="culture-head">
-            <span className="badge">📌 À la une · {fmt(une.date_publi)}</span>
+            <span className="badge">À la une · {fmt(une.date_publi)}</span>
             <span className="badge badge-soft">
               {(CATS[une.categorie] || CATS.actualite).icon} {(CATS[une.categorie] || CATS.actualite).label}
             </span>

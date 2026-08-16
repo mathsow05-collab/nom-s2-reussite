@@ -179,11 +179,11 @@ function OrientationQuiz({ metiers, parcours, onPick, onPickP, onClose }) {
   }
 
   return (
-    <Modal title="🎯 Quel métier te ressemble ?" onClose={onClose}>
+    <Modal title="Quel métier te ressemble ?" onClose={onClose}>
       {resultat ? (
         <>
           <p className="muted">D'après tes réponses, voici ton profil d'orientation :</p>
-          <h4 className="h4">💼 Métiers qui te ressemblent</h4>
+          <h4 className="h4">Métiers qui te ressemblent</h4>
           <div className="quiz-sugg">
             {resultat.met.map((m) => (
               <button key={m.id} className="sugg-card" onClick={() => onPick(m)}>
@@ -195,7 +195,7 @@ function OrientationQuiz({ metiers, parcours, onPick, onPickP, onClose }) {
           </div>
           {resultat.parcs.length > 0 && (
             <>
-              <h4 className="h4">🎓 Parcours d'études conseillés</h4>
+              <h4 className="h4">Parcours d'études conseillés</h4>
               <div className="tags-wrap">
                 {resultat.parcs.map((p) => (
                   <button key={p.id} className="tag-chip link" onClick={() => onPickP(p)}>
@@ -207,7 +207,7 @@ function OrientationQuiz({ metiers, parcours, onPick, onPickP, onClose }) {
           )}
           {resultat.comps.length > 0 && (
             <>
-              <h4 className="h4">✨ Compétences à développer</h4>
+              <h4 className="h4">Compétences à développer</h4>
               <div className="tags-wrap">
                 {resultat.comps.map((c) => (
                   <span key={c} className="tag-chip">
@@ -311,7 +311,7 @@ export default function Metiers() {
   return (
     <main className="container orient">
       <section className="orient-hero">
-        <h1>Ton avenir commence ici ✨</h1>
+        <h1>Ton avenir commence ici</h1>
         <p>Métiers, universités, formations : explore, garde tes favoris et trouve la voie qui te ressemble.</p>
         <div className="orient-search">
           <Icon name="eye" size={17} />
@@ -327,14 +327,14 @@ export default function Metiers() {
           )}
         </div>
         <button className="btn btn-light" onClick={() => setQuiz(true)}>
-          🎯 Je ne sais pas encore — fais-moi un test !
+          Je ne sais pas encore — fais-moi un test !
         </button>
       </section>
 
       <div className="orient-tabs" role="tablist">
         {[
-          ['metiers', `💼 Métiers (${metiers.length})`],
-          ['etudes', `🎓 Études → Métiers (${parcours.length})`],
+          ['metiers', `Métiers (${metiers.length})`],
+          ['etudes', `Études → Métiers (${parcours.length})`],
         ].map(([id, lbl]) => (
           <button key={id} className={vue === id ? 'otab active' : 'otab'} onClick={() => setVue(id)}>
             {lbl}
@@ -346,14 +346,14 @@ export default function Metiers() {
         <div className="vue-anim" key="m">
           <div className="pills">
             <button className={favOnly ? 'pill active' : 'pill'} onClick={() => setFavOnly(!favOnly)}>
-              ❤️ Mes favoris
+              Mes favoris
             </button>
             <button className={domaine === 'all' ? 'pill active' : 'pill'} onClick={() => setDomaine('all')}>
               Tous les domaines
             </button>
             {domaines.map((d) => (
               <button key={d} className={domaine === d ? 'pill active' : 'pill'} onClick={() => setDomaine(domaine === d ? 'all' : d)}>
-                {domEmoji(d)} {d}
+                {d}
               </button>
             ))}
           </div>
@@ -364,7 +364,7 @@ export default function Metiers() {
               {filtres.map((m, i) => (
                 <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={m.id}>
                   <button className="orient-fav" onClick={() => toggleFav(m)} aria-label="Favori">
-                    {favs[m.id] ? '❤️' : '🤍'}
+                    {favs[m.id] ? <Icon name="heart" size={16} className="fav-on" /> : <Icon name="heart" size={16} />}
                   </button>
                   <button className="orient-img" onClick={() => setOpen(m)}>
                     {m.image ? <img src={m.image} alt="" loading="lazy" /> : <span className="orient-emoji">{domEmoji(m.domaine)}</span>}
@@ -388,12 +388,12 @@ export default function Metiers() {
             <>
               {univFiltres.length > 0 && (
                 <>
-                  <h2 className="orient-title">🎓 Universités & grandes filières</h2>
+                  <h2 className="orient-title">Universités & grandes filières</h2>
                   <div className="orient-grid">
                     {univFiltres.map((p, i) => (
                       <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
                         <button className="orient-img" onClick={() => setOpenP(p)}>
-                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🎓</span>}
+                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon"><Icon name="cap" size={26} /></span>}
                           <div className="orient-shade">
                             <span className="badge badge-soft">Bac {p.cible}</span>
                             <strong>{p.titre}</strong>
@@ -406,12 +406,12 @@ export default function Metiers() {
               )}
               {formFiltres.length > 0 && (
                 <>
-                  <h2 className="orient-title">🏫 Écoles, BTS & mobilité</h2>
+                  <h2 className="orient-title">Écoles, BTS & mobilité</h2>
                   <div className="orient-grid">
                     {formFiltres.map((p, i) => (
                       <article className="orient-card anim" style={{ '--i': Math.min(i, 11) }} key={p.id}>
                         <button className="orient-img" onClick={() => setOpenP(p)}>
-                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon">🏫</span>}
+                          {p.image ? <img src={p.image} alt="" loading="lazy" /> : <span className="uni-icon"><Icon name="building" size={26} /></span>}
                           <div className="orient-shade">
                             <span className="badge badge-soft">{p.cible === 'all' ? 'Pour tous' : `Bac ${p.cible}`}</span>
                             <strong>{p.titre}</strong>
@@ -436,26 +436,26 @@ export default function Metiers() {
               <h3>{open.titre}</h3>
             </div>
             <button className="orient-fav on-img" onClick={() => toggleFav(open)}>
-              {favs[open.id] ? '❤️' : '🤍'}
+              {favs[open.id] ? <Icon name="heart" size={16} className="fav-on" /> : <Icon name="heart" size={16} />}
             </button>
           </div>
           <div className="mini-path">
-            <span className="mp-step">🎒 Bac {open.filiere === 'all' ? '' : open.filiere}</span>
+            <span className="mp-step">Bac {open.filiere === 'all' ? '' : open.filiere}</span>
             <span className="mp-arrow">→</span>
-            <span className="mp-step">🏛️ Études</span>
+            <span className="mp-step">Études</span>
             <span className="mp-arrow">→</span>
-            <span className="mp-step on">💼 {open.titre}</span>
+            <span className="mp-step on">{open.titre}</span>
           </div>
           <p style={{ marginTop: 12 }}>{open.description}</p>
           {open.parcours && (
             <>
-              <h4 className="h4">🎓 Études après le Bac</h4>
+              <h4 className="h4">Études après le Bac</h4>
               <p className="parcours-box">{open.parcours}</p>
             </>
           )}
           {open.debouches && (
             <>
-              <h4 className="h4">💼 Débouchés</h4>
+              <h4 className="h4">Débouchés</h4>
               <div className="pills" style={{ marginBottom: 0 }}>
                 {open.debouches
                   .split(';')
@@ -478,7 +478,7 @@ export default function Metiers() {
             {openP.image ? (
               <img className="uni-hero-img" src={openP.image} alt="" />
             ) : (
-              <span className="uni-hero-icon">🎓</span>
+              <span className="uni-hero-icon"><Icon name="cap" size={26} /></span>
             )}
             <div>
               <span className="badge badge-light">{openP.cible === 'all' ? 'Pour tous les Bac' : `Réservé aux Bac ${openP.cible}`}</span>
@@ -488,7 +488,7 @@ export default function Metiers() {
           {openP.intro && <p className="muted" style={{ marginTop: 12 }}>{openP.intro}</p>}
           <div className="path-timeline">
             <div className="pstep">
-              <span className="pstep-dot">🎒</span>
+              <span className="pstep-dot"><Icon name="user" size={16} /></span>
               <div>
                 <strong>Étape 1 — Ton Bac {openP.cible === 'all' ? '' : openP.cible}</strong>
                 <p className="muted small">Le point de départ de ce parcours.</p>
@@ -496,7 +496,7 @@ export default function Metiers() {
             </div>
             {parseBlocs(openP.blocs).map((b, i) => (
               <div className="pstep" key={i}>
-                <span className="pstep-dot">🏛️</span>
+                <span className="pstep-dot"><Icon name="building" size={16} /></span>
                 <div>
                   <strong>
                     Étape {i + 2} — {b.sous || 'Ta formation'}
@@ -528,7 +528,7 @@ export default function Metiers() {
               </div>
             ))}
             <div className="pstep">
-              <span className="pstep-dot">💼</span>
+              <span className="pstep-dot"><Icon name="briefcase" size={16} /></span>
               <div>
                 <strong>Et après → ton métier</strong>
                 <p className="muted small">

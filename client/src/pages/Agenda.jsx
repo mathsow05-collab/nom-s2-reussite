@@ -101,7 +101,7 @@ export default function Agenda() {
       </section>
 
       <section className="card s3card plan3">
-        <h2>🗓️ Mon planning de révision intelligent</h2>
+        <h2>Mon planning de révision intelligent</h2>
         {plan === null ? (
           <>
             <p className="muted small">
@@ -109,16 +109,16 @@ export default function Agenda() {
               révision, séance par séance.
             </p>
             <button className="btn btn-primary" onClick={generer}>
-              ✨ Générer mon planning
+              <Icon name="spark" size={16} /> Générer mon planning
             </button>
           </>
         ) : plan.length === 0 ? (
-          <p className="muted small">Aucune échéance proche : profite-en pour avancer tes cours ! 🌱</p>
+          <p className="muted small">Aucune échéance proche : profite-en pour avancer tes cours !</p>
         ) : (
           <>
             {plan.map((s) => (
               <button key={s.id} className={done[s.id] ? 'plan3-item fait' : 'plan3-item'} onClick={() => cocher(s.id)}>
-                <span className="plan3-check">{done[s.id] ? '✅' : '⬜'}</span>
+                <span className="plan3-check">{done[s.id] ? <Icon name="check" size={15} /> : <span className="box3" />}</span>
                 <span className="plan3-txt">
                   <strong>{s.titre}</strong>
                   <small>
@@ -129,7 +129,7 @@ export default function Agenda() {
             ))}
             <div className="s3-actions">
               <button className="btn btn-outline" onClick={generer}>
-                ↺ Régénérer
+                <Icon name="refresh" size={15} /> Régénérer
               </button>
             </div>
           </>
@@ -153,7 +153,7 @@ export default function Agenda() {
                 <h3>{e.titre}</h3>
                 {e.lieu && (
                   <p className="muted small">
-                    📍 {e.lieu}
+                    Lieu : {e.lieu}
                   </p>
                 )}
               </div>

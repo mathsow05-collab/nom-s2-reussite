@@ -165,16 +165,16 @@ export function streak(prog) {
 }
 export function badgesOf(prog, stats) {
   const b = [];
-  const push = (ok, emoji, nom, desc) => ok && b.push({ emoji, nom, desc });
-  push(stats.vues >= 1, '🌱', 'Premier pas', 'Ouvrir son premier cours');
-  push(stats.vues >= 5, '📚', 'Curieux·se', 'Ouvrir 5 cours');
-  push(stats.vues >= 15, '🎓', 'Studieux·se', 'Ouvrir 15 cours');
-  push(stats.nq >= 1, '🎯', 'Premier quiz', 'Terminer un quiz');
-  push(stats.nq >= 10, '🏹', 'Entraîné·e', 'Terminer 10 quiz');
-  push(stats.pctMoy >= 80 && stats.nq >= 1, '⚡', 'Sharp', 'Moyenne quiz ≥ 80 %');
-  push(streak(prog) >= 3, '🔥', 'Série ×3', '3 jours actifs d’affilée');
-  push((prog.minutes || 0) >= 60, '⏱️', 'Marathon', '60 minutes d’étude cumulées');
-  push(stats.coursSemaine >= 4 && stats.quizSemaine >= 2, '🏆', 'Semaine parfaite', '4 cours + 2 quiz dans la semaine');
+  const push = (ok, ico, nom, desc) => ok && b.push({ ico, nom, desc });
+  push(stats.vues >= 1, 'spark', 'Premier pas', 'Ouvrir son premier cours');
+  push(stats.vues >= 5, 'book', 'Curieux·se', 'Ouvrir 5 cours');
+  push(stats.vues >= 15, 'trophy', 'Studieux·se', 'Ouvrir 15 cours');
+  push(stats.nq >= 1, 'target', 'Premier quiz', 'Terminer un quiz');
+  push(stats.nq >= 10, 'award', 'Entraîné·e', 'Terminer 10 quiz');
+  push(stats.pctMoy >= 80 && stats.nq >= 1, 'zap', 'Sharp', 'Moyenne quiz ≥ 80 %');
+  push(streak(prog) >= 3, 'flame', 'Série ×3', '3 jours actifs d’affilée');
+  push((prog.minutes || 0) >= 60, 'clock', 'Marathon', '60 minutes d’étude cumulées');
+  push(stats.coursSemaine >= 4 && stats.quizSemaine >= 2, 'star', 'Semaine parfaite', '4 cours + 2 quiz dans la semaine');
   return b;
 }
 

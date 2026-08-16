@@ -48,7 +48,7 @@ export default function QuizAyat() {
   if (!questions)
     return (
       <section className="panel" style={{ marginBottom: 16 }}>
-        <h2>🎯 Quiz des versets</h2>
+        <h2>Quiz des versets</h2>
         <p className="muted">
           « Quel verset vient ensuite ? » — 10 questions générées automatiquement depuis les petites sourates, pour
           ancrer ta mémorisation.
@@ -66,7 +66,7 @@ export default function QuizAyat() {
         <div className="quiz-score">
           {score}/{questions.length}
         </div>
-        <div className="quiz-pct">{pct} % — {pct >= 80 ? 'Mâ shâ’ Allah, excellent ! 🌟' : pct >= 50 ? 'Bien, continue à écouter et réciter.' : 'Réécoute les sourates et réessaie.'}</div>
+        <div className="quiz-pct">{pct} % — {pct >= 80 ? 'Mâ shâ’ Allah, excellent !' : pct >= 50 ? 'Bien, continue à écouter et réciter.' : 'Réécoute les sourates et réessaie.'}</div>
         <button className="btn btn-primary" onClick={start}>
           <Icon name="refresh" size={15} /> Rejouer
         </button>

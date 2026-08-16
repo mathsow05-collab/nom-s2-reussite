@@ -11,7 +11,7 @@ export default function AudioCoran() {
 
   return (
     <section className="panel" style={{ marginBottom: 16 }}>
-      <h2>🎧 Écouter la récitation</h2>
+      <h2>Écouter la récitation</h2>
       <p className="muted small">Choisis un récitateurs puis une sourate : l'audio se lance directement ici.</p>
       <div className="pills">
         {RECITERS.map((r) => (

@@ -12,7 +12,7 @@ const SUGGESTIONS = [
 
 export default function Assistant() {
   const [msgs, setMsgs] = useState([
-    { role: 'ia', text: 'Salut ! Je suis Prof IA 🤖 Pose-moi tes questions sur tes cours, tes révisions, ou demande-moi une explication simple. Je suis là pour toi !' },
+    { role: 'ia', text: 'Salut ! Je suis ton Prof IA. Pose-moi tes questions sur tes cours, tes révisions, ou demande-moi une explication simple. Je suis là pour toi !' },
   ]);
   const [saisie, setSaisie] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,7 +45,7 @@ export default function Assistant() {
   return (
     <main className="container">
       <section className="banner">
-        <h2>🤖 Assistant IA</h2>
+        <h2>Assistant IA</h2>
         <p>Ton tuteur personnel, disponible à toute heure pour expliquer, réviser et t'encourager.</p>
       </section>
 
@@ -58,7 +58,7 @@ export default function Assistant() {
         {busy && (
           <div className="chat-msg ia">
             <div className="chat-bulle">
-              <span className="typing">✍️ Prof IA réfléchit…</span>
+              <span className="typing">Réflexion en cours…</span>
             </div>
           </div>
         )}

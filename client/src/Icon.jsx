@@ -143,6 +143,88 @@ export default function Icon({ name, size = 18, className = '' }) {
         <line x1="15" y1="5" x2="15" y2="22" />
       </>
     ),
+    home: (
+      <>
+        <path d="M3 10.5 12 3l9 7.5" />
+        <path d="M5 9.5V21h14V9.5" />
+      </>
+    ),
+    bell: (
+      <>
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8" />
+        <path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" />
+      </>
+    ),
+    search: (
+      <>
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4-4" />
+      </>
+    ),
+    user: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+      </>
+    ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 3" />
+      </>
+    ),
+    target: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="5" />
+        <circle cx="12" cy="12" r="1.5" />
+      </>
+    ),
+    flame: <path d="M12 3s5 4.5 5 9a5 5 0 0 1-10 0c0-2 1-4 2.5-5.5C10.5 8 12 6 12 3Z" />,
+    star: <path d="m12 3 2.7 5.6 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 2.8 1.2-6.1L3 9.4l6.3-.8Z" />,
+    zap: <path d="M13 2 4 14h6l-1 8 9-12h-6Z" />,
+    trophy: (
+      <>
+        <path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0Z" />
+        <path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" />
+      </>
+    ),
+    globe: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18Z" />
+      </>
+    ),
+    spark: (
+      <>
+        <path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.5 2.5M16.5 16.5 19 19M19 5l-2.5 2.5M7.5 16.5 5 19" />
+      </>
+    ),
+    mic: (
+      <>
+        <rect x="9" y="3" width="6" height="10" rx="3" />
+        <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+      </>
+    ),
+    thumb: (
+      <>
+        <path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z" />
+        <path d="M7 10l4.2-7c1.4.3 2.3 1.3 2.3 2.7V9H19a2 2 0 0 1 2 2.4l-1.4 7A2.5 2.5 0 0 1 17.1 21H7" />
+      </>
+    ),
+    heart: <path d="M12 20s-7-4.5-9-9c-1.5-3.5 1-8 5-8 2.5 0 4 1.5 4 3 0-1.5 1.5-3 4-3 4 0 6.5 4.5 5 8-2 4.5-9 9-9 9Z" />,
+    building: (
+      <>
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M12 21v-3" />
+      </>
+    ),
+    briefcase: (
+      <>
+        <rect x="3" y="8" width="18" height="12" rx="2" />
+        <path d="M9 8V6a3 3 0 0 1 6 0v2M3 13h18" />
+      </>
+    ),
   };
   return (
     <svg

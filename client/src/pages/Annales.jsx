@@ -48,7 +48,7 @@ export default function Annales() {
 
       <div className="outils-bar">
         <div className="search3">
-          <span>🔎</span>
+          <Icon name="search" size={16} />
           <input placeholder="Rechercher un sujet…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <select className="input" value={annee} onChange={(e) => setAnnee(e.target.value)}>

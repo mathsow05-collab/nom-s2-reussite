@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api, setToken } from '../api.js';
+import Icon from '../Icon.jsx';
 
 export default function StudentLogin() {
   const [id, setId] = useState('');
@@ -26,7 +27,7 @@ export default function StudentLogin() {
       <div className="auth-glow g1" aria-hidden="true" />
       <div className="auth-glow g2" aria-hidden="true" />
       <main className="auth-card3">
-        <div className="logo3">🎓</div>
+        <div className="logo3"><Icon name="cap" size={28} /></div>
         <h1>KAY DIANG</h1>
         <p className="tag3">
           Ton lycée, ta réussite — <span className="grad3">une seule plateforme.</span>
@@ -52,9 +53,9 @@ export default function StudentLogin() {
           </button>
         </form>
         <div className="feat3">
-          <span>🎬 Vidéos & PDF</span>
-          <span>🧭 Orientation</span>
-          <span>🛡️ Session sécurisée</span>
+          <span><Icon name="video" size={13} /> Vidéos & PDF</span>
+          <span><Icon name="compass" size={13} /> Orientation</span>
+          <span><Icon name="shield" size={13} /> Session sécurisée</span>
         </div>
         <a className="admin3" href="#/admin">
           Espace administrateur

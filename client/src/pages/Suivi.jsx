@@ -1,11 +1,14 @@
 import { FILIERES, MATIERE_BY_ID } from '../api.js';
+import Icon from '../Icon.jsx';
 import { computeStats, fmtMin, revisions, useCountUp } from '../progress.js';
 
-function Stat({ emoji, valeur, suffixe, label }) {
+function Stat({ icon, valeur, suffixe, label }) {
   const v = useCountUp(valeur);
   return (
     <div className="stat3">
-      <span className="stat3-emoji">{emoji}</span>
+      <span className="stat3-emoji">
+        <Icon name={icon} size={17} />
+      </span>
       <strong>
         {v}
         {suffixe}
@@ -35,19 +38,19 @@ export default function Suivi({ me, cours, prog, onGo }) {
   return (
     <main className="container suivi3">
       <header className="hello3">
-        <h1>Ton suivi 📈</h1>
+        <h1>Ton suivi</h1>
         <p>Ta progression réelle, matière par matière.</p>
       </header>
 
       <div className="stats-grid">
-        <Stat emoji="📚" valeur={stats.vues} suffixe={`/${stats.total}`} label="cours ouverts" />
-        <Stat emoji="🎯" valeur={stats.pctMoy} suffixe=" %" label="moyenne quiz" />
-        <Stat emoji="⏱️" valeur={stats.minutes} label="minutes d'étude" />
-        <Stat emoji="🔥" valeur={stats.joursActifs} label="jours actifs / 7" />
+        <Stat icon="book" valeur={stats.vues} suffixe={`/${stats.total}`} label="cours ouverts" />
+        <Stat icon="target" valeur={stats.pctMoy} suffixe=" %" label="moyenne quiz" />
+        <Stat icon="clock" valeur={stats.minutes} label="minutes d'étude" />
+        <Stat icon="flame" valeur={stats.joursActifs} label="jours actifs / 7" />
       </div>
 
       <section className="card s3card">
-        <h2>🎯 Objectifs de la semaine</h2>
+        <h2>Objectifs de la semaine</h2>
         <div className="obj3">
           <div className="obj3-line">
             <span>
@@ -67,19 +70,21 @@ export default function Suivi({ me, cours, prog, onGo }) {
           <div className="bar3">
             <div style={{ width: `${pq}%` }} />
           </div>
-          {pc === 100 && pq === 100 && <div className="obj3-win">🏆 Semaine parfaite, bravo !</div>}
+          {pc === 100 && pq === 100 && <div className="obj3-win">Semaine parfaite, bravo !</div>}
         </div>
       </section>
 
       <section className="card s3card">
-        <h2>🧠 Révision intelligente</h2>
+        <h2>Révision intelligente</h2>
         <p className="muted small">Calculé d'après tes erreurs de quiz et le temps écoulé depuis tes derniers cours.</p>
         {(() => {
           const rev = revisions(prog, cours, (FILIERES[me.filiere] || FILIERES.S2).matieres);
           if (rev.length === 0) return <p className="muted">Rien à réviser pour l'instant — continue d'avancer ! 🌱</p>;
           return rev.map((r, i) => (
             <button key={i} className="reco3" onClick={() => onGo(r.tab, r.matiere)}>
-              <span>{r.emoji}</span>
+              <span className="reco3-ico">
+                <Icon name={r.tab === 'quiz' ? 'target' : 'book'} size={15} />
+              </span>
               {r.txt}
             </button>
           ));
@@ -88,6 +93,7 @@ export default function Suivi({ me, cours, prog, onGo }) {
 
       <section className="card s3card">
         <h2>Progression par matière</h2>
+
         {matieres.length === 0 && <p className="muted">Aucun cours disponible pour l'instant.</p>}
         {matieres.map((m) => {
           const p = m.total ? Math.round((m.vus / m.total) * 100) : 0;
@@ -119,7 +125,7 @@ export default function Suivi({ me, cours, prog, onGo }) {
           return (
             <div className="hist3" key={`q${i}`}>
               <span className="hist3-ico" style={{ background: `${m.color}22`, color: m.color }}>
-                {pct >= 60 ? '✅' : '📘'}
+                <Icon name={pct >= 60 ? 'check' : 'book'} size={16} />
               </span>
               <div className="hist3-txt">
                 <strong>
@@ -133,7 +139,9 @@ export default function Suivi({ me, cours, prog, onGo }) {
         })}
         {derniersCours.map((c, i) => (
           <div className="hist3" key={`c${i}`}>
-            <span className="hist3-ico" style={{ background: '#eef2ff', color: '#4f46e5' }}>📖</span>
+            <span className="hist3-ico" style={{ background: '#eef2ff', color: '#1d4ed8' }}>
+              <Icon name="book" size={16} />
+            </span>
             <div className="hist3-txt">
               <strong>{c.titre}</strong>
               <small>Cours consulté</small>

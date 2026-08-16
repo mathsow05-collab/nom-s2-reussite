@@ -74,7 +74,7 @@ export default function MiniJeu() {
     return (
       <section className="jeu-hero">
         <div>
-          <h2>🎮 Challenge Histoire-Géo</h2>
+          <h2>Challenge Histoire-Géo</h2>
           <p>10 questions chrono (20 s), spécial Terminale. Réponds vite pour gagner des points bonus, enchaîne les bonnes réponses, et apprends avec l'explication après chaque question !</p>
         </div>
         <button className="btn btn-light" onClick={lancer}>
@@ -86,7 +86,7 @@ export default function MiniJeu() {
   if (etat === 'fin') {
     const max = questions.length * 2;
     const pct = Math.round((score / max) * 100);
-    const rang = pct >= 80 ? '🏆 Génie de l’Histoire-Géo !' : pct >= 50 ? '🥊 Très solide, continue !' : '📚 Relis tes fiches et rejoue !';
+    const rang = pct >= 80 ? 'Génie de l’Histoire-Géo !' : pct >= 50 ? '🥊 Très solide, continue !' : '📚 Relis tes fiches et rejoue !';
     return (
       <section className="jeu-hero fin">
         <div className="jeu-score">{score} pts</div>
@@ -106,7 +106,7 @@ export default function MiniJeu() {
           Question {idx + 1}/{questions.length}
         </span>
         <span className={temps <= 5 ? 'jeu-timer rouge' : 'jeu-timer'}>⏱ {choisi === null ? temps : '—'} s</span>
-        <span className="badge badge-light">⭐ {score} pts {serie >= 2 ? `· 🔥 série ${serie}` : ''}</span>
+        <span className="badge badge-light">{score} pts {serie >= 2 ? `· série ${serie}` : ''}</span>
       </div>
       <h3 className="jeu-q">{q.q}</h3>
       <div className="quiz-choices">

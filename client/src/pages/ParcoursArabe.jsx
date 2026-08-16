@@ -97,7 +97,7 @@ export default function ParcoursArabe({ meId }) {
             <button className="card lecon-card" key={l.id} onClick={() => setLeconOuverte(l)}>
               <div>
                 <strong>{l.titre}</strong>
-                <div className="muted small">{l.lecons || ''}{(prog[l.id] || 0) >= 80 ? '✅ maîtrisé' : prog[l.id] ? `en cours · ${prog[l.id]} %` : 'nouveau'}</div>
+                <div className="muted small">{l.lecons || ''}{(prog[l.id] || 0) >= 80 ? 'maîtrisé' : prog[l.id] ? `en cours · ${prog[l.id]} %` : 'nouveau'}</div>
               </div>
               <div style={{ minWidth: 120 }}>
                 <Barre pct={prog[l.id] || 0} ok={(prog[l.id] || 0) >= 80} />
@@ -113,7 +113,7 @@ export default function ParcoursArabe({ meId }) {
   return (
     <main className="container">
       <section className="banner">
-        <h2>🗺️ Ta carte de progression</h2>
+        <h2>Ta carte de progression</h2>
         <p>
           Avance monde après monde. Il faut <strong>80 %</strong> de maîtrise pour débloquer le suivant.{' '}
           {leconsMaitrisees}/{totalLecons} leçons maîtrisées.
@@ -358,7 +358,7 @@ function EtapeExos({ exos, onFin, resultat, onRejouer }) {
     return (
       <div className="card panel" style={{ textAlign: 'center' }}>
         <div className="quiz-score">{resultat} %</div>
-        <p className="muted">{resultat >= 80 ? 'Monde en route, excellent ! 🌟' : 'Repasse les étapes puis rejoue pour viser 80 %.'}</p>
+        <p className="muted">{resultat >= 80 ? 'Monde en route, excellent !' : 'Repasse les étapes puis rejoue pour viser 80 %.'}</p>
         <button className="btn btn-primary" onClick={onRejouer}>
           <Icon name="refresh" size={15} /> Rejouer
         </button>

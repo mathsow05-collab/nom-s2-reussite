@@ -5,11 +5,11 @@ import { Spinner } from '../ui.jsx';
 import { addQuiz, clearErreur, getProg } from '../progress.js';
 
 const MODES = [
-  { id: 'entrainement', emoji: '📚', nom: 'Entraînement', desc: 'Une leçon précise, avec explications' },
-  { id: 'rapide', emoji: '⚡', nom: 'Quiz rapide', desc: '10 questions mélangeant tes matières' },
-  { id: 'chrono', emoji: '⏱️', nom: 'Chronométré', desc: '30 secondes par question' },
-  { id: 'examen', emoji: '📝', nom: 'Examen blanc', desc: '20 questions, 15 min, sans aide' },
-  { id: 'erreurs', emoji: '🧠', nom: 'Revoir mes erreurs', desc: 'Les questions que tu as ratées' },
+  { id: 'entrainement', icon: 'book', nom: 'Entraînement', desc: 'Une leçon précise, avec explications' },
+  { id: 'rapide', icon: 'zap', nom: 'Quiz rapide', desc: '10 questions mélangeant tes matières' },
+  { id: 'chrono', icon: 'clock', nom: 'Chronométré', desc: '30 secondes par question' },
+  { id: 'examen', icon: 'file', nom: 'Examen blanc', desc: '20 questions, 15 min, sans aide' },
+  { id: 'erreurs', icon: 'refresh', nom: 'Revoir mes erreurs', desc: 'Les questions que tu as ratées' },
 ];
 
 export default function Quiz() {
@@ -151,7 +151,9 @@ export default function Quiz() {
         <div className="modes3">
           {MODES.map((mo) => (
             <button key={mo.id} className={mode === mo.id ? 'mode3 on' : 'mode3'} onClick={() => setMode(mo.id)}>
-              <span>{mo.emoji}</span>
+              <span className="mode3-ico">
+                <Icon name={mo.icon} size={17} />
+              </span>
               <strong>{mo.nom}</strong>
               <small>{mo.desc}</small>
             </button>
@@ -191,7 +193,7 @@ export default function Quiz() {
           </div>
         )}
         {mode === 'erreurs' && (prog?.erreurs || []).length === 0 && (
-          <div className="empty">Aucune erreur enregistrée pour l'instant : fais un quiz, et tes erreurs arriveront ici pour être revues. 🎉</div>
+          <div className="empty">Aucune erreur enregistrée pour l'instant : fais un quiz, et tes erreurs arriveront ici pour être revues.</div>
         )}
 
         <button
@@ -206,14 +208,14 @@ export default function Quiz() {
 
         {hist.length > 0 && (
           <section className="card quiz-hist">
-            <h2>🕘 Tes derniers quiz</h2>
+            <h2>Tes derniers quiz</h2>
             {hist.map((q, i) => {
               const m = MATIERE_BY_ID[q.matiere] || { label: q.matiere, color: '#64748b' };
               const pct = Math.round((q.score / q.total) * 100);
               return (
                 <div className="hist3" key={i}>
                   <span className="hist3-ico" style={{ background: `${m.color}22`, color: m.color }}>
-                    {pct >= 60 ? '✅' : '📘'}
+                    <Icon name={pct >= 60 ? 'check' : 'book'} size={16} />
                   </span>
                   <div className="hist3-txt">
                     <strong>
@@ -234,7 +236,7 @@ export default function Quiz() {
     const score = questions.reduce((s, q, i) => s + (answers[i] === q.bonne ? 1 : 0), 0);
     const pct = Math.round((score / questions.length) * 100);
     const mention =
-      pct >= 80 ? 'Excellent ! 🔥' : pct >= 60 ? 'Bien joué, continue !' : pct >= 40 ? 'Pas mal, mais revois la leçon.' : 'Il faut reprendre le cours, courage !';
+      pct >= 80 ? 'Excellent !' : pct >= 60 ? 'Bien joué, continue !' : pct >= 40 ? 'Pas mal, mais revois la leçon.' : 'Il faut reprendre le cours, courage !';
     const parMatiere = {};
     questions.forEach((q, i) => {
       const o = (parMatiere[q.matiere] ||= { ok: 0, tot: 0 });
@@ -245,7 +247,11 @@ export default function Quiz() {
     return (
       <main className="container">
         <div className={pct >= 80 ? 'card quiz-result win' : 'card quiz-result'}>
-          {pct >= 80 && <div className="confetti3">🎉</div>}
+          {pct >= 80 && (
+            <div className="confetti3">
+              <Icon name="trophy" size={34} />
+            </div>
+          )}
           <div className="quiz-score">
             {score}/{questions.length}
           </div>
@@ -307,8 +313,8 @@ export default function Quiz() {
           </span>
           <span className="muted">
             Question {idx + 1}/{questions.length}
-            {mode === 'chrono' && ` · ⏱️ ${timeLeft}s`}
-            {mode === 'examen' && ` · ⏱️ ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
+            {mode === 'chrono' && ` · ${timeLeft} s`}
+            {mode === 'examen' && ` · ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`}
           </span>
         </div>
         <div className="quiz-bar">
@@ -335,7 +341,7 @@ export default function Quiz() {
         </div>
         {revealed && feedback && (
           <div className={okNow ? 'fb3 ok' : 'fb3 ko'}>
-            {okNow ? '✅ Bonne réponse, bien joué !' : `❌ La bonne réponse était : ${q.choix[q.bonne]}`}
+            {okNow ? 'Bonne réponse, bien joué !' : `La bonne réponse était : ${q.choix[q.bonne]}`}
           </div>
         )}
         <div className="form-actions">

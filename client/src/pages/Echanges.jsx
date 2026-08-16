@@ -36,7 +36,7 @@ export default function Echanges() {
     const h = (ev) => {
       if (ev.detail?.type === 'reponse') {
         load();
-        setToast('🎉 L’administration vient de répondre à une de tes questions !');
+        setToast('L’administration vient de répondre à une de tes questions !');
         setTimeout(() => setToast(null), 8000);
       }
     };
@@ -79,36 +79,36 @@ export default function Echanges() {
 
       <div className="pills" style={{ marginBottom: 12 }}>
         <button className={vue === 'perso' ? 'pill active' : 'pill'} onClick={() => setVue('perso')}>
-          💬 Mes échanges
+          Mes échanges
         </button>
         <button className={vue === 'commu' ? 'pill active' : 'pill'} onClick={() => setVue('commu')}>
-          🌍 Communauté ({commu ? commu.length : '…'})
+          Communauté ({commu ? commu.length : '…'})
         </button>
       </div>
 
       {vue === 'commu' && (
         <section className="panel">
-          <h2>🌍 Questions partagées de ta filière</h2>
+          <h2>Questions partagées de ta filière</h2>
           {!commu || commu.length === 0 ? (
             <p className="muted">Pas encore de questions partagées. Coche « partager » en posant ta question pour aider les autres !</p>
           ) : (
             commu.map((c) => (
               <div className="commu3" key={c.id}>
-                <div className="chat-msg moi">
+                  <div className="chat-msg moi">
                   <div className="chat-bulle">
-                    <span className="thread-from">🧑🏾‍ {c.prenom} {c.nom}</span>
+                    <span className="thread-from">Élève · {c.prenom} {c.nom}</span>
                     {c.sujet && <span className="thread-sujet">{c.sujet}</span>}
                     {c.message}
                   </div>
                 </div>
                 <div className="chat-msg ia">
                   <div className="chat-bulle reponse-admin">
-                    <span className="thread-from">🧑🏾‍🏫 Administration</span>
+                    <span className="thread-from">Administration</span>
                     {c.reponse}
                   </div>
                 </div>
                 <button className={commu && c.likes.includes(meId) ? 'like3 on' : 'like3'} onClick={() => like(c.id)}>
-                  👍 {c.likes.length}
+                  <Icon name="thumb" size={14} /> {c.likes.length}
                 </button>
               </div>
             ))
@@ -129,7 +129,7 @@ export default function Echanges() {
           <textarea className="input" rows="3" required value={qMsg} onChange={(e) => setQMsg(e.target.value)} placeholder="Je n'ai pas compris comment on choisit le référentiel…" />
           <label className="share3">
             <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
-            🌍 Partager ma question (et sa réponse) avec les autres élèves de ma filière
+            Partager ma question (et sa réponse) avec les autres élèves de ma filière
           </label>
           <button className="btn btn-primary" disabled={busy || !qMsg.trim()}>
             Envoyer ma question
@@ -156,7 +156,7 @@ export default function Echanges() {
                 {q.reponse ? (
                   <div className="chat-msg ia">
                     <div className="chat-bulle reponse-admin">
-                      <span className="thread-from">🧑🏾‍🏫 Administration</span>
+                      <span className="thread-from">Administration</span>
                       {q.reponse}
                     </div>
                   </div>

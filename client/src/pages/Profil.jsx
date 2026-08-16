@@ -1,4 +1,5 @@
 import { api } from '../api.js';
+import Icon from '../Icon.jsx';
 import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
@@ -31,7 +32,7 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
 
       <section className="card s3card">
         <h2>
-          ⭐ Niveau {lvl.i + 1} — {lvl.nom}
+          Niveau {lvl.i + 1} — {lvl.nom}
         </h2>
         <div className="bar3">
           <div style={{ width: `${Math.min(100, Math.round((xp % 250) / 2.5))}%` }} />
@@ -40,22 +41,30 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
           {xp} points d'expérience · encore {lvl.reste} XP pour le niveau suivant.
         </div>
         <div className="chips3" style={{ marginTop: 12 }}>
-          <span>🔥 Série : {streak(prog)} jour(s)</span>
-          <span>⏱️ {fmtMin(prog.minutes)}</span>
-          <span>📚 {stats.vues}/{stats.total} cours</span>
-          <span>🎯 {stats.pctMoy} % en quiz</span>
+          <span>
+            <Icon name="flame" size={13} /> Série : {streak(prog)} jour(s)
+          </span>
+          <span>
+            <Icon name="clock" size={13} /> {fmtMin(prog.minutes)}
+          </span>
+          <span>
+            <Icon name="book" size={13} /> {stats.vues}/{stats.total} cours
+          </span>
+          <span>
+            <Icon name="target" size={13} /> {stats.pctMoy} % en quiz
+          </span>
         </div>
       </section>
 
       <section className="card s3card">
-        <h2>
-          🏅 Badges ({badges.length}/{tousBadges})
-        </h2>
+        <h2>Badges ({badges.length}/{tousBadges})</h2>
         <div className="badges3">
           {badges.length === 0 && <p className="muted">Commence à apprendre pour gagner ton premier badge !</p>}
           {badges.map((b) => (
             <div className="badge3" key={b.nom}>
-              <span>{b.emoji}</span>
+              <span className="badge3-ico">
+                <Icon name={b.ico} size={20} />
+              </span>
               <strong>{b.nom}</strong>
               <small>{b.desc}</small>
             </div>
@@ -64,7 +73,7 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
       </section>
 
       <section className="card s3card">
-        <h2>🎨 Mon avatar</h2>
+        <h2>Mon avatar</h2>
         <div className="avatar-grid">
           {AVATARS.map((a) => (
             <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} onClick={() => onAvatar(a)}>
@@ -75,14 +84,14 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
       </section>
 
       <section className="card s3card">
-        <h2>🕘 Activité récente</h2>
+        <h2>Activité récente</h2>
         {derniersQuiz.length === 0 && <p className="muted">Aucun quiz pour l'instant.</p>}
         {derniersQuiz.map((q, i) => {
           const m = MATIERE_BY_ID[q.matiere] || { label: q.matiere, color: '#64748b' };
           return (
             <div className="hist3" key={i}>
               <span className="hist3-ico" style={{ background: `${m.color}22`, color: m.color }}>
-                {q.score / q.total >= 0.6 ? '✅' : '📘'}
+                <Icon name={q.score / q.total >= 0.6 ? 'check' : 'book'} size={16} />
               </span>
               <div className="hist3-txt">
                 <strong>

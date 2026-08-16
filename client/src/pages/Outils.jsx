@@ -10,11 +10,11 @@ const COEFS_DEF = {
 };
 
 function mention(m) {
-  if (m >= 16) return { txt: 'Très bien', emoji: '🏆', cls: 'tb' };
-  if (m >= 14) return { txt: 'Bien', emoji: '👏', cls: 'b' };
-  if (m >= 12) return { txt: 'Assez bien', emoji: '👍', cls: 'ab' };
+  if (m >= 16) return { txt: 'Très bien', emoji: '', cls: 'tb' };
+  if (m >= 14) return { txt: 'Bien', emoji: '', cls: 'b' };
+  if (m >= 12) return { txt: 'Assez bien', emoji: '', cls: 'ab' };
   if (m >= 10) return { txt: 'Passable', emoji: '✔', cls: 'p' };
-  return { txt: 'Insuffisant', emoji: '💪', cls: 'i' };
+  return { txt: 'Insuffisant', emoji: '', cls: 'i' };
 }
 
 export default function Outils() {
@@ -32,7 +32,7 @@ export default function Outils() {
   return (
     <main className="container">
       <section className="banner">
-        <h2>🧰 Boîte à outils de réussite</h2>
+        <h2>Boîte à outils de réussite</h2>
         <p>
           {me.prenom}, calcule ta moyenne générale en direct et construis ton planning de révision jusqu'au jour J.
         </p>
@@ -203,7 +203,7 @@ function Planning({ filiere }) {
       </h2>
       <div className="outils-bar">
         <div>
-          <label className="label">🗓️ Date de l'examen</label>
+          <label className="label">Date de l'examen</label>
           <input className="input" type="date" value={dateExamen} onChange={(e) => setDateExamen(e.target.value)} />
         </div>
         <div>
@@ -217,7 +217,7 @@ function Planning({ filiere }) {
           </select>
         </div>
       </div>
-      <label className="label">💪 Mes matières faibles (elles reviendront 2× plus souvent)</label>
+      <label className="label">Mes matières faibles (elles reviendront 2× plus souvent)</label>
       <div className="pills">
         {matieres.map((m) => (
           <button
@@ -231,7 +231,7 @@ function Planning({ filiere }) {
         ))}
       </div>
       <button className="btn btn-primary" onClick={generer}>
-        ✨ Générer mon planning
+        Générer mon planning
       </button>
 
       {plan && plan.semaines && plan.semaines.length > 0 && (
@@ -243,7 +243,7 @@ function Planning({ filiere }) {
               </strong>
               <div className="muted small">jusqu'au {new Date(dateExamen + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
             </div>
-            <span className="plan-emoji">🚀</span>
+            
           </div>
 
           {plan.semaines.map((sem, si) => {
@@ -279,7 +279,7 @@ function Planning({ filiere }) {
                           <b>{parId(j.s2).label}</b> {fmtH(j.h2)}
                         </span>
                       </div>
-                      <div className="muted small">💡 {j.tip}</div>
+                      <div className="muted small">{j.tip}</div>
                     </div>
                   </div>
                 ))}

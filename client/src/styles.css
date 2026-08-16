@@ -1110,3 +1110,61 @@ body { background: #f6f7fb; }
 .badge3 span { font-size: 1.5rem; }
 .badge3 strong { font-size: 0.85rem; }
 .badge3 small { color: var(--muted); font-size: 0.68rem; }
+
+/* ================================================================
+   KAY DIANG v6 : palette professionnelle, tuiles photo, icônes
+   ================================================================ */
+:root { --brand: #1d4ed8; --brand-dark: #1e40af; --brand-soft: #e8eefb; }
+body { background: #f7f8fa; }
+.btn-primary { background: linear-gradient(180deg, #2563eb, #1d4ed8); box-shadow: 0 6px 16px rgba(29, 78, 216, 0.25); }
+.otab.active { background: #0f2557; box-shadow: none; }
+.pill.active { background: #0f2557; border-color: #0f2557; }
+.bar3 > div { background: linear-gradient(90deg, #2563eb, #0e7490); }
+.path-timeline::before { background: linear-gradient(#2563eb, #0e7490); }
+.pstep-dot { border-color: #1d4ed8; }
+.mp-step.on { background: #0f2557; }
+.resume3 { background: linear-gradient(135deg, #0b1f3f, #123a7a); box-shadow: 0 12px 30px rgba(11, 31, 63, 0.35); }
+.resume3-txt small { color: #9db8e8; }
+.resume3-ico { width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, 0.14); color: #fff; display: flex; align-items: center; justify-content: center; }
+.shiny { background: linear-gradient(100deg, #1e40af 20%, #0e7490 45%, #2563eb 60%, #1e40af 90%); background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; }
+.reco3-ico { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 10px; background: #e8eefb; color: #1d4ed8; display: flex; align-items: center; justify-content: center; }
+.icon3 { color: #334155; display: flex; align-items: center; justify-content: center; }
+.bico2, .mode3-ico, .badge3-ico, .stat3-emoji {
+  width: 38px; height: 38px; border-radius: 12px; background: #e8eefb; color: #1d4ed8;
+  display: flex; align-items: center; justify-content: center;
+}
+.mode3.on .mode3-ico { background: #fff; }
+.plan3-check { color: #16a34a; display: flex; align-items: center; }
+.box3 { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-radius: 5px; }
+.fav-on { color: #e11d48; }
+.search3 svg { color: #64748b; flex: 0 0 auto; }
+.bnav button svg { display: block; margin: 0 auto 3px; }
+.confetti3 { color: #1d4ed8; }
+.feat3 span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Tuiles photo de l'accueil */
+.ptile {
+  position: relative; border: none; border-radius: 18px; overflow: hidden; min-height: 122px;
+  cursor: pointer; text-align: left; padding: 0; background: #0f2557;
+  animation: tile-pop 0.45s both; animation-delay: calc(var(--i) * 50ms);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+.ptile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.ptile:hover img, .ptile:active img { transform: scale(1.06); }
+.ptile-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 20, 45, 0.08) 30%, rgba(10, 20, 45, 0.88)); }
+.ptile-ico {
+  position: absolute; top: 10px; left: 10px; width: 30px; height: 30px; border-radius: 9px;
+  background: rgba(255, 255, 255, 0.94); color: #0f2557; display: flex; align-items: center; justify-content: center;
+}
+.ptile-txt { position: absolute; left: 12px; right: 12px; bottom: 10px; color: #fff; display: flex; flex-direction: column; }
+.ptile-txt strong { font-size: 0.95rem; letter-spacing: -0.01em; }
+.ptile-txt small { color: #cbd5e1; font-size: 0.68rem; }
+.ptile.feat { grid-column: 1 / -1; min-height: 132px; }
+
+/* Connexion v6 : bleu nuit professionnel */
+.auth-v3 { background: #081226; }
+.auth-glow.g1 { background: #1d4ed8; }
+.auth-glow.g2 { background: #0e7490; }
+.logo3 { background: linear-gradient(135deg, #2563eb, #0e7490); color: #fff; }
+.grad3 { background: linear-gradient(90deg, #60a5fa, #2dd4bf); -webkit-background-clip: text; background-clip: text; }
+.btn3 { background: linear-gradient(180deg, #2563eb, #1d4ed8); box-shadow: 0 10px 26px rgba(29, 78, 216, 0.4); }

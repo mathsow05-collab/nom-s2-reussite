@@ -218,10 +218,11 @@ export default function StudentApp() {
         </button>
         <div className="topbar-user">
           <button className="icon3" onClick={() => setSearchOpen(true)} title="Recherche globale">
-            🔍
+            <Icon name="search" size={17} />
           </button>
           <button className="icon3" onClick={() => setNotifsOpen(true)} title="Notifications">
-            🔔{notifList.length > 0 && <span className="dot3">{notifList.length}</span>}
+            <Icon name="bell" size={17} />
+            {notifList.length > 0 && <span className="dot3">{notifList.length}</span>}
           </button>
           <button className="avatar-btn" onClick={() => setTab('profil')} title="Mon profil">
             {me.avatar || '🧑🏾‍'}
@@ -286,10 +287,10 @@ export default function StudentApp() {
           {filiere === 'AR' && <AudioCoran />}
           {filiere === 'AR' && <QuizAyat />}
           {filiere === 'AR' && <LexiqueArabe />}
-          <div className="search3">
-            <span>🔎</span>
-            <input placeholder="Rechercher un cours…" value={qCours} onChange={(e) => setQCours(e.target.value)} />
-          </div>
+        <div className="search3">
+          <Icon name="search" size={16} />
+          <input placeholder="Rechercher un cours…" value={qCours} onChange={(e) => setQCours(e.target.value)} />
+        </div>
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
               Toutes
@@ -330,19 +331,19 @@ export default function StudentApp() {
       {/* Barre de navigation fixe en bas (application mobile) */}
       <nav className="bnav">
         <button className={tab === 'accueil' ? 'on' : ''} onClick={() => setTab('accueil')}>
-          <span>🏠</span> Accueil
+          <Icon name="home" size={19} /> Accueil
         </button>
         <button className={tab === 'cours' ? 'on' : ''} onClick={() => setTab('cours')}>
-          <span>📚</span> Cours
+          <Icon name="book" size={19} /> Cours
         </button>
         <button className={tab === 'suivi' ? 'on' : ''} onClick={() => setTab('suivi')}>
-          <span>📈</span> Suivi
+          <Icon name="chart" size={19} /> Suivi
         </button>
         <button className={sheet ? 'on' : ''} onClick={() => setSheet(true)}>
-          <span>🧩</span> Plus
+          <Icon name="grid" size={19} /> Plus
         </button>
         <button className={tab === 'profil' ? 'on' : ''} onClick={() => setTab('profil')}>
-          <span>{me.avatar || '🧑🏾‍🎓'}</span> Profil
+          <Icon name="user" size={19} /> Profil
         </button>
       </nav>
 
@@ -350,8 +351,8 @@ export default function StudentApp() {
         <div className="sheet3" onClick={() => setNotifsOpen(false)}>
           <div className="sheet3-card" onClick={(e) => e.stopPropagation()}>
             <div className="sheet3-handle" />
-            <h2 className="sheet3-title">🔔 Notifications</h2>
-            {notifList.length === 0 && <p className="muted">Rien de nouveau pour l'instant. 🌤️</p>}
+            <h2 className="sheet3-title">Notifications</h2>
+            {notifList.length === 0 && <p className="muted">Rien de nouveau pour l'instant.</p>}
             {notifList.map((n, i) => (
               <button
                 key={i}
@@ -361,7 +362,9 @@ export default function StudentApp() {
                   setTab(n.tab);
                 }}
               >
-                <span>{n.emoji}</span>
+                <span className="reco3-ico">
+                  <Icon name={ICO_TAB[n.tab] || 'bell'} size={15} />
+                </span>
                 {n.txt}
               </button>
             ))}
@@ -405,7 +408,9 @@ export default function StudentApp() {
                     setTab(t.id);
                   }}
                 >
-                  <span className={`bico ${t.cls}`}>{t.emoji}</span>
+                  <span className="bico2">
+                    <Icon name={t.icon} size={18} />
+                  </span>
                   {t.titre}
                 </button>
               ))}
@@ -417,19 +422,23 @@ export default function StudentApp() {
   );
 }
 
-// Écran d'accueil : grandes cartes colorées, une par section.
+// Écran d'accueil : cartes photo par section.
 const TUILES = [
-  { id: 'cours', emoji: '📚', titre: 'Cours', sub: 'Vidéos & fiches PDF', cls: 't-indigo' },
-  { id: 'annales', emoji: '📝', titre: 'Annales', sub: 'Sujets d’examens', cls: 't-amber' },
-  { id: 'quiz', emoji: '🎯', titre: 'Quiz', sub: 'Teste-toi en t’amusant', cls: 't-rose' },
-  { id: 'agenda', emoji: '📅', titre: 'Agenda', sub: 'Événements à venir', cls: 't-sky' },
-  { id: 'echanges', emoji: '💬', titre: 'Échanges', sub: 'Écris à l’administration', cls: 't-green' },
-  { id: 'outils', emoji: '🧮', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
-  { id: 'orientation', emoji: '🧭', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
-  { id: 'ia', emoji: '🤖', titre: 'Prof IA', sub: 'Pose toutes tes questions', cls: 't-orange', pasL2: true },
-  { id: 'parcours', emoji: '🕌', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
-  { id: 'culture', emoji: '🌍', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
+  { id: 'cours', icon: 'book', img: '/metiers/ecole.jpg', titre: 'Cours', sub: 'Vidéos & fiches PDF', cls: 't-indigo' },
+  { id: 'annales', icon: 'file', img: '/metiers/lettres.jpg', titre: 'Annales', sub: 'Sujets d’examens', cls: 't-amber' },
+  { id: 'quiz', icon: 'award', img: '/metiers/data.jpg', titre: 'Quiz', sub: 'Teste-toi', cls: 't-rose' },
+  { id: 'agenda', icon: 'calendar', img: '/metiers/campus.jpg', titre: 'Agenda', sub: 'Échéances & planning', cls: 't-sky' },
+  { id: 'echanges', icon: 'chat', img: '/metiers/diplomate.jpg', titre: 'Échanges', sub: 'Administration & communauté', cls: 't-green' },
+  { id: 'outils', icon: 'chart', img: '/metiers/finance.jpg', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
+  { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
+  { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
+  { id: 'parcours', icon: 'book', img: '/metiers/parcours.jpg', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
+  { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
 ];
+const ICO_TAB = {
+  cours: 'book', annales: 'file', quiz: 'target', agenda: 'calendar', echanges: 'chat',
+  outils: 'chart', orientation: 'compass', ia: 'spark', parcours: 'book', culture: 'glob', suivi: 'chart', accueil: 'home',
+};
 
 const PROG_VIDE = { cours: {}, quiz: [], minutes: 0, jours: {} };
 const norm3 = (s) =>
@@ -450,18 +459,20 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
     <main className="container home3">
       <header className="hello3">
         <h1>
-          {salut}, {me.prenom} <span className="wave">{me.avatar || '👋'}</span>
+          {salut}, {me.prenom}
         </h1>
         <p>
           {stats.vues > 0
-            ? `Déjà ${stats.vues} cours ouverts et ${stats.nq} quiz — continue sur ta lancée !`
+            ? `Déjà ${stats.vues} cours ouverts et ${stats.nq} quiz — continue sur ta lancée.`
             : 'Prêt·e pour ta session de travail du jour ?'}
         </p>
       </header>
 
       {stats.last && (
         <button className="resume3" onClick={() => onGo('cours')}>
-          <span className="resume3-ico">▶️</span>
+          <span className="resume3-ico">
+            <Icon name="play" size={18} />
+          </span>
           <span className="resume3-txt">
             <small>Reprendre où tu t'étais arrêté·e</small>
             <strong>{stats.last.titre}</strong>
@@ -471,17 +482,25 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
       )}
 
       <div className="chips3">
-        <span>📚 {stats.vues}/{stats.total} cours</span>
-        <span>🎯 {stats.pctMoy} % en quiz</span>
-        <span>⏱️ {fmtMin(prog.minutes)}</span>
+        <span>
+          <Icon name="book" size={13} /> {stats.vues}/{stats.total} cours
+        </span>
+        <span>
+          <Icon name="target" size={13} /> {stats.pctMoy} % en quiz
+        </span>
+        <span>
+          <Icon name="clock" size={13} /> {fmtMin(prog.minutes)}
+        </span>
       </div>
 
       {conseils.length > 0 && (
         <div className="recos3">
-          <div className="recos3-title">✨ Pour toi aujourd'hui</div>
+          <div className="recos3-title">Recommandé pour toi aujourd'hui</div>
           {conseils.map((r, i) => (
             <button key={i} className="reco3" onClick={() => onGo(r.tab, r.matiere)}>
-              <span>{r.emoji}</span>
+              <span className="reco3-ico">
+                <Icon name={ICO_TAB[r.tab] || 'star'} size={15} />
+              </span>
               {r.txt}
             </button>
           ))}
@@ -493,15 +512,18 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
         {tiles.map((t, i) => (
           <button
             key={t.id}
-            className={t.id === 'cours' ? 'bcard feat' : 'bcard'}
+            className={t.id === 'cours' ? 'ptile feat' : 'ptile'}
             style={{ '--i': i }}
             onClick={() => onOpen(t.id)}
           >
-            <span className={`bico ${t.cls}`}>{t.emoji}</span>
-            {t.id === 'cours' && <span className="bgo">→</span>}
-            <span className="btxt">
+            <img src={t.img} alt="" loading="lazy" />
+            <span className="ptile-shade" />
+            <span className="ptile-ico">
+              <Icon name={t.icon} size={15} />
+            </span>
+            <span className="ptile-txt">
               <strong>{t.titre}</strong>
-              <small>{t.id === 'cours' ? 'Vidéos de cours et fiches PDF, par matière' : t.sub}</small>
+              <small>{t.sub}</small>
             </span>
           </button>
         ))}
@@ -533,7 +555,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
     <div className="gs3" onClick={onClose}>
       <div className="gs3-card" onClick={(e) => e.stopPropagation()}>
         <div className="search3">
-          <span>🔍</span>
+          <Icon name="search" size={16} />
           <input autoFocus placeholder="Rechercher partout : cours, annales, métiers…" value={q} onChange={(e) => setQ(e.target.value)} />
           <button className="icon-btn" onClick={onClose}>
             ✕
@@ -546,7 +568,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
             <strong>Matières</strong>
             {rMat.map((m) => (
               <button key={m.id} className="reco3" onClick={() => onPick('cours', { matiere: m.id })}>
-                <span>🎨</span> {m.label}
+                <span className="reco3-ico"><Icon name="grid" size={15} /></span> {m.label}
               </button>
             ))}
           </div>
@@ -556,7 +578,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
             <strong>Cours</strong>
             {rCours.map((c) => (
               <button key={c.id} className="reco3" onClick={() => onPick('cours', { cours: c })}>
-                <span>📚</span> {c.titre}
+                <span className="reco3-ico"><Icon name="book" size={15} /></span> {c.titre}
               </button>
             ))}
           </div>
@@ -566,7 +588,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
             <strong>Annales</strong>
             {rAnn.map((a) => (
               <button key={a.id} className="reco3" onClick={() => onPick('annales')}>
-                <span>📝</span> {a.annee} — {a.titre}
+                <span className="reco3-ico"><Icon name="file" size={15} /></span> {a.annee} — {a.titre}
               </button>
             ))}
           </div>
@@ -576,7 +598,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
             <strong>Orientation</strong>
             {rMet.map((m) => (
               <button key={m.id} className="reco3" onClick={() => onPick('orientation')}>
-                <span>🧭</span> {m.titre} · {m.domaine}
+                <span className="reco3-ico"><Icon name="compass" size={15} /></span> {m.titre} · {m.domaine}
               </button>
             ))}
           </div>
@@ -586,7 +608,7 @@ function GlobalSearch({ cours, filiere, onClose, onPick }) {
             <strong>Agenda</strong>
             {rAge.map((e) => (
               <button key={e.id} className="reco3" onClick={() => onPick('agenda')}>
-                <span>📅</span> {e.titre}
+                <span className="reco3-ico"><Icon name="calendar" size={15} /></span> {e.titre}
               </button>
             ))}
           </div>
@@ -749,7 +771,7 @@ function CoranEspace({ meId }) {
         <div className="verse-ref">Verset du jour — {v.ref}</div>
       </section>
       <section className="panel" style={{ marginBottom: 16 }}>
-        <h2>🕌 Ma mémorisation des sourates</h2>
+        <h2>Ma mémorisation des sourates</h2>
         <p className="muted small">Touche une sourate pour la passer « en cours » puis « acquise ». Ton progrès est gardé sur cet appareil.</p>
         <div className="mem-bar">
           <div style={{ width: `${pct}%` }} />
@@ -783,7 +805,7 @@ function LexiqueArabe() {
   const visible = cat === 'all' ? mots : mots.filter((m) => m.categorie === cat);
   return (
     <section className="panel" style={{ marginBottom: 16 }}>
-      <h2>📖 Lexique arabe – français</h2>
+      <h2>Lexique arabe – français</h2>
       <div className="pills">
         <button className={cat === 'all' ? 'pill active' : 'pill'} onClick={() => setCat('all')}>
           Tout
