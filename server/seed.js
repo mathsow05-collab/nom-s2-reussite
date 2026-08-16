@@ -11,38 +11,36 @@ function seed(db, log = console.log) {
   const result = { createdIds: [], admins: [] };
 
   /* ---------------- Admins (avec nom affiché + périmètre de filière) ---------------- */
-  if (db.prepare('SELECT COUNT(*) c FROM admins').get().c === 0) {
-    const admins = [
-      { username: process.env.ADMIN1_USERNAME || 'admin', password: process.env.ADMIN1_PASSWORD || 'Admin#S2-2026', display: 'Direction', filiere: 'all' },
-      { username: process.env.ADMIN2_USERNAME || 'partenaire', password: process.env.ADMIN2_PASSWORD || 'Partenaire#S2-2026', display: 'Partenaire', filiere: 'all' },
-      { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
-      { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
-      { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
-      { username: 'aliou', password: 'aliou2026', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
-    ];
-    const ins = db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)');
-    for (const a of admins) {
-      ins.run(a.username, hashPassword(a.password), a.display, a.filiere);
-      result.admins.push({ username: a.username, password: a.password });
-    }
-    log(`[seed] Comptes admin créés : ${admins.map((a) => a.username).join(', ')}`);
-  } else {
-    // Base existante : complète les nouvelles colonnes + ajoute Mouhamed si absent
-    db.prepare("UPDATE admins SET display_name = username WHERE display_name IS NULL").run();
-    const extra = [
-      { username: 'mouhamed', password: 'pelo2007', display: 'Mouhamed Sy Sow', filiere: 'L2' },
-      { username: 'abou', password: 'abou2026', display: 'Abou (responsable S2)', filiere: 'S2' },
-      { username: 'moustapha', password: 'arabe2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
-      { username: 'aliou', password: 'aliou2026', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
-    ];
-    for (const a of extra) {
-      if (!db.prepare('SELECT 1 FROM admins WHERE username = ?').get(a.username)) {
-        db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)')
-          .run(a.username, hashPassword(a.password), a.display, a.filiere);
-        log(`[seed] Compte admin « ${a.username} » (${a.filiere}) ajouté.`);
-      }
+  // Comptes officiels : aliou = accès total ; abou = S2 ; moustapha = arabe ;
+  // mouhamed = L2. Mise à jour idempotente (mot de passe + périmètre).
+  const ADMINS = [
+    { username: 'aliou', password: 'balet05', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
+    { username: 'abou', password: 'tounkara04', display: 'Abou (responsable S2)', filiere: 'S2' },
+    { username: 'moustapha', password: 'ndiaye2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
+    { username: 'mouhamed', password: 'pelo07', display: 'Mouhamed Sy Sow (responsable L2)', filiere: 'L2' },
+  ];
+  const upAdmin = db.prepare('UPDATE admins SET password_hash = ?, display_name = ?, filiere = ? WHERE username = ?');
+  const insAdmin = db.prepare('INSERT INTO admins (username, password_hash, display_name, filiere) VALUES (?, ?, ?, ?)');
+  for (const a of ADMINS) {
+    const r = upAdmin.run(hashPassword(a.password), a.display, a.filiere, a.username);
+    if (r.changes === 0) {
+      insAdmin.run(a.username, hashPassword(a.password), a.display, a.filiere);
+      log(`[seed] Compte admin « ${a.username} » (${a.filiere}) créé.`);
     }
   }
+  // Compte direction supplémentaire via variables d'environnement (Render).
+  if (process.env.ADMIN1_USERNAME) {
+    const exists = db.prepare('SELECT 1 FROM admins WHERE username = ?').get(process.env.ADMIN1_USERNAME);
+    if (!exists) {
+      insAdmin.run(
+        process.env.ADMIN1_USERNAME,
+        hashPassword(process.env.ADMIN1_PASSWORD || 'Admin#S2-2026'),
+        'Direction',
+        'all'
+      );
+    }
+  }
+  result.admins = ADMINS.map((a) => ({ username: a.username, password: a.password }));
 
   /* ---------------- Élèves de démonstration (S2 + L2) ---------------- */
   if (db.prepare("SELECT COUNT(*) c FROM eleves WHERE filiere = 'S2'").get().c === 0) {

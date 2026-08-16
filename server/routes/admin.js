@@ -23,6 +23,18 @@ function refuseAR(req, res, next) {
   if (req.scope === 'AR') return res.status(403).json({ error: 'Module réservé aux autres périmètres de gestion.' });
   return next();
 }
+// La « Culture du monde » est un contenu L2 : fermée aux périmètres AR et S2.
+function refuseCulture(req, res, next) {
+  if (req.scope === 'AR' || req.scope === 'S2')
+    return res.status(403).json({ error: 'Module réservé au périmètre L2.' });
+  return next();
+}
+// Le lexique arabe est un contenu AR : fermé aux périmètres S2 et L2.
+function refuseLexique(req, res, next) {
+  if (req.scope !== 'all' && req.scope !== 'AR')
+    return res.status(403).json({ error: 'Module réservé au périmètre arabe.' });
+  return next();
+}
 const admin = requireAdmin(db);
 
 /* ------------------------- helpers ------------------------- */
@@ -319,11 +331,11 @@ router.delete('/parcours-univ/:id', admin, refuseAR, (req, res) => {
 });
 
 /* ------------------------- Culture du monde ------------------------- */
-router.get('/culture', admin, refuseAR, (req, res) => {
+router.get('/culture', admin, refuseCulture, (req, res) => {
   res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());
 });
 
-router.post('/culture', admin, refuseAR, (req, res) => {
+router.post('/culture', admin, refuseCulture, (req, res) => {
   const { categorie, titre, contenu } = req.body || {};
   if (!titre || !String(titre).trim() || !contenu || !String(contenu).trim())
     return res.status(400).json({ error: 'Titre et contenu obligatoires.' });
@@ -339,17 +351,17 @@ router.post('/culture', admin, refuseAR, (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-router.delete('/culture/:id', admin, refuseAR, (req, res) => {
+router.delete('/culture/:id', admin, refuseCulture, (req, res) => {
   db.prepare('DELETE FROM culture WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 
 /* ------------------------- Lexique arabe ------------------------- */
-router.get('/lexique', admin, (req, res) => {
+router.get('/lexique', admin, refuseLexique, (req, res) => {
   res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());
 });
 
-router.post('/lexique', admin, (req, res) => {
+router.post('/lexique', admin, refuseLexique, (req, res) => {
   const { mot_ar, mot_fr, categorie } = req.body || {};
   if (!mot_ar || !String(mot_ar).trim() || !mot_fr || !String(mot_fr).trim())
     return res.status(400).json({ error: 'Mot arabe et traduction obligatoires.' });
@@ -358,7 +370,7 @@ router.post('/lexique', admin, (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-router.delete('/lexique/:id', admin, (req, res) => {
+router.delete('/lexique/:id', admin, refuseLexique, (req, res) => {
   db.prepare('DELETE FROM lexique WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });

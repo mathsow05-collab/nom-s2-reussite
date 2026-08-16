@@ -184,7 +184,7 @@ export default function StudentApp() {
         </button>
       )}
 
-      {tab === 'ia' && <Assistant />}
+      {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'culture' && filiere === 'L2' && <Culture />}
       {tab === 'annales' && <Annales />}
@@ -248,7 +248,7 @@ const TUILES = [
   { id: 'echanges', emoji: '💬', titre: 'Échanges', sub: 'Écris à l’administration', cls: 't-green' },
   { id: 'outils', emoji: '🧮', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
   { id: 'orientation', emoji: '🧭', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
-  { id: 'ia', emoji: '🤖', titre: 'Prof IA', sub: 'Pose toutes tes questions', cls: 't-orange' },
+  { id: 'ia', emoji: '🤖', titre: 'Prof IA', sub: 'Pose toutes tes questions', cls: 't-orange', pasL2: true },
   { id: 'parcours', emoji: '🕌', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
   { id: 'culture', emoji: '🌍', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
 ];
@@ -265,7 +265,9 @@ function Home({ me, filiere, onOpen }) {
         <div className="hero-sub">Choisis une carte pour commencer à travailler.</div>
       </section>
       <div className="home-grid">
-        {TUILES.filter((t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2')).map((t, i) => (
+        {TUILES.filter(
+          (t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2') && (!t.pasL2 || filiere !== 'L2')
+        ).map((t, i) => (
           <button key={t.id} className={`tile ${t.cls}`} style={{ '--i': i }} onClick={() => onOpen(t.id)}>
             <span className="tile-emoji">{t.emoji}</span>
             <span className="tile-titre">{t.titre}</span>

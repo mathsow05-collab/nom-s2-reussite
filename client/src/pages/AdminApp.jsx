@@ -57,9 +57,12 @@ export default function AdminApp() {
       </div>
     );
 
-  // Le périmètre Arabe ne voit que l'essentiel : pas d'annales/quiz/agenda/métiers.
-  const visibleTabs =
-    me.filiere === 'AR' ? TABS.filter((t) => !['annales', 'quiz', 'agenda', 'metiers', 'culture'].includes(t.id)) : TABS;
+  // Périmètres : Arabe = essentiel seulement ; S2 = pas de Culture (contenu L2).
+  const visibleTabs = TABS.filter((t) => {
+    if (me.filiere === 'AR' && ['annales', 'quiz', 'agenda', 'metiers', 'culture'].includes(t.id)) return false;
+    if (me.filiere === 'S2' && t.id === 'culture') return false;
+    return true;
+  });
 
   return (
     <div className="admin-shell">
