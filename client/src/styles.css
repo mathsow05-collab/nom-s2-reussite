@@ -570,6 +570,53 @@ input[type='file'].input { padding: 8px; }
   color: #fff; font-size: 1.35rem; box-shadow: 0 10px 26px rgba(79, 70, 229, 0.45); cursor: pointer;
 }
 .home-fab:active { transform: scale(0.94); }
+
+/* ---------- Effets « reactbits » : aurora, shiny, marquee, spotlight ---------- */
+.student, .auth-wrap { position: relative; z-index: 0; }
+.aurora { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.aurora .blob {
+  position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.45;
+  animation: blob-float 16s ease-in-out infinite alternate;
+}
+.aurora .b1 { width: 46vw; height: 46vw; min-width: 300px; min-height: 300px; background: #818cf8; top: -12%; left: -14%; }
+.aurora .b2 { width: 40vw; height: 40vw; min-width: 260px; min-height: 260px; background: #f472b6; top: 32%; right: -16%; animation-delay: -6s; }
+.aurora .b3 { width: 34vw; height: 34vw; min-width: 220px; min-height: 220px; background: #fcd34d; bottom: -14%; left: 22%; animation-delay: -11s; }
+@keyframes blob-float {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(6vw, 5vh) scale(1.18); }
+}
+.shiny {
+  background: linear-gradient(100deg, #4f46e5 10%, #db2777 35%, #f59e0b 50%, #db2777 65%, #4f46e5 90%);
+  background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shiny-move 5s linear infinite;
+}
+@keyframes shiny-move { to { background-position: 220% 0; } }
+.marquee {
+  overflow: hidden; margin: 2px 0 16px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.mq-track { display: flex; gap: 10px; width: max-content; animation: mq 28s linear infinite; padding-right: 10px; }
+.mq-item {
+  background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px;
+  font-weight: 700; font-size: 0.78rem; color: var(--brand-dark); white-space: nowrap;
+}
+@keyframes mq { to { transform: translateX(-50%); } }
+.spot { position: relative; overflow: hidden; }
+.spot::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(220px circle at var(--sx, -999px) var(--sy, -999px), rgba(255, 255, 255, 0.55), transparent 65%);
+  opacity: 0; transition: opacity 0.25s;
+}
+.spot:hover::after, .spot:active::after { opacity: 1; }
+/* Connexion : titre révélé ligne par ligne + carte en verre dépoli */
+.auth-title span { display: block; animation: vue-in 0.6s both; animation-delay: var(--d, 0ms); }
+.auth-card {
+  background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65); box-shadow: 0 18px 50px rgba(79, 70, 229, 0.18);
+}
+.hero { overflow: hidden; }
+.hero .shiny { filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25)); }
 .quote-text {
   font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 1.15rem; line-height: 1.5;
   margin: 2px 0; color: #1e1b4b;

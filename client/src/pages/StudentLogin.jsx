@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, setToken } from '../api.js';
 import Icon from '../Icon.jsx';
+import { Aurora, Shiny } from '../components/Fx.jsx';
 
 export default function StudentLogin() {
   const [id, setId] = useState('');
@@ -24,16 +25,15 @@ export default function StudentLogin() {
 
   return (
     <div className="auth-wrap">
+      <Aurora />
       <div className="auth-hero">
         <div className="auth-logo">
-          <Icon name="cap" size={30} /> KAY DIANG
+          <Icon name="cap" size={30} /> <Shiny>KAY DIANG</Shiny>
         </div>
-        <h1>
-          Ton lycée.
-          <br />
-          Ta réussite.
-          <br />
-          Une seule plateforme.
+        <h1 className="auth-title">
+          <span style={{ '--d': '0ms' }}>Ton lycée.</span>
+          <span style={{ '--d': '140ms' }}>Ta réussite.</span>
+          <span className="shiny" style={{ '--d': '280ms' }}>Une seule plateforme.</span>
         </h1>
         <p>
           Filière <strong>S2</strong> : Maths, Physique-Chimie, Français, Histoire-Géo. Filière <strong>L2</strong> :
