@@ -1050,3 +1050,63 @@ body { background: #f6f7fb; }
 }
 .quiz-hist { padding: 16px; margin-top: 14px; }
 .quiz-hist h2 { margin-top: 0; }
+
+/* ================================================================
+   KAY DIANG v5 : écosystème (notifs, recherche, profil, quiz, communauté)
+   ================================================================ */
+.icon3 { border: none; background: #fff; border-radius: 12px; width: 38px; height: 38px; font-size: 1rem; cursor: pointer; position: relative; border: 1px solid #e4e6ee; }
+.dot3 { position: absolute; top: -5px; right: -5px; background: #ef4444; color: #fff; font-size: 0.6rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 99px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.sheet3-title { margin: 0 0 12px; font-size: 1.05rem; }
+
+/* Recherche globale */
+.gs3 { position: fixed; inset: 0; z-index: 70; background: rgba(10, 10, 26, 0.55); padding: 8vh 16px 16px; overflow: auto; animation: fade3 0.2s both; }
+.gs3-card { max-width: 640px; margin: 0 auto; background: #fff; border-radius: 22px; padding: 14px; animation: sheet3-up 0.25s both; max-height: 84vh; overflow: auto; }
+.gs3-sec { margin-top: 12px; }
+.gs3-sec strong { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* Modes de quiz */
+.modes3 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.mode3 {
+  border: 1px solid #ecedf3; background: #fff; border-radius: 16px; padding: 12px; text-align: left;
+  display: flex; flex-direction: column; gap: 2px; cursor: pointer; transition: all 0.15s;
+}
+.mode3 span { font-size: 1.3rem; }
+.mode3 strong { font-size: 0.88rem; }
+.mode3 small { color: var(--muted); font-size: 0.68rem; }
+.mode3.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2); }
+.chrono3 { height: 6px; background: #eef0f6; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+.chrono3 > div { height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); transition: width 1s linear; }
+.fb3 { margin-top: 10px; border-radius: 12px; padding: 10px 12px; font-weight: 700; font-size: 0.85rem; animation: vue-in 0.25s both; }
+.fb3.ok { background: #dcfce7; color: #15803d; }
+.fb3.ko { background: #fee2e2; color: #b91c1c; }
+.quiz-choice.good { border-color: #16a34a; background: #dcfce7; color: #14532d; }
+.quiz-choice.bad { border-color: #ef4444; background: #fee2e2; color: #7f1d1d; }
+.bilan3 { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+.bilan3-chip { border: 2px solid; border-radius: 999px; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; }
+
+/* Planning intelligent */
+.plan3-item { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: left; border: 1px solid #ecedf3; background: #fff; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+.plan3-item.fait { opacity: 0.55; }
+.plan3-item.fait .plan3-txt strong { text-decoration: line-through; }
+.plan3-txt { display: flex; flex-direction: column; }
+.plan3-txt strong { font-size: 0.86rem; }
+.plan3-txt small { color: var(--muted); font-size: 0.72rem; }
+
+/* Communauté */
+.commu3 { border-bottom: 1px solid #f1f2f7; padding: 12px 0; }
+.commu3:last-child { border-bottom: none; }
+.like3 { margin-top: 8px; border: 1px solid #e4e6ee; background: #fff; border-radius: 999px; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; cursor: pointer; }
+.like3.on { background: #eef2ff; border-color: var(--brand); color: var(--brand); }
+.share3 { display: flex; gap: 8px; align-items: center; font-size: 0.8rem; color: var(--muted); margin: 10px 0; }
+.share3 input { width: 18px; height: 18px; accent-color: var(--brand); }
+
+/* Profil v3 */
+.prof3-head { display: flex; align-items: center; gap: 14px; padding: 18px; margin-bottom: 12px; }
+.profil-avatar.big { width: 72px; height: 72px; font-size: 2.3rem; }
+.prof3-id { flex: 1; min-width: 0; }
+.prof3-id strong { font-size: 1.05rem; display: block; }
+.badges3 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.badge3 { border: 1px solid #ecedf3; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 2px; background: linear-gradient(160deg, #fff, #f6f7ff); }
+.badge3 span { font-size: 1.5rem; }
+.badge3 strong { font-size: 0.85rem; }
+.badge3 small { color: var(--muted); font-size: 0.68rem; }

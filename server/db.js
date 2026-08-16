@@ -168,5 +168,7 @@ ensureColumn('parcours_univ', 'image', 'TEXT');
 ensureColumn('metiers', 'parcours', 'TEXT');
 ensureColumn('cours', 'niveau', 'INTEGER');
 ensureColumn('eleves', 'avatar', 'TEXT');
+ensureColumn('questions_eleves', 'public', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('questions_eleves', 'likes', "TEXT NOT NULL DEFAULT '[]'");
 
 module.exports = db;

@@ -100,7 +100,45 @@ const QUIZ = [
       ['Réussir un grand projet', 'finance'],
     ],
   },
+  {
+    q: 'Ta vraie force, c’est…',
+    r: [
+      ['Écouter et aider les autres', 'sante'],
+      ['Expliquer avec des mots simples', 'lettres'],
+      ['Comprendre la logique des choses', 'sciences'],
+      ['Construire de mes mains', 'btp'],
+      ['Convaincre et organiser', 'finance'],
+      ['Défendre ce qui est juste', 'defense'],
+    ],
+  },
+  {
+    q: 'Et après le Bac, ton objectif ?',
+    r: [
+      ['Des études courtes pour travailler vite', 'court'],
+      ['De longues études pour viser haut', 'long'],
+      ['Créer ma propre entreprise', 'entreprendre'],
+      ['Servir mon pays (armée, administration)', 'defense'],
+      ['Continuer mes études à l’étranger', 'etranger'],
+      ['Je ne sais pas encore', 'court'],
+    ],
+  },
 ];
+const COMPETENCES = {
+  sante: ['empathie', 'rigueur scientifique', 'sang-froid'],
+  btp: ['logique', 'dessin technique', 'travail d’équipe'],
+  sciences: ['analyse', 'curiosité', 'méthode'],
+  defense: ['discipline', 'leadership', 'sang-froid'],
+  lettres: ['expression écrite', 'culture générale', 'créativité'],
+  finance: ['organisation', 'calcul mental', 'communication'],
+};
+const TAG_PARCOURS = {
+  sante: ['Santé'],
+  btp: ['Ingénierie', 'Sciences'],
+  sciences: ['Sciences', 'Ingénierie'],
+  defense: ['Droit', 'Sciences Politiques'],
+  lettres: ['Lettres', 'Journalisme', 'Sciences Humaines'],
+  finance: ['Économie', 'Gestion'],
+};
 const TAG_DOMAINES = {
   sante: ['sant', 'médec', 'pharma', 'psych'],
   btp: ['btp', 'bâtiment', 'urban', 'architecture', 'génie'],
@@ -110,7 +148,7 @@ const TAG_DOMAINES = {
   finance: ['finan', 'écon', 'gestion', 'compt', 'tour'],
 };
 
-function OrientationQuiz({ metiers, onPick, onClose }) {
+function OrientationQuiz({ metiers, parcours, onPick, onPickP, onClose }) {
   const [i, setI] = useState(0);
   const [scores, setScores] = useState({});
   const [resultat, setResultat] = useState(null);
@@ -127,7 +165,16 @@ function OrientationQuiz({ metiers, onPick, onClose }) {
           if ((TAG_DOMAINES[t] || []).some((k) => dom.includes(norm(k))) && !sugg.find((x) => x.id === m.id)) sugg.push(m);
         }
       }
-      setResultat((sugg.length ? sugg : metiers.slice(0, 3)).slice(0, 3));
+      const parcs = [];
+      for (const t of top) {
+        for (const kw of TAG_PARCOURS[t] || []) {
+          for (const p of parcours) {
+            if (norm(p.titre).includes(norm(kw)) && !parcs.find((x) => x.id === p.id)) parcs.push(p);
+          }
+        }
+      }
+      const comps = [...new Set(top.flatMap((t) => COMPETENCES[t] || []))].slice(0, 6);
+      setResultat({ met: (sugg.length ? sugg : metiers.slice(0, 3)).slice(0, 3), parcs: parcs.slice(0, 3), comps });
     } else setI(i + 1);
   }
 
@@ -135,9 +182,10 @@ function OrientationQuiz({ metiers, onPick, onClose }) {
     <Modal title="🎯 Quel métier te ressemble ?" onClose={onClose}>
       {resultat ? (
         <>
-          <p className="muted">D'après tes réponses, ces métiers pourraient te plaire :</p>
+          <p className="muted">D'après tes réponses, voici ton profil d'orientation :</p>
+          <h4 className="h4">💼 Métiers qui te ressemblent</h4>
           <div className="quiz-sugg">
-            {resultat.map((m) => (
+            {resultat.met.map((m) => (
               <button key={m.id} className="sugg-card" onClick={() => onPick(m)}>
                 {m.image && <img src={m.image} alt="" />}
                 <strong>{m.titre}</strong>
@@ -145,6 +193,30 @@ function OrientationQuiz({ metiers, onPick, onClose }) {
               </button>
             ))}
           </div>
+          {resultat.parcs.length > 0 && (
+            <>
+              <h4 className="h4">🎓 Parcours d'études conseillés</h4>
+              <div className="tags-wrap">
+                {resultat.parcs.map((p) => (
+                  <button key={p.id} className="tag-chip link" onClick={() => onPickP(p)}>
+                    {p.titre} <Icon name="right" size={12} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {resultat.comps.length > 0 && (
+            <>
+              <h4 className="h4">✨ Compétences à développer</h4>
+              <div className="tags-wrap">
+                {resultat.comps.map((c) => (
+                  <span key={c} className="tag-chip">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
           <div className="form-actions">
             <button className="btn btn-outline" onClick={() => { setI(0); setScores({}); setResultat(null); }}>
               <Icon name="refresh" size={15} /> Refaire le test
@@ -471,11 +543,17 @@ export default function Metiers() {
       {quiz && (
         <OrientationQuiz
           metiers={metiers}
+          parcours={parcours}
           onClose={() => setQuiz(false)}
           onPick={(m) => {
             setQuiz(false);
             setVue('metiers');
             setOpen(m);
+          }}
+          onPickP={(p) => {
+            setQuiz(false);
+            setVue('etudes');
+            setOpenP(p);
           }}
         />
       )}

@@ -1,5 +1,5 @@
-import { MATIERE_BY_ID } from '../api.js';
-import { computeStats, fmtMin, useCountUp } from '../progress.js';
+import { FILIERES, MATIERE_BY_ID } from '../api.js';
+import { computeStats, fmtMin, revisions, useCountUp } from '../progress.js';
 
 function Stat({ emoji, valeur, suffixe, label }) {
   const v = useCountUp(valeur);
@@ -69,6 +69,21 @@ export default function Suivi({ me, cours, prog, onGo }) {
           </div>
           {pc === 100 && pq === 100 && <div className="obj3-win">🏆 Semaine parfaite, bravo !</div>}
         </div>
+      </section>
+
+      <section className="card s3card">
+        <h2>🧠 Révision intelligente</h2>
+        <p className="muted small">Calculé d'après tes erreurs de quiz et le temps écoulé depuis tes derniers cours.</p>
+        {(() => {
+          const rev = revisions(prog, cours, (FILIERES[me.filiere] || FILIERES.S2).matieres);
+          if (rev.length === 0) return <p className="muted">Rien à réviser pour l'instant — continue d'avancer ! 🌱</p>;
+          return rev.map((r, i) => (
+            <button key={i} className="reco3" onClick={() => onGo(r.tab, r.matiere)}>
+              <span>{r.emoji}</span>
+              {r.txt}
+            </button>
+          ));
+        })()}
       </section>
 
       <section className="card s3card">

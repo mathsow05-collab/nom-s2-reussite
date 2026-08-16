@@ -36,6 +36,17 @@ export function addQuiz(id, r) {
   const p = getProg(id);
   p.quiz.push({ ...r, t: Date.now() });
   p.quiz = p.quiz.slice(-60);
+  if (r.erreurs && r.erreurs.length) {
+    p.erreurs = [...(p.erreurs || []), ...r.erreurs].slice(-50);
+  }
+  save(id, p);
+  return p;
+}
+
+/* Retire une erreur revue et réussie (révision intelligente). */
+export function clearErreur(id, matiere, lecon) {
+  const p = getProg(id);
+  p.erreurs = (p.erreurs || []).filter((e) => !(e.matiere === matiere && e.lecon === lecon));
   save(id, p);
   return p;
 }
@@ -127,4 +138,62 @@ export function fmtMin(min) {
   if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
   return `${h} h ${String(min % 60).padStart(2, '0')}`;
+}
+
+/* ---------- Gamification raisonnable : XP, niveaux, badges, série ---------- */
+export function xpOf(prog) {
+  const vues = Object.keys(prog.cours).length;
+  const quizPts = (prog.quiz || []).reduce((s, q) => s + q.score, 0);
+  return vues * 10 + quizPts * 5 + (prog.minutes || 0);
+}
+const NIVEAUX = ['Graine', 'Pousse', 'Arbre', 'Étoile', 'Champion', 'Légende'];
+const PAS_XP = 250;
+export function levelOf(xp) {
+  const i = Math.min(NIVEAUX.length - 1, Math.floor(xp / PAS_XP));
+  return { nom: NIVEAUX[i], i, reste: PAS_XP - (xp % PAS_XP), max: NIVEAUX.length - 1 };
+}
+export function streak(prog) {
+  const day = (off) => {
+    const d = new Date();
+    d.setDate(d.getDate() - off);
+    return d.toISOString().slice(0, 10);
+  };
+  const off0 = prog.jours[day(0)] ? 0 : 1; // aujourd'hui pas encore actif = on part d'hier
+  let s = 0;
+  while (prog.jours[day(off0 + s)]) s += 1;
+  return s;
+}
+export function badgesOf(prog, stats) {
+  const b = [];
+  const push = (ok, emoji, nom, desc) => ok && b.push({ emoji, nom, desc });
+  push(stats.vues >= 1, '🌱', 'Premier pas', 'Ouvrir son premier cours');
+  push(stats.vues >= 5, '📚', 'Curieux·se', 'Ouvrir 5 cours');
+  push(stats.vues >= 15, '🎓', 'Studieux·se', 'Ouvrir 15 cours');
+  push(stats.nq >= 1, '🎯', 'Premier quiz', 'Terminer un quiz');
+  push(stats.nq >= 10, '🏹', 'Entraîné·e', 'Terminer 10 quiz');
+  push(stats.pctMoy >= 80 && stats.nq >= 1, '⚡', 'Sharp', 'Moyenne quiz ≥ 80 %');
+  push(streak(prog) >= 3, '🔥', 'Série ×3', '3 jours actifs d’affilée');
+  push((prog.minutes || 0) >= 60, '⏱️', 'Marathon', '60 minutes d’étude cumulées');
+  push(stats.coursSemaine >= 4 && stats.quizSemaine >= 2, '🏆', 'Semaine parfaite', '4 cours + 2 quiz dans la semaine');
+  return b;
+}
+
+/* ---------- Révision intelligente : erreurs de quiz + mémoire qui s'estompe ---------- */
+export function revisions(prog, coursAll, matieres) {
+  const out = [];
+  const lbl = (m) => (matieres.find((x) => x.id === m) || { label: m }).label;
+  const parMat = {};
+  for (const e of prog.erreurs || []) parMat[e.matiere] = (parMat[e.matiere] || 0) + 1;
+  for (const [m, n] of Object.entries(parMat).sort((a, b) => b[1] - a[1]).slice(0, 2)) {
+    out.push({ emoji: '🧠', txt: `${n} erreur(s) en ${lbl(m)} → refais un quiz pour les effacer`, tab: 'quiz', matiere: m });
+  }
+  const now = Date.now();
+  const anciens = Object.values(prog.cours)
+    .filter((c) => now - c.t > 7 * 86400000)
+    .sort((a, b) => a.t - b.t)
+    .slice(0, 2);
+  for (const c of anciens) {
+    out.push({ emoji: '🔁', txt: `${c.titre} → à rafraîchir (vu il y a plus de 7 jours)`, tab: 'cours', matiere: c.matiere });
+  }
+  return out.slice(0, 4);
 }

@@ -536,7 +536,7 @@ router.post('/questions/:id/repondre', admin, (req, res) => {
   if (!checkScope(req, res, q)) return;
   const reponse = String(req.body?.reponse || '').trim();
   if (!reponse) return res.status(400).json({ error: 'La réponse est obligatoire.' });
-  db.prepare("UPDATE questions_eleves SET reponse = ?, statut = 'repondu', repondu_at = ? WHERE id = ?")
+  db.prepare("UPDATE questions_eleves SET reponse = ?, statut = 'repondu', repondu_at = ?, public = 1 WHERE id = ?")
     .run(reponse, new Date().toISOString(), q.id);
   // Temps réel : l'élève connecté reçoit la réponse immédiatement.
   sse.send(q.eleve_db_id, 'reponse', { id: q.id, reponse });

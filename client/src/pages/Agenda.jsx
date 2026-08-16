@@ -28,10 +28,63 @@ function statut(e) {
 export default function Agenda() {
   const [list, setList] = useState(null);
   const [open, setOpen] = useState(null);
+  const [me, setMe] = useState(null);
+  const [plan, setPlan] = useState(null);
+  const [done, setDone] = useState({});
 
   useEffect(() => {
     api('/eleve/echeances').then(setList);
+    api('/eleve/me').then((m) => {
+      setMe(m);
+      try {
+        const p = JSON.parse(localStorage.getItem(`s2r_plan_${m.eleve_id}`) || 'null');
+        if (p) {
+          setPlan(p.sessions);
+          setDone(p.done || {});
+        }
+      } catch {
+        /* rien */
+      }
+    });
   }, []);
+
+  function sauverPlan(sessions, doneNext) {
+    localStorage.setItem(`s2r_plan_${me.eleve_id}`, JSON.stringify({ sessions, done: doneNext }));
+  }
+
+  // Planning intelligent : 3 séances de révision par échéance (J-7, J-3, J-1).
+  function generer() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessions = [];
+    for (const e of list) {
+      const debut = new Date(e.date_debut + 'T00:00:00');
+      const diff = Math.round((debut - today) / 86400000);
+      if (diff < 0 || diff > 21) continue;
+      for (const off of [7, 3, 1]) {
+        const d = new Date(debut);
+        d.setDate(d.getDate() - off);
+        if (d >= today) {
+          sessions.push({
+            id: `${e.id}-${off}`,
+            date: d.toISOString().slice(0, 10),
+            titre: `Réviser pour « ${e.titre} »`,
+            sub: off === 1 ? 'Dernière ligne droite : fiches + annales' : off === 3 ? 'Faire un sujet en conditions réelles' : 'Relire le cours et faire un quiz',
+          });
+        }
+      }
+    }
+    sessions.sort((a, b) => a.date.localeCompare(b.date));
+    setPlan(sessions);
+    setDone({});
+    sauverPlan(sessions, {});
+  }
+
+  function cocher(id) {
+    const next = { ...done, [id]: !done[id] };
+    setDone(next);
+    sauverPlan(plan, next);
+  }
 
   if (!list)
     return (
@@ -45,6 +98,42 @@ export default function Agenda() {
       <section className="banner">
         <h2>Agenda des échéances</h2>
         <p>Bac, concours, compositions : les dates clés, ce qu'il faut faire et où ça se passe. Touche une carte pour le détail.</p>
+      </section>
+
+      <section className="card s3card plan3">
+        <h2>🗓️ Mon planning de révision intelligent</h2>
+        {plan === null ? (
+          <>
+            <p className="muted small">
+              À partir de tes échéances (J-7, J-3, J-1), la plateforme construit automatiquement ton planning de
+              révision, séance par séance.
+            </p>
+            <button className="btn btn-primary" onClick={generer}>
+              ✨ Générer mon planning
+            </button>
+          </>
+        ) : plan.length === 0 ? (
+          <p className="muted small">Aucune échéance proche : profite-en pour avancer tes cours ! 🌱</p>
+        ) : (
+          <>
+            {plan.map((s) => (
+              <button key={s.id} className={done[s.id] ? 'plan3-item fait' : 'plan3-item'} onClick={() => cocher(s.id)}>
+                <span className="plan3-check">{done[s.id] ? '✅' : '⬜'}</span>
+                <span className="plan3-txt">
+                  <strong>{s.titre}</strong>
+                  <small>
+                    {new Date(s.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} · {s.sub}
+                  </small>
+                </span>
+              </button>
+            ))}
+            <div className="s3-actions">
+              <button className="btn btn-outline" onClick={generer}>
+                ↺ Régénérer
+              </button>
+            </div>
+          </>
+        )}
       </section>
       <div className="agenda-list timeline">
         {list.map((e) => {

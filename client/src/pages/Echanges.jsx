@@ -6,6 +6,10 @@ import { Spinner } from '../ui.jsx';
 export default function Echanges() {
   const [questions, setQuestions] = useState(null);
   const [idees, setIdees] = useState(null);
+  const [commu, setCommu] = useState(null);
+  const [vue, setVue] = useState('perso');
+  const [share, setShare] = useState(false);
+  const [meId, setMeId] = useState(null);
   const [qSujet, setQSujet] = useState('');
   const [qMsg, setQMsg] = useState('');
   const [iMsg, setIMsg] = useState('');
@@ -15,10 +19,17 @@ export default function Echanges() {
   const load = () => {
     api('/eleve/questions').then(setQuestions);
     api('/eleve/idees').then(setIdees);
+    api('/eleve/communaute').then(setCommu).catch(() => setCommu([]));
   };
   useEffect(() => {
+    api('/eleve/me').then((m) => setMeId(m.id));
     load();
   }, []);
+
+  async function like(id) {
+    await api('/eleve/communaute/like', { method: 'POST', body: { id } });
+    api('/eleve/communaute').then(setCommu);
+  }
 
   // Réponse admin en temps réel (poussée par le serveur via SSE)
   useEffect(() => {
@@ -37,7 +48,7 @@ export default function Echanges() {
     e.preventDefault();
     setBusy(true);
     try {
-      await api('/eleve/questions', { method: 'POST', body: { sujet: qSujet, message: qMsg } });
+      await api('/eleve/questions', { method: 'POST', body: { sujet: qSujet, message: qMsg, public: share ? 1 : 0 } });
       setQMsg('');
       setQSujet('');
       load();
@@ -62,10 +73,51 @@ export default function Echanges() {
     <main className="container">
       {toast && <div className="toast">{toast}</div>}
       <section className="banner">
-        <h2>Échanges avec l'administration</h2>
-        <p>Une question sur un cours ? Pose-la ici : la réponse arrive directement sur ton espace, en temps réel. Et propose tes idées pour améliorer la plateforme !</p>
+        <h2>Échanges & communauté</h2>
+        <p>Dialogue avec l'administration, et profite des questions déjà répondues partagées par les autres élèves de ta filière.</p>
       </section>
 
+      <div className="pills" style={{ marginBottom: 12 }}>
+        <button className={vue === 'perso' ? 'pill active' : 'pill'} onClick={() => setVue('perso')}>
+          💬 Mes échanges
+        </button>
+        <button className={vue === 'commu' ? 'pill active' : 'pill'} onClick={() => setVue('commu')}>
+          🌍 Communauté ({commu ? commu.length : '…'})
+        </button>
+      </div>
+
+      {vue === 'commu' && (
+        <section className="panel">
+          <h2>🌍 Questions partagées de ta filière</h2>
+          {!commu || commu.length === 0 ? (
+            <p className="muted">Pas encore de questions partagées. Coche « partager » en posant ta question pour aider les autres !</p>
+          ) : (
+            commu.map((c) => (
+              <div className="commu3" key={c.id}>
+                <div className="chat-msg moi">
+                  <div className="chat-bulle">
+                    <span className="thread-from">🧑🏾‍ {c.prenom} {c.nom}</span>
+                    {c.sujet && <span className="thread-sujet">{c.sujet}</span>}
+                    {c.message}
+                  </div>
+                </div>
+                <div className="chat-msg ia">
+                  <div className="chat-bulle reponse-admin">
+                    <span className="thread-from">🧑🏾‍🏫 Administration</span>
+                    {c.reponse}
+                  </div>
+                </div>
+                <button className={commu && c.likes.includes(meId) ? 'like3 on' : 'like3'} onClick={() => like(c.id)}>
+                  👍 {c.likes.length}
+                </button>
+              </div>
+            ))
+          )}
+        </section>
+      )}
+
+      {vue === 'perso' && (
+      <>
       <section className="panel">
         <h2>
           <Icon name="chat" size={17} /> Poser une question
@@ -75,6 +127,10 @@ export default function Echanges() {
           <input className="input" placeholder="Ex. : le cours sur l'énergie mécanique" value={qSujet} onChange={(e) => setQSujet(e.target.value)} />
           <label className="label">Ta question *</label>
           <textarea className="input" rows="3" required value={qMsg} onChange={(e) => setQMsg(e.target.value)} placeholder="Je n'ai pas compris comment on choisit le référentiel…" />
+          <label className="share3">
+            <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} />
+            🌍 Partager ma question (et sa réponse) avec les autres élèves de ma filière
+          </label>
           <button className="btn btn-primary" disabled={busy || !qMsg.trim()}>
             Envoyer ma question
           </button>
@@ -129,6 +185,8 @@ export default function Echanges() {
           </p>
         )}
       </section>
+      </>
+      )}
     </main>
   );
 }

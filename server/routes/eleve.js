@@ -246,11 +246,36 @@ router.get('/questions', requireEleve(db), (req, res) => {
 router.post('/questions', requireEleve(db), (req, res) => {
   const message = String(req.body?.message || '').trim();
   if (!message) return res.status(400).json({ error: 'Le message est obligatoire.' });
+  const pub = req.body?.public ? 1 : 0;
   const info = db
-    .prepare('INSERT INTO questions_eleves (eleve_db_id, eleve_ref, filiere, sujet, message) VALUES (?, ?, ?, ?, ?)')
-    .run(req.eleve.id, req.eleve.eleve_id, req.eleve.filiere || 'S2', String(req.body?.sujet || '').trim() || null, message);
+    .prepare('INSERT INTO questions_eleves (eleve_db_id, eleve_ref, filiere, sujet, message, public) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(req.eleve.id, req.eleve.eleve_id, req.eleve.filiere || 'S2', String(req.body?.sujet || '').trim() || null, message, pub);
   addLog('question_posee', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: req.body?.sujet || '' });
   res.status(201).json({ id: info.lastInsertRowid });
+});
+
+/* Espace communautaire : questions partagées (publiées une fois répondues). */
+router.get('/communaute', requireEleve(db), (req, res) => {
+  const f = req.eleve.filiere || 'S2';
+  const rows = db
+    .prepare(
+      `SELECT q.id, q.sujet, q.message, q.reponse, q.likes, q.repondu_at, e.prenom, e.nom
+       FROM questions_eleves q JOIN eleves e ON e.id = q.eleve_db_id
+       WHERE q.public = 1 AND q.statut = 'repondu' AND q.filiere = ?
+       ORDER BY q.id DESC LIMIT 60`
+    )
+    .all(f);
+  res.json(rows.map((r) => ({ ...r, likes: JSON.parse(r.likes || '[]') })));
+});
+
+router.post('/communaute/like', requireEleve(db), (req, res) => {
+  const id = Number(req.body?.id);
+  const q = db.prepare('SELECT * FROM questions_eleves WHERE id = ? AND public = 1').get(id);
+  if (!q) return res.status(404).json({ error: 'Introuvable.' });
+  let likes = JSON.parse(q.likes || '[]');
+  likes = likes.includes(req.eleve.id) ? likes.filter((x) => x !== req.eleve.id) : [...likes, req.eleve.id];
+  db.prepare('UPDATE questions_eleves SET likes = ? WHERE id = ?').run(JSON.stringify(likes), id);
+  res.json({ likes });
 });
 
 router.get('/idees', requireEleve(db), (req, res) => {

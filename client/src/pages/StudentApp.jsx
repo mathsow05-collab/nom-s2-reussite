@@ -16,6 +16,7 @@ import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
+import Profil from './Profil.jsx';
 import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
 
 export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
@@ -63,6 +64,48 @@ export default function StudentApp() {
     return () => clearInterval(t);
   }, [me]);
 
+  // Notifications intelligentes : nouveautés, échéances proches, objectifs.
+  useEffect(() => {
+    if (!me || !cours) return undefined;
+    let live = true;
+    (async () => {
+      const id = me.eleve_id;
+      const seenKey = `s2r_seen_${id}`;
+      let seen = null;
+      try {
+        seen = JSON.parse(localStorage.getItem(seenKey) || 'null');
+      } catch {
+        seen = null;
+      }
+      const [annales, echeances] = await Promise.all([
+        api('/eleve/annales').catch(() => []),
+        api('/eleve/echeances').catch(() => []),
+      ]);
+      if (!live) return;
+      const premier = !seen;
+      seen = seen || { cours: [], annales: [] };
+      const list = [];
+      if (!premier) {
+        for (const c of cours) if (!seen.cours.includes(c.id)) list.push({ emoji: '📚', txt: `Nouveau cours disponible : ${c.titre}`, tab: 'cours' });
+        for (const a of annales) if (!seen.annales.includes(a.id)) list.push({ emoji: '📝', txt: `Nouvelle annale ${a.annee} : ${a.titre}`, tab: 'annales' });
+      }
+      const now = Date.now();
+      for (const e of echeances) {
+        const days = Math.ceil((new Date(e.date_debut) - now) / 86400000);
+        if (days >= 0 && days <= 7)
+          list.push({ emoji: '⏰', txt: `${e.titre} — ${days === 0 ? 'c’est aujourd’hui !' : `dans ${days} j`}`, tab: 'agenda' });
+      }
+      const st = computeStats(getProg(id), cours);
+      if (st.quizSemaine === 0) list.push({ emoji: '🎯', txt: 'Objectif de la semaine : fais ton premier quiz', tab: 'quiz' });
+      if (st.coursSemaine === 0) list.push({ emoji: '📖', txt: 'Objectif de la semaine : ouvre au moins un cours', tab: 'cours' });
+      setNotifList(list.slice(0, 12));
+      localStorage.setItem(seenKey, JSON.stringify({ cours: cours.map((c) => c.id), annales: annales.map((a) => a.id) }));
+    })();
+    return () => {
+      live = false;
+    };
+  }, [me, cours]);
+
   // Temps réel : le serveur pousse la déconnexion forcée via SSE.
   useEffect(() => {
     if (!me) return undefined;
@@ -96,10 +139,12 @@ export default function StudentApp() {
     return () => clearInterval(t);
   }, [me]);
 
-  const [profil, setProfil] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [prog, setProg] = useState(null);
   const [qCours, setQCours] = useState('');
+  const [notifsOpen, setNotifsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifList, setNotifList] = useState([]);
 
   function logout() {
     api('/eleve/logout').catch(() => {});
@@ -172,8 +217,14 @@ export default function StudentApp() {
           <Icon name="cap" size={22} /> <span>KAY DIANG</span>
         </button>
         <div className="topbar-user">
-          <button className="avatar-btn" onClick={() => setProfil(true)} title="Mon profil">
-            {me.avatar || '🧑🏾‍🎓'}
+          <button className="icon3" onClick={() => setSearchOpen(true)} title="Recherche globale">
+            🔍
+          </button>
+          <button className="icon3" onClick={() => setNotifsOpen(true)} title="Notifications">
+            🔔{notifList.length > 0 && <span className="dot3">{notifList.length}</span>}
+          </button>
+          <button className="avatar-btn" onClick={() => setTab('profil')} title="Mon profil">
+            {me.avatar || '🧑🏾‍'}
           </button>
           <div className="topbar-id">
             <strong>
@@ -206,6 +257,18 @@ export default function StudentApp() {
         />
       )}
       {tab === 'suivi' && <Suivi me={me} cours={cours} prog={prog || PROG_VIDE} onGo={(t) => setTab(t)} />}
+      {tab === 'profil' && (
+        <Profil
+          me={me}
+          cours={cours}
+          prog={prog || PROG_VIDE}
+          onAvatar={(a) => {
+            api('/eleve/profil', { method: 'POST', body: { avatar: a } }).then(() => setMe((m) => ({ ...m, avatar: a })));
+          }}
+          onGo={(t) => setTab(t)}
+          logout={logout}
+        />
+      )}
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
@@ -263,13 +326,6 @@ export default function StudentApp() {
       )}
 
       {viewer && <Viewer c={viewer} onClose={() => setViewer(null)} />}
-      {profil && (
-        <ProfilModal
-          me={me}
-          onClose={() => setProfil(false)}
-          onAvatar={(a) => setMe((m) => ({ ...m, avatar: a }))}
-        />
-      )}
 
       {/* Barre de navigation fixe en bas (application mobile) */}
       <nav className="bnav">
@@ -285,10 +341,50 @@ export default function StudentApp() {
         <button className={sheet ? 'on' : ''} onClick={() => setSheet(true)}>
           <span>🧩</span> Plus
         </button>
-        <button className={profil ? 'on' : ''} onClick={() => setProfil(true)}>
+        <button className={tab === 'profil' ? 'on' : ''} onClick={() => setTab('profil')}>
           <span>{me.avatar || '🧑🏾‍🎓'}</span> Profil
         </button>
       </nav>
+
+      {notifsOpen && (
+        <div className="sheet3" onClick={() => setNotifsOpen(false)}>
+          <div className="sheet3-card" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet3-handle" />
+            <h2 className="sheet3-title">🔔 Notifications</h2>
+            {notifList.length === 0 && <p className="muted">Rien de nouveau pour l'instant. 🌤️</p>}
+            {notifList.map((n, i) => (
+              <button
+                key={i}
+                className="reco3"
+                onClick={() => {
+                  setNotifsOpen(false);
+                  setTab(n.tab);
+                }}
+              >
+                <span>{n.emoji}</span>
+                {n.txt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {searchOpen && (
+        <GlobalSearch
+          cours={cours}
+          filiere={filiere}
+          onClose={() => setSearchOpen(false)}
+          onPick={(t, payload) => {
+            setSearchOpen(false);
+            if (payload?.matiere) setMatiere(payload.matiere);
+            setTab(t);
+            if (payload?.cours) {
+              setViewer(payload.cours);
+              setProg(markCours(me.eleve_id, payload.cours));
+            }
+          }}
+        />
+      )}
 
       {sheet && (
         <div className="sheet3" onClick={() => setSheet(false)}>
@@ -411,6 +507,92 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
         ))}
       </div>
     </main>
+  );
+}
+
+/* Recherche globale : cours, matières, annales, orientation, agenda. */
+function GlobalSearch({ cours, filiere, onClose, onPick }) {
+  const [q, setQ] = useState('');
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    Promise.all([
+      api('/eleve/annales').catch(() => []),
+      api('/eleve/metiers').catch(() => []),
+      api('/eleve/echeances').catch(() => []),
+    ]).then(([a, m, e]) => setData({ a, m, e }));
+  }, []);
+  const nq = norm3(q);
+  const matieres = (FILIERES[filiere] || FILIERES.S2).matieres;
+  const rCours = nq ? cours.filter((c) => norm3(`${c.titre} ${c.description}`).includes(nq)).slice(0, 4) : [];
+  const rMat = nq ? matieres.filter((m) => norm3(m.label).includes(nq)).slice(0, 3) : [];
+  const rAnn = nq && data ? data.a.filter((a) => norm3(`${a.titre} ${a.annee}`).includes(nq)).slice(0, 3) : [];
+  const rMet = nq && data ? data.m.filter((m) => norm3(`${m.titre} ${m.domaine}`).includes(nq)).slice(0, 3) : [];
+  const rAge = nq && data ? data.e.filter((e) => norm3(`${e.titre} ${e.description || ''}`).includes(nq)).slice(0, 3) : [];
+  const vide = nq && !rCours.length && !rMat.length && !rAnn.length && !rMet.length && !rAge.length;
+  return (
+    <div className="gs3" onClick={onClose}>
+      <div className="gs3-card" onClick={(e) => e.stopPropagation()}>
+        <div className="search3">
+          <span>🔍</span>
+          <input autoFocus placeholder="Rechercher partout : cours, annales, métiers…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <button className="icon-btn" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        {!nq && <p className="muted small">Tape au moins deux lettres pour chercher dans toute la plateforme.</p>}
+        {vide && <p className="muted small">Aucun résultat pour « {q} ».</p>}
+        {rMat.length > 0 && (
+          <div className="gs3-sec">
+            <strong>Matières</strong>
+            {rMat.map((m) => (
+              <button key={m.id} className="reco3" onClick={() => onPick('cours', { matiere: m.id })}>
+                <span>🎨</span> {m.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {rCours.length > 0 && (
+          <div className="gs3-sec">
+            <strong>Cours</strong>
+            {rCours.map((c) => (
+              <button key={c.id} className="reco3" onClick={() => onPick('cours', { cours: c })}>
+                <span>📚</span> {c.titre}
+              </button>
+            ))}
+          </div>
+        )}
+        {rAnn.length > 0 && (
+          <div className="gs3-sec">
+            <strong>Annales</strong>
+            {rAnn.map((a) => (
+              <button key={a.id} className="reco3" onClick={() => onPick('annales')}>
+                <span>📝</span> {a.annee} — {a.titre}
+              </button>
+            ))}
+          </div>
+        )}
+        {rMet.length > 0 && (
+          <div className="gs3-sec">
+            <strong>Orientation</strong>
+            {rMet.map((m) => (
+              <button key={m.id} className="reco3" onClick={() => onPick('orientation')}>
+                <span>🧭</span> {m.titre} · {m.domaine}
+              </button>
+            ))}
+          </div>
+        )}
+        {rAge.length > 0 && (
+          <div className="gs3-sec">
+            <strong>Agenda</strong>
+            {rAge.map((e) => (
+              <button key={e.id} className="reco3" onClick={() => onPick('agenda')}>
+                <span>📅</span> {e.titre}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
