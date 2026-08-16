@@ -11,6 +11,7 @@ export default function Annales() {
   const [list, setList] = useState(null);
   const [annee, setAnnee] = useState('all');
   const [matiere, setMatiere] = useState('all');
+  const [q, setQ] = useState('');
   const [viewer, setViewer] = useState(null); // { a, type }
 
   useEffect(() => {
@@ -33,6 +34,10 @@ export default function Annales() {
     );
 
   const matieres = (FILIERES[me.filiere] || FILIERES.S2).matieres;
+  const nq = q.trim().toLowerCase();
+  const liste = nq
+    ? list.filter((a) => `${a.titre} ${(MATIERE_BY_ID[a.matiere] || { label: a.matiere }).label} ${a.annee}`.toLowerCase().includes(nq))
+    : list;
 
   return (
     <main className="container">
@@ -42,6 +47,10 @@ export default function Annales() {
       </section>
 
       <div className="outils-bar">
+        <div className="search3">
+          <span>🔎</span>
+          <input placeholder="Rechercher un sujet…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
         <select className="input" value={annee} onChange={(e) => setAnnee(e.target.value)}>
           <option value="all">Toutes les années</option>
           {ANNEES.map((a) => (
@@ -62,11 +71,11 @@ export default function Annales() {
         </div>
       </div>
 
-      {list.length === 0 ? (
+      {liste.length === 0 ? (
         <div className="empty">Aucune annale pour ces filtres. L'administration en ajoute régulièrement.</div>
       ) : (
         <div className="annales-list">
-          {list.map((a) => {
+          {liste.map((a) => {
             const m = MATIERE_BY_ID[a.matiere] || { label: a.matiere, color: '#64748b' };
             return (
               <article className="card annale-card" key={a.id} style={{ '--mc': m.color }}>

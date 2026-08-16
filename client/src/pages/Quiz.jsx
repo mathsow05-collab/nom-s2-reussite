@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Spinner } from '../ui.jsx';
+import { addQuiz, getProg } from '../progress.js';
 
 export default function Quiz() {
   const [me, setMe] = useState(null);
@@ -13,10 +14,12 @@ export default function Quiz() {
   const [questions, setQuestions] = useState([]);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const [hist, setHist] = useState([]);
 
   useEffect(() => {
     api('/eleve/me').then((m) => {
       setMe(m);
+      setHist([...getProg(m.eleve_id).quiz].sort((a, b) => b.t - a.t).slice(0, 5));
       const first = (FILIERES[m.filiere] || FILIERES.S2).matieres[0].id;
       setMatiere(first);
     });
@@ -88,6 +91,31 @@ export default function Quiz() {
             <Icon name="award" size={16} /> Lancer le quiz
           </button>
         </div>
+        {hist.length > 0 && (
+          <section className="card quiz-hist">
+            <h2>🕘 Tes derniers quiz</h2>
+            {hist.map((q, i) => {
+              const m = MATIERE_BY_ID[q.matiere] || { label: q.matiere, color: '#64748b' };
+              const pct = Math.round((q.score / q.total) * 100);
+              return (
+                <div className="hist3" key={i}>
+                  <span className="hist3-ico" style={{ background: `${m.color}22`, color: m.color }}>
+                    {pct >= 60 ? '✅' : '📘'}
+                  </span>
+                  <div className="hist3-txt">
+                    <strong>
+                      {m.label} — {q.score}/{q.total}
+                    </strong>
+                    <small>{q.lecon}</small>
+                  </div>
+                  <button className="btn btn-outline" onClick={() => { setMatiere(q.matiere); setLecon(q.lecon); }}>
+                    Refaire
+                  </button>
+                </div>
+              );
+            })}
+          </section>
+        )}
       </main>
     );
 
@@ -98,7 +126,8 @@ export default function Quiz() {
     const mention = pct >= 80 ? 'Excellent ! 🔥' : pct >= 60 ? 'Bien joué, continue !' : pct >= 40 ? 'Pas mal, mais revois la leçon.' : 'Il faut reprendre le cours, courage !';
     return (
       <main className="container">
-        <div className="card quiz-result">
+        <div className={pct >= 80 ? 'card quiz-result win' : 'card quiz-result'}>
+          {pct >= 80 && <div className="confetti3">🎉</div>}
           <div className="quiz-score">
             {score}/{questions.length}
           </div>
@@ -169,7 +198,15 @@ export default function Quiz() {
               Suivant <Icon name="right" size={15} />
             </button>
           ) : (
-            <button className="btn btn-primary" disabled={answers.some((a) => a == null)} onClick={() => setStep('result')}>
+            <button
+              className="btn btn-primary"
+              disabled={answers.some((a) => a == null)}
+              onClick={() => {
+                const sc = questions.reduce((s, q, i) => s + (answers[i] === q.bonne ? 1 : 0), 0);
+                addQuiz(me.eleve_id, { matiere, lecon, score: sc, total: questions.length });
+                setStep('result');
+              }}
+            >
               <Icon name="check" size={15} /> Terminer
             </button>
           )}

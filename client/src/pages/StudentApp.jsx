@@ -15,6 +15,8 @@ import Echanges from './Echanges.jsx';
 import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
+import Suivi from './Suivi.jsx';
+import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
 
 export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
 
@@ -53,6 +55,14 @@ export default function StudentApp() {
     load();
   }, [load]);
 
+  // Suivi local d'activité : chargement + 1 minute d'étude comptée par minute passée.
+  useEffect(() => {
+    if (!me) return undefined;
+    setProg(getProg(me.eleve_id));
+    const t = setInterval(() => setProg(tickMinutes(me.eleve_id, 1)), 60000);
+    return () => clearInterval(t);
+  }, [me]);
+
   // Temps réel : le serveur pousse la déconnexion forcée via SSE.
   useEffect(() => {
     if (!me) return undefined;
@@ -87,6 +97,9 @@ export default function StudentApp() {
   }, [me]);
 
   const [profil, setProfil] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [prog, setProg] = useState(null);
+  const [qCours, setQCours] = useState('');
 
   function logout() {
     api('/eleve/logout').catch(() => {});
@@ -138,7 +151,9 @@ export default function StudentApp() {
 
   const filiere = me.filiere || 'S2';
   const matieres = (FILIERES[filiere] || FILIERES.S2).matieres;
-  const visible = matiere === 'all' ? cours : cours.filter((c) => c.matiere === matiere);
+  const visibleAll = matiere === 'all' ? cours : cours.filter((c) => c.matiere === matiere);
+  const nq3 = norm3(qCours);
+  const visible = nq3 ? visibleAll.filter((c) => norm3(`${c.titre} ${c.description}`).includes(nq3)) : visibleAll;
 
   const wm = encodeURIComponent(me.eleve_id);
 
@@ -177,12 +192,20 @@ export default function StudentApp() {
         </div>
       </header>
 
-      {tab === 'accueil' && <Home me={me} filiere={filiere} onOpen={setTab} />}
-      {tab !== 'accueil' && (
-        <button className="home-fab" onClick={() => setTab('accueil')} title="Retour à l’accueil">
-          🏠
-        </button>
+      {tab === 'accueil' && (
+        <Home
+          me={me}
+          filiere={filiere}
+          prog={prog || PROG_VIDE}
+          cours={cours}
+          onOpen={setTab}
+          onGo={(t, m) => {
+            if (m) setMatiere(m);
+            setTab(t);
+          }}
+        />
       )}
+      {tab === 'suivi' && <Suivi me={me} cours={cours} prog={prog || PROG_VIDE} onGo={(t) => setTab(t)} />}
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
@@ -200,6 +223,10 @@ export default function StudentApp() {
           {filiere === 'AR' && <AudioCoran />}
           {filiere === 'AR' && <QuizAyat />}
           {filiere === 'AR' && <LexiqueArabe />}
+          <div className="search3">
+            <span>🔎</span>
+            <input placeholder="Rechercher un cours…" value={qCours} onChange={(e) => setQCours(e.target.value)} />
+          </div>
           <div className="pills">
             <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
               Toutes
@@ -220,7 +247,15 @@ export default function StudentApp() {
           ) : (
             <div className="grid-cards">
               {visible.map((c) => (
-                <CoursCard key={c.id} c={c} onOpen={() => setViewer(c)} />
+                <CoursCard
+                  key={c.id}
+                  c={c}
+                  vu={!!(prog && prog.cours[c.id])}
+                  onOpen={() => {
+                    setViewer(c);
+                    if (me) setProg(markCours(me.eleve_id, c));
+                  }}
+                />
               ))}
             </div>
           )}
@@ -234,6 +269,53 @@ export default function StudentApp() {
           onClose={() => setProfil(false)}
           onAvatar={(a) => setMe((m) => ({ ...m, avatar: a }))}
         />
+      )}
+
+      {/* Barre de navigation fixe en bas (application mobile) */}
+      <nav className="bnav">
+        <button className={tab === 'accueil' ? 'on' : ''} onClick={() => setTab('accueil')}>
+          <span>🏠</span> Accueil
+        </button>
+        <button className={tab === 'cours' ? 'on' : ''} onClick={() => setTab('cours')}>
+          <span>📚</span> Cours
+        </button>
+        <button className={tab === 'suivi' ? 'on' : ''} onClick={() => setTab('suivi')}>
+          <span>📈</span> Suivi
+        </button>
+        <button className={sheet ? 'on' : ''} onClick={() => setSheet(true)}>
+          <span>🧩</span> Plus
+        </button>
+        <button className={profil ? 'on' : ''} onClick={() => setProfil(true)}>
+          <span>{me.avatar || '🧑🏾‍🎓'}</span> Profil
+        </button>
+      </nav>
+
+      {sheet && (
+        <div className="sheet3" onClick={() => setSheet(false)}>
+          <div className="sheet3-card" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet3-handle" />
+            <div className="sheet3-grid">
+              {TUILES.filter(
+                (t) =>
+                  t.id !== 'cours' &&
+                  (!t.arSeul || filiere === 'AR') &&
+                  (!t.l2Seul || filiere === 'L2') &&
+                  (!t.pasL2 || filiere !== 'L2')
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setSheet(false);
+                    setTab(t.id);
+                  }}
+                >
+                  <span className={`bico ${t.cls}`}>{t.emoji}</span>
+                  {t.titre}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -253,9 +335,18 @@ const TUILES = [
   { id: 'culture', emoji: '🌍', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
 ];
 
-function Home({ me, filiere, onOpen }) {
+const PROG_VIDE = { cours: {}, quiz: [], minutes: 0, jours: {} };
+const norm3 = (s) =>
+  String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+function Home({ me, filiere, prog, cours, onOpen, onGo }) {
   const h = new Date().getHours();
   const salut = h < 12 ? 'Salam' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const stats = computeStats(prog, cours);
+  const conseils = recos(prog, stats, cours, (FILIERES[filiere] || FILIERES.S2).matieres);
   const tiles = TUILES.filter(
     (t) => (!t.arSeul || filiere === 'AR') && (!t.l2Seul || filiere === 'L2') && (!t.pasL2 || filiere !== 'L2')
   );
@@ -265,8 +356,43 @@ function Home({ me, filiere, onOpen }) {
         <h1>
           {salut}, {me.prenom} <span className="wave">{me.avatar || '👋'}</span>
         </h1>
-        <p>Prêt·e pour ta session de travail du jour ?</p>
+        <p>
+          {stats.vues > 0
+            ? `Déjà ${stats.vues} cours ouverts et ${stats.nq} quiz — continue sur ta lancée !`
+            : 'Prêt·e pour ta session de travail du jour ?'}
+        </p>
       </header>
+
+      {stats.last && (
+        <button className="resume3" onClick={() => onGo('cours')}>
+          <span className="resume3-ico">▶️</span>
+          <span className="resume3-txt">
+            <small>Reprendre où tu t'étais arrêté·e</small>
+            <strong>{stats.last.titre}</strong>
+          </span>
+          <span className="bgo">→</span>
+        </button>
+      )}
+
+      <div className="chips3">
+        <span>📚 {stats.vues}/{stats.total} cours</span>
+        <span>🎯 {stats.pctMoy} % en quiz</span>
+        <span>⏱️ {fmtMin(prog.minutes)}</span>
+      </div>
+
+      {conseils.length > 0 && (
+        <div className="recos3">
+          <div className="recos3-title">✨ Pour toi aujourd'hui</div>
+          {conseils.map((r, i) => (
+            <button key={i} className="reco3" onClick={() => onGo(r.tab, r.matiere)}>
+              <span>{r.emoji}</span>
+              {r.txt}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <h2 className="home3-title">Tous tes espaces</h2>
       <div className="bento">
         {tiles.map((t, i) => (
           <button
@@ -326,7 +452,7 @@ function ProfilModal({ me, onClose, onAvatar }) {
   );
 }
 
-function CoursCard({ c, onOpen }) {
+function CoursCard({ c, onOpen, vu }) {
   const m = MATIERE_BY_ID[c.matiere] || { label: c.matiere, color: '#64748b' };
   return (
     <article className="card cours-card" style={{ '--mc': m.color }}>
@@ -335,6 +461,7 @@ function CoursCard({ c, onOpen }) {
           {m.label}
         </span>
         <div className="cours-icons">
+          {vu && <span className="vu3">✔ vu</span>}
           {c.youtube_id && <Icon name="video" size={16} />}
           {c.has_pdf && <Icon name="file" size={16} />}
         </div>

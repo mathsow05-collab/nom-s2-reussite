@@ -931,3 +931,122 @@ body { background: #f6f7fb; }
 .bcard.feat .btxt strong { font-size: 1.1rem; }
 .bcard.feat .btxt small { color: #e4e0ff; }
 .bgo { margin-left: auto; font-size: 1.4rem; font-weight: 800; opacity: 0.8; }
+
+/* ================================================================
+   KAY DIANG v4 : tableau de bord, navigation basse, micro-interactions
+   ================================================================ */
+.student main { padding-bottom: 100px; }
+
+/* Barre de navigation basse */
+.bnav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex;
+  background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid #eef0f6; padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.bnav button {
+  flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 0.64rem; font-weight: 700; color: #9aa0b5; padding: 6px 0; cursor: pointer; transition: color 0.2s;
+}
+.bnav button span { font-size: 1.25rem; line-height: 1; transition: transform 0.2s; }
+.bnav button.on { color: var(--brand); }
+.bnav button.on span { transform: translateY(-2px) scale(1.12); }
+
+/* Feuille « Plus » */
+.sheet3 { position: fixed; inset: 0; z-index: 60; background: rgba(10, 10, 26, 0.5); display: flex; align-items: flex-end; animation: fade3 0.2s both; }
+@keyframes fade3 { from { opacity: 0; } }
+.sheet3-card {
+  width: 100%; background: #fff; border-radius: 24px 24px 0 0; padding: 10px 16px calc(20px + env(safe-area-inset-bottom));
+  animation: sheet3-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes sheet3-up { from { transform: translateY(60%); opacity: 0.4; } }
+.sheet3-handle { width: 44px; height: 5px; border-radius: 99px; background: #e2e4ee; margin: 6px auto 14px; }
+.sheet3-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.sheet3-grid button {
+  border: 1px solid #ecedf3; background: #fff; border-radius: 16px; padding: 12px 6px; display: flex;
+  flex-direction: column; align-items: center; gap: 8px; font-weight: 700; font-size: 0.76rem; cursor: pointer;
+}
+.sheet3-grid button:active { transform: scale(0.96); }
+.sheet3-grid .bico { width: 40px; height: 40px; font-size: 1.15rem; }
+
+/* Recherche */
+.search3 {
+  display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e4e6ee;
+  border-radius: 14px; padding: 10px 14px; margin-bottom: 10px;
+}
+.search3 input { border: none; outline: none; background: transparent; flex: 1; font-size: 0.92rem; }
+
+/* Dashboard accueil */
+.resume3 {
+  width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+  background: linear-gradient(135deg, #101226, #1e1b4b); color: #fff; border: none; border-radius: 18px;
+  padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 12px 30px rgba(16, 18, 38, 0.35);
+  animation: tile-pop 0.4s both;
+}
+.resume3-ico { font-size: 1.3rem; }
+.resume3-txt { display: flex; flex-direction: column; }
+.resume3-txt small { color: #a5b4fc; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.resume3-txt strong { font-size: 0.92rem; }
+.chips3 { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.chips3 span {
+  background: #fff; border: 1px solid #e4e6ee; border-radius: 999px; padding: 6px 12px;
+  font-size: 0.74rem; font-weight: 700; color: #334155;
+}
+.recos3 { margin-bottom: 6px; }
+.recos3-title { font-size: 0.8rem; font-weight: 800; color: var(--muted); margin-bottom: 8px; }
+.reco3 {
+  width: 100%; display: flex; gap: 10px; align-items: center; text-align: left; cursor: pointer;
+  background: #fff; border: 1px solid #ecedf3; border-radius: 14px; padding: 11px 12px; margin-bottom: 8px;
+  font-size: 0.82rem; font-weight: 600; color: #1e293b; box-shadow: 0 4px 12px rgba(23, 23, 63, 0.05);
+}
+.reco3:active { transform: scale(0.98); }
+.home3-title { margin: 18px 0 10px; font-size: 1rem; letter-spacing: -0.01em; }
+
+/* Page Suivi */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat3 {
+  background: #fff; border: 1px solid #ecedf3; border-radius: 18px; padding: 14px;
+  display: flex; flex-direction: column; gap: 2px; box-shadow: 0 6px 18px rgba(23, 23, 63, 0.05);
+  animation: tile-pop 0.45s both;
+}
+.stat3-emoji { font-size: 1.2rem; }
+.stat3 strong { font-size: 1.35rem; letter-spacing: -0.02em; }
+.stat3 small { color: var(--muted); font-size: 0.7rem; font-weight: 700; }
+.s3card { padding: 16px; margin-bottom: 12px; }
+.s3card h2 { margin-top: 0; }
+.obj3-line { display: flex; justify-content: space-between; font-size: 0.82rem; margin: 10px 0 5px; }
+.bar3 { height: 8px; border-radius: 99px; background: #eef0f6; overflow: hidden; }
+.bar3 > div {
+  height: 100%; border-radius: 99px; background: linear-gradient(90deg, #4f46e5, #a855f7);
+  animation: bar-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: left;
+}
+@keyframes bar-in { from { transform: scaleX(0); } }
+.obj3-win { margin-top: 12px; font-weight: 800; color: #16a34a; }
+.mat3 { margin-bottom: 12px; }
+.mat3-line { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.mat3-line strong { font-size: 0.85rem; }
+.mat3-line small { margin-left: auto; color: var(--muted); font-size: 0.72rem; }
+.mat3-dot { width: 10px; height: 10px; border-radius: 50%; }
+.hist3 { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f1f2f7; }
+.hist3:last-child { border-bottom: none; }
+.hist3-ico { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+.hist3-txt { display: flex; flex-direction: column; min-width: 0; }
+.hist3-txt strong { font-size: 0.84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist3-txt small { color: var(--muted); font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist3-date { margin-left: auto; color: var(--muted); font-size: 0.7rem; flex: 0 0 auto; }
+.s3-actions { display: flex; gap: 10px; margin-top: 6px; }
+.s3-actions .btn { flex: 1; }
+
+/* Micro-interactions quiz + badges */
+.vu3 { font-size: 0.62rem; background: #dcfce7; color: #16a34a; border-radius: 999px; padding: 2px 8px; font-weight: 800; }
+.quiz-choice.active { animation: choice-pop 0.25s ease; }
+@keyframes choice-pop { 50% { transform: scale(1.03); } }
+.quiz-result { position: relative; }
+.win .quiz-score { animation: pop3 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.confetti3 { text-align: center; font-size: 2.2rem; animation: pop3 0.5s 0.15s both; }
+@keyframes pop3 {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.quiz-hist { padding: 16px; margin-top: 14px; }
+.quiz-hist h2 { margin-top: 0; }
