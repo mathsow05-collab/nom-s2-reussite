@@ -308,7 +308,7 @@ export default function Quiz() {
     <main className="container">
       <div className="card quiz-run">
         <div className="quiz-progress">
-          <span className="badge" style={{ background: m.color }}>
+          <span className="badge-pastel" style={{ background: `${m.color}1a`, color: m.color }}>
             {m.label} · {q.lecon}
           </span>
           <span className="muted">

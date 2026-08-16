@@ -79,13 +79,15 @@ export default function Annales() {
             const m = MATIERE_BY_ID[a.matiere] || { label: a.matiere, color: '#64748b' };
             return (
               <article className="card annale-card" key={a.id} style={{ '--mc': m.color }}>
-                <div className="annale-year" style={{ background: m.color }}>
-                  {a.annee}
-                </div>
                 <div className="annale-body">
-                  <span className="badge" style={{ background: m.color }}>
-                    {m.label}
-                  </span>
+                  <div className="annale-top">
+                    <span className="badge-pastel" style={{ background: `${m.color}1a`, color: m.color }}>
+                      {m.label}
+                    </span>
+                    <span className="annale-year-txt" style={{ color: m.color }}>
+                      Session {a.annee}
+                    </span>
+                  </div>
                   <h3>{a.titre}</h3>
                   <div className="cours-actions">
                     {a.has_sujet && (

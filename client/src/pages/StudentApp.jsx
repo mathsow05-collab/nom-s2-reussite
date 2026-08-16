@@ -209,7 +209,7 @@ export default function StudentApp() {
         className="watermark"
         aria-hidden="true"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='180'%3E%3Ctext x='14' y='96' fill='%23000' fill-opacity='0.045' font-size='15' transform='rotate(-18 130 90)'%3E${wm}%3C/text%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='180'%3E%3Ctext x='14' y='96' fill='%23000' fill-opacity='0.025' font-size='15' transform='rotate(-18 130 90)'%3E${wm}%3C/text%3E%3C/svg%3E")`,
         }}
       />
       <header className="topbar">
@@ -238,9 +238,6 @@ export default function StudentApp() {
               {me.classe} · {me.eleve_id}
             </small>
           </div>
-          <button className="btn btn-ghost" onClick={logout} title="Déconnexion">
-            <Icon name="logout" />
-          </button>
         </div>
       </header>
 
@@ -309,11 +306,12 @@ export default function StudentApp() {
           {visible.length === 0 ? (
             <div className="empty">Aucun cours dans cette matière pour l'instant.</div>
           ) : (
-            <div className="grid-cards">
-              {visible.map((c) => (
+            <div className="grid-cards" key={`${matiere}-${qCours}`}>
+              {visible.map((c, i) => (
                 <CoursCard
                   key={c.id}
                   c={c}
+                  i={i}
                   vu={!!(prog && prog.cours[c.id])}
                   onOpen={() => {
                     setViewer(c);
@@ -656,12 +654,12 @@ function ProfilModal({ me, onClose, onAvatar }) {
   );
 }
 
-function CoursCard({ c, onOpen, vu }) {
+function CoursCard({ c, onOpen, vu, i }) {
   const m = MATIERE_BY_ID[c.matiere] || { label: c.matiere, color: '#64748b' };
   return (
-    <article className="card cours-card" style={{ '--mc': m.color }}>
+    <article className="card cours-card anim" style={{ '--mc': m.color, '--i': Math.min(i, 11) }}>
       <div className="cours-top">
-        <span className="badge" style={{ background: m.color }}>
+        <span className="badge-pastel" style={{ background: `${m.color}1a`, color: m.color }}>
           {m.label}
         </span>
         <div className="cours-icons">
