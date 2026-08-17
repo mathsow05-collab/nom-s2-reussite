@@ -544,7 +544,7 @@ router.get('/examens/:id/tentatives', admin, (req, res) => {
   );
 });
 
-router.get('/examens/copie/:tid', admin, requireAdmin(db, { allowQuery: true }), (req, res) => {
+router.get('/examens/copie/:tid', requireAdmin(db, { allowQuery: true }), (req, res) => {
   const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ?').get(req.params.tid);
   if (!t?.copie_pdf) return res.status(404).json({ error: 'Copie absente.' });
   const file = path.join(UPLOADS, t.copie_pdf);

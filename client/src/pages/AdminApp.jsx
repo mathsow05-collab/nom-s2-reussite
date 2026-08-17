@@ -36,15 +36,31 @@ export default function AdminApp() {
   const [me, setMe] = useState(null);
 
   useEffect(() => {
-    api('/admin/me')
-      .then((m) => {
-        setMe(m);
-        setOk(true);
-      })
-      .catch(() => {
-        clearToken();
-        window.location.hash = '#/admin';
-      });
+    let alive = true;
+    // Le serveur gratuit peut être long à démarrer : on réessaie au lieu de déconnecter.
+    (async () => {
+      for (let essai = 0; essai < 12; essai++) {
+        try {
+          const m = await api('/admin/me');
+          if (!alive) return;
+          setMe(m);
+          setOk(true);
+          return;
+        } catch (e) {
+          if (e?.status === 401) {
+            if (alive) {
+              clearToken();
+              window.location.hash = '#/admin';
+            }
+            return;
+          }
+          await new Promise((r) => setTimeout(r, 4000));
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   function logout() {

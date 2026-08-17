@@ -61,6 +61,15 @@ export default function ExamensAdmin() {
     api(`/admin/examens/${ex.id}/tentatives`).then(setTents);
   }
 
+  // Rafraîchissement automatique des copies tant que le panneau est ouvert.
+  useEffect(() => {
+    if (!openEx) return undefined;
+    const t = setInterval(() => {
+      api(`/admin/examens/${openEx.id}/tentatives`).then(setTents);
+    }, 15000);
+    return () => clearInterval(t);
+  }, [openEx]);
+
   async function corriger(tid) {
     const c = corr[tid] || {};
     const fd = new FormData();
@@ -124,7 +133,12 @@ export default function ExamensAdmin() {
       </section>
 
       <section className="panel">
-        <h2>Examens publiés</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          Examens publiés
+          <button className="btn btn-ghost" title="Actualiser" onClick={load}>
+            <Icon name="refresh" size={15} />
+          </button>
+        </h2>
         {!list && <p className="muted">Chargement…</p>}
         {list && list.length === 0 && <p className="muted">Aucun examen publié.</p>}
         {list?.map((ex) => (
@@ -152,7 +166,13 @@ export default function ExamensAdmin() {
 
       {openEx && (
         <section className="panel">
-          <h2>Copies — {openEx.titre}</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Copies — {openEx.titre}
+            <button className="btn btn-ghost" title="Actualiser" onClick={() => voirCopies(openEx)}>
+              <Icon name="refresh" size={15} />
+            </button>
+          </h2>
+          <p className="muted small">Les nouvelles copies arrivent automatiquement toutes les 15 secondes.</p>
           {!tents && <p className="muted">Chargement…</p>}
           {tents && tents.length === 0 && <p className="muted">Aucune copie pour l'instant.</p>}
           {tents?.map((t) => (
