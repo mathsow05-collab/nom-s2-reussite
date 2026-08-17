@@ -544,7 +544,7 @@ router.get('/examens/:id/tentatives', admin, (req, res) => {
   );
 });
 
-router.get('/examens/copie/:tid', admin, (req, res) => {
+router.get('/examens/copie/:tid', admin, requireAdmin(db, { allowQuery: true }), (req, res) => {
   const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ?').get(req.params.tid);
   if (!t?.copie_pdf) return res.status(404).json({ error: 'Copie absente.' });
   const file = path.join(UPLOADS, t.copie_pdf);
@@ -553,10 +553,20 @@ router.get('/examens/copie/:tid', admin, (req, res) => {
   return res.sendFile(file);
 });
 
-router.post('/tentatives/:id/corriger', admin, (req, res) => {
+const copieCorrigeeUp = makeUploader(['.pdf'], 25).single('copie_corrigee');
+
+router.post('/tentatives/:id/corriger', admin, copieCorrigeeUp, (req, res) => {
   const { score, commentaire } = req.body || {};
-  db.prepare("UPDATE examens_tentatives SET score = ?, commentaire = ?, statut = 'corrige', corrected_at = ? WHERE id = ?")
-    .run(String(score || '').trim(), String(commentaire || '').trim(), new Date().toISOString(), req.params.id);
+  let rel = null;
+  if (req.file) {
+    const dir = path.join(UPLOADS, 'examens');
+    fs.mkdirSync(dir, { recursive: true });
+    const dest = path.join(dir, `rendu-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.pdf`);
+    fs.renameSync(req.file.path, dest);
+    rel = `examens/${path.basename(dest)}`;
+  }
+  db.prepare('UPDATE examens_tentatives SET score = ?, commentaire = ?, copie_corrigee_pdf = COALESCE(?, copie_corrigee_pdf), statut = \'corrige\', corrected_at = ? WHERE id = ?')
+    .run(String(score || '').trim(), String(commentaire || '').trim(), rel, new Date().toISOString(), req.params.id);
   addLog('examen_corrige', { source: 'admin', req, details: `tentative ${req.params.id}` });
   res.json({ ok: true });
 });

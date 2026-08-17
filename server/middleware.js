@@ -10,9 +10,9 @@ function extractToken(req, { allowQuery = false } = {}) {
   return null;
 }
 
-function requireAdmin(db) {
+function requireAdmin(db, { allowQuery = false } = {}) {
   return function (req, res, next) {
-    const payload = verifyToken(extractToken(req));
+    const payload = verifyToken(extractToken(req, { allowQuery }));
     if (!payload || payload.role !== 'admin') {
       return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Authentification admin requise.' });
     }

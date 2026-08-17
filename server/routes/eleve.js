@@ -300,6 +300,15 @@ router.get('/examens/tentative/:tid/sujet', requireEleve(db, { allowQuery: true 
   return res.sendFile(file);
 });
 
+router.get('/examens/tentative/:tid/corrigee', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
+  if (!t || t.statut !== 'corrige' || !t.copie_corrigee_pdf) return res.status(404).json({ error: 'Copie corrigée pas encore disponible.' });
+  const file = path.join(UPLOADS, t.copie_corrigee_pdf);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Fichier manquant.' });
+  res.setHeader('Content-Type', 'application/pdf');
+  return res.sendFile(file);
+});
+
 router.get('/examens/tentative/:tid/corrige', requireEleve(db, { allowQuery: true }), (req, res) => {
   const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
   if (!t || t.statut === 'en_cours') return res.status(403).json({ error: 'Corrigé disponible après le rendu de la copie.' });

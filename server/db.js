@@ -201,5 +201,6 @@ CREATE TABLE IF NOT EXISTS examens_tentatives (
 );
 `);
 ensureColumn('examens_tentatives', 'done', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('examens_tentatives', 'copie_corrigee_pdf', 'TEXT');
 
 module.exports = db;

@@ -176,9 +176,16 @@ export default function Examens() {
               <strong>Examen corrigé</strong>
               <div className="ex-note">{tent.score}</div>
               {tent.commentaire && <p className="muted">{tent.commentaire}</p>}
-              <button className="btn btn-outline" onClick={() => window.open(`/api/eleve/examens/tentative/${tent.id}/corrige?token=${encodeURIComponent(getToken())}`, '_blank')}>
-                <Icon name="file" size={15} /> Voir le corrigé
-              </button>
+              <div className="ex-actions" style={{ width: '100%' }}>
+                {tent.copie_corrigee_pdf && (
+                  <button className="btn btn-primary" onClick={() => window.open(`/api/eleve/examens/tentative/${tent.id}/corrigee?token=${encodeURIComponent(getToken())}`, '_blank')}>
+                    <Icon name="file" size={15} /> Ma copie corrigée
+                  </button>
+                )}
+                <button className="btn btn-outline" onClick={() => window.open(`/api/eleve/examens/tentative/${tent.id}/corrige?token=${encodeURIComponent(getToken())}`, '_blank')}>
+                  <Icon name="file" size={15} /> Voir le corrigé
+                </button>
+              </div>
             </div>
           )}
         </section>

@@ -63,7 +63,16 @@ export default function ExamensAdmin() {
 
   async function corriger(tid) {
     const c = corr[tid] || {};
-    await api(`/admin/tentatives/${tid}/corriger`, { method: 'POST', body: { score: c.score || '', commentaire: c.com || '' } });
+    const fd = new FormData();
+    fd.append('score', c.score || '');
+    fd.append('commentaire', c.com || '');
+    if (c.file) fd.append('copie_corrigee', c.file);
+    const res = await fetch(`/api/admin/tentatives/${tid}/corriger`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}` },
+      body: fd,
+    });
+    if (!res.ok) throw new Error((await res.json()).error || 'Erreur.');
     voirCopies(openEx);
   }
 
@@ -180,6 +189,17 @@ export default function ExamensAdmin() {
                   <button className="btn btn-primary" onClick={() => corriger(t.id)}>
                     Valider la correction
                   </button>
+                </div>
+              )}
+              {t.statut !== 'en_cours' && (
+                <div style={{ marginTop: 8 }}>
+                  <label className="label">Rendre la copie corrigée à l'élève (PDF annoté, ex. stylo rouge)</label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setCorr((c) => ({ ...c, [t.id]: { ...c[t.id], file: e.target.files[0] } }))}
+                  />
+                  {t.copie_corrigee_pdf && <p className="muted small">Une copie corrigée est déjà rendue à cet élève.</p>}
                 </div>
               )}
             </div>
