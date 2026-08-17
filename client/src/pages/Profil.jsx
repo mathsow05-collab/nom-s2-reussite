@@ -4,7 +4,7 @@ import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
-export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
+export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme }) {
   const stats = computeStats(prog, cours);
   const xp = xpOf(prog);
   const lvl = levelOf(xp);
@@ -70,6 +70,14 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout }) {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="card s3card">
+        <h2>Apparence</h2>
+        <button className="theme3" onClick={onTheme}>
+          <span>Mode sombre (confort le soir, économie de batterie)</span>
+          <span className={theme === 'dark' ? 'switch3 on' : 'switch3'} />
+        </button>
       </section>
 
       <section className="card s3card">

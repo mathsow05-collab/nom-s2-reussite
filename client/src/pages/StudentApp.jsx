@@ -146,6 +146,23 @@ export default function StudentApp() {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifList, setNotifList] = useState([]);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('s2r_theme') || 'light';
+    } catch {
+      return 'light';
+    }
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try {
+      localStorage.setItem('s2r_theme', theme);
+    } catch {
+      /* ignore */
+    }
+  }, [theme]);
 
   function logout() {
     api('/eleve/logout').catch(() => {});
@@ -215,7 +232,7 @@ export default function StudentApp() {
       />
       <header className="topbar">
         <button className="topbar-brand" onClick={() => setTab('accueil')} title="Accueil">
-          <Icon name="cap" size={22} /> <span>KAY DIANG</span>
+          <span className="logo-kd">KD</span> <span>KAY DIANG</span>
         </button>
         <div className="topbar-user">
           <button className="icon3" onClick={() => setSearchOpen(true)} title="Recherche globale">
@@ -261,6 +278,8 @@ export default function StudentApp() {
           me={me}
           cours={cours}
           prog={prog || PROG_VIDE}
+          theme={theme}
+          onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
           onAvatar={(a) => {
             api('/eleve/profil', { method: 'POST', body: { avatar: a } }).then(() => setMe((m) => ({ ...m, avatar: a })));
           }}
@@ -483,6 +502,9 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
       )}
 
       <div className="chips3">
+        <span className="chip-bac">
+          <Icon name="cap" size={13} /> Bac 2027 : J-{Math.max(0, Math.ceil((new Date('2027-06-15') - Date.now()) / 86400000))}
+        </span>
         <span>
           <Icon name="book" size={13} /> {stats.vues}/{stats.total} cours
         </span>
@@ -672,6 +694,22 @@ function CoursCard({ c, onOpen, vu, i }) {
         </div>
       </div>
       <h3>{c.titre}</h3>
+      {(c.duree_min || c.difficulte) && (
+        <div className="cours-meta">
+          {c.duree_min && (
+            <span>
+              <Icon name="clock" size={12} /> ~{c.duree_min} min
+            </span>
+          )}
+          {c.difficulte > 0 && (
+            <span className="diff3" title={`Difficulté ${c.difficulte}/3`}>
+              {[1, 2, 3].map((n) => (
+                <i key={n} className={n <= c.difficulte ? 'on' : ''} />
+              ))}
+            </span>
+          )}
+        </div>
+      )}
       {c.description && <p className="muted clamp2">{c.description}</p>}
       <div className="cours-actions">
         {c.youtube_id && (
@@ -710,6 +748,20 @@ function Viewer({ c, onClose }) {
           <button className="vp-full pdf-full-btn" onClick={pleinEcranPdf} title="Plein écran">
             ⛶
           </button>
+        </div>
+      )}
+      {c.acquis && (
+        <div className="acquis3">
+          <strong>Ce que tu vas apprendre</strong>
+          <ul>
+            {c.acquis
+              .split(';')
+              .map((a) => a.trim())
+              .filter(Boolean)
+              .map((a, i) => (
+                <li key={i}>{a}</li>
+              ))}
+          </ul>
         </div>
       )}
       <div className="viewer-foot">

@@ -12,6 +12,11 @@ export default function Questions({ adminScope = 'all' }) {
     load();
   }, []);
 
+  async function epingler(q) {
+    await api(`/admin/questions/${q.id}/epingler`, { method: 'POST', body: {} });
+    load();
+  }
+
   async function repondre(q) {
     const texte = (rep[q.id] || '').trim();
     if (!texte) return;
@@ -40,6 +45,9 @@ export default function Questions({ adminScope = 'all' }) {
               {q.statut === 'repondu' ? (
                 <div className="qa-r">
                   <Icon name="check" size={15} /> {q.reponse}
+                  <button className="btn btn-sm btn-outline" style={{ marginLeft: 'auto' }} onClick={() => epingler(q)}>
+                    {q.epingle ? 'Désépingler' : 'Question de la semaine'}
+                  </button>
                 </div>
               ) : (
                 <div className="qa-reply">

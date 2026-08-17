@@ -104,6 +104,9 @@ export default function Cours({ adminScope = 'all' }) {
                                   youtube_url: c.youtube_id ? `https://www.youtube.com/watch?v=${c.youtube_id}` : '',
                                   fichier: null,
                                   pdfActuel: c.pdf_file,
+                                  duree_min: c.duree_min || '',
+                                  difficulte: c.difficulte || 0,
+                                  acquis: c.acquis || '',
                                 })
                               }
                             >
@@ -164,6 +167,9 @@ function CoursForm({ form, adminScope, onClose, onSaved }) {
       fd.append('filiere', f.filiere);
       fd.append('niveau', String(f.niveau || 1));
       fd.append('description', f.description);
+      fd.append('duree_min', String(f.duree_min || ''));
+      fd.append('difficulte', String(f.difficulte || 0));
+      fd.append('acquis', f.acquis || '');
       fd.append('youtube_url', f.youtube_url);
       if (f.fichier) fd.append('pdf', f.fichier);
       if (f.id) await api(`/admin/cours/${f.id}`, { method: 'PUT', form: true, body: fd });
@@ -214,6 +220,23 @@ function CoursForm({ form, adminScope, onClose, onSaved }) {
 
         <label className="label">Description</label>
         <textarea className="input" rows="2" value={f.description} onChange={(e) => set('description', e.target.value)} />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label className="label">Durée estimée (min)</label>
+            <input className="input" type="number" min="5" max="240" value={f.duree_min || ''} onChange={(e) => set('duree_min', e.target.value)} placeholder="ex. 25" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label className="label">Difficulté</label>
+            <select className="input" value={f.difficulte || 0} onChange={(e) => set('difficulte', parseInt(e.target.value, 10))}>
+              <option value="0">Non précisée</option>
+              <option value="1">Facile</option>
+              <option value="2">Moyen</option>
+              <option value="3">Difficile</option>
+            </select>
+          </div>
+        </div>
+        <label className="label">Ce que tu vas apprendre (séparé par ;)</label>
+        <textarea className="input" rows="2" value={f.acquis || ''} onChange={(e) => set('acquis', e.target.value)} placeholder="ex. Poser une équation ; Résoudre un système ; Interpréter un graphique" />
 
         <label className="label">Lien YouTube (vidéo non répertoriée)</label>
         <input

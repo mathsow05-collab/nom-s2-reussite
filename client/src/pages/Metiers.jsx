@@ -540,6 +540,26 @@ export default function Metiers() {
         </Modal>
       )}
 
+      <h2 className="orient-title">Ils sont passés par là</h2>
+      <div className="temo3">
+        {[
+          { n: 'Awa D., Terminale S2 → ESP Dakar', t: 'Les annales corrigées sur la plateforme m’ont appris à gérer le temps. Le jour du Bac, aucune surprise.' },
+          { n: 'Moussa N., Bac L2 → FSJP (Droit)', t: 'Le test d’orientation m’a confirmé le droit. Voir les métiers derrière chaque filière change tout.' },
+          { n: 'Fatou S., S2 → prépa médecine', t: 'Les examens blancs chronométrés, copie sur papier comme au vrai concours : c’est ça qui m’a rendue prête.' },
+        ].map((x, i) => (
+          <figure className="card temo3-card" key={i}>
+            <blockquote>« {x.t} »</blockquote>
+            <figcaption>{x.n}</figcaption>
+          </figure>
+        ))}
+      </div>
+      <h2 className="orient-title">Les métiers qui recrutent demain</h2>
+      <div className="avenir3">
+        {['Intelligence artificielle & data', 'Cybersécurité', 'Énergies renouvelables', 'Santé numérique', 'Agrotech & souveraineté alimentaire', 'Finance & mobile money'].map((x) => (
+          <span key={x}>{x}</span>
+        ))}
+      </div>
+
       {quiz && (
         <OrientationQuiz
           metiers={metiers}

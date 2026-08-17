@@ -381,7 +381,17 @@ router.get('/communaute', requireEleve(db), (req, res) => {
        ORDER BY q.id DESC LIMIT 60`
     )
     .all(f);
-  res.json(rows.map((r) => ({ ...r, likes: JSON.parse(r.likes || '[]') })));
+  const ep = db.prepare("SELECT value FROM settings WHERE key = 'question_semaine'").get();
+  let epingle = null;
+  if (ep) {
+    epingle =
+      db
+        .prepare(
+          `SELECT q.id, q.sujet, q.message, q.reponse, e.prenom, e.nom FROM questions_eleves q JOIN eleves e ON e.id = q.eleve_db_id WHERE q.id = ? AND q.statut = 'repondu'`
+        )
+        .get(Number(ep.value)) || null;
+  }
+  res.json({ liste: rows.map((r) => ({ ...r, likes: JSON.parse(r.likes || '[]') })), epingle });
 });
 
 router.post('/communaute/like', requireEleve(db), (req, res) => {

@@ -114,6 +114,20 @@ router.get('/stats', admin, (req, res) => {
     totalMetiers: db.prepare('SELECT COUNT(*) c FROM metiers').get().c,
     parMatiere,
     filiere: req.scope,
+    serie: (() => {
+      const jours = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        jours.push({
+          d: key.slice(8) + '/' + key.slice(5, 7),
+          copies: db.prepare("SELECT COUNT(*) c FROM examens_tentatives WHERE substr(finished_at,1,10) = ? AND statut != 'en_cours'").get(key).c,
+          questions: db.prepare('SELECT COUNT(*) c FROM questions_eleves WHERE substr(created_at,1,10) = ?').get(key).c,
+        });
+      }
+      return jours;
+    })(),
     derniersLogs: db.prepare('SELECT * FROM logs ORDER BY id DESC LIMIT 25').all(),
   });
 });
@@ -250,8 +264,19 @@ router.post('/cours', admin, pdfUpload, (req, res) => {
 
   const maxOrdre = db.prepare('SELECT MAX(ordre) m FROM cours WHERE matiere = ? AND filiere = ?').get(matiere, filiere).m || 0;
   const info = db
-    .prepare('INSERT INTO cours (titre, matiere, description, youtube_id, pdf_file, ordre, filiere) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .run(String(titre).trim(), matiere, String(req.body.description || '').trim() || null, youtube_id, pdf_file, maxOrdre + 1, filiere);
+    .prepare('INSERT INTO cours (titre, matiere, description, youtube_id, pdf_file, ordre, filiere, duree_min, difficulte, acquis) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .run(
+      String(titre).trim(),
+      matiere,
+      String(req.body.description || '').trim() || null,
+      youtube_id,
+      pdf_file,
+      maxOrdre + 1,
+      filiere,
+      parseInt(req.body.duree_min, 10) || null,
+      Math.min(3, Math.max(0, parseInt(req.body.difficulte, 10) || 0)),
+      String(req.body.acquis || '').trim() || null
+    );
   addLog('cours_cree', { source: 'admin', req, details: `${titre} (${filiere}/${matiere})` });
   return res.status(201).json({ id: info.lastInsertRowid });
 });
@@ -277,12 +302,15 @@ router.put('/cours/:id', admin, pdfUpload, (req, res) => {
     pdf_file = `${matiere}/${path.basename(dest)}`;
   }
 
-  db.prepare('UPDATE cours SET titre = ?, matiere = ?, description = ?, youtube_id = ?, pdf_file = ? WHERE id = ?').run(
+  db.prepare('UPDATE cours SET titre = ?, matiere = ?, description = ?, youtube_id = ?, pdf_file = ?, duree_min = ?, difficulte = ?, acquis = ? WHERE id = ?').run(
     String(req.body.titre || c.titre).trim(),
     matiere,
     req.body.description !== undefined ? String(req.body.description).trim() || null : c.description,
     youtube_id,
     pdf_file,
+    req.body.duree_min !== undefined ? parseInt(req.body.duree_min, 10) || null : c.duree_min,
+    req.body.difficulte !== undefined ? Math.min(3, Math.max(0, parseInt(req.body.difficulte, 10) || 0)) : c.difficulte,
+    req.body.acquis !== undefined ? String(req.body.acquis).trim() || null : c.acquis,
     c.id
   );
   addLog('cours_modifie', { source: 'admin', req, details: c.titre });
@@ -605,15 +633,15 @@ router.delete('/quiz/:id', admin, refuseAR, (req, res) => {
 
 /* ------------------------- Questions des élèves ------------------------- */
 router.get('/questions', admin, (req, res) => {
-  res.json(
-    db
-      .prepare(
-        req.scope === 'all'
-          ? "SELECT * FROM questions_eleves ORDER BY (statut = 'en_attente') DESC, id DESC"
-          : "SELECT * FROM questions_eleves WHERE filiere = ? ORDER BY (statut = 'en_attente') DESC, id DESC"
-      )
-      .all(...(req.scope === 'all' ? [] : [req.scope]))
-  );
+  const rows = db
+    .prepare(
+      req.scope === 'all'
+        ? "SELECT * FROM questions_eleves ORDER BY (statut = 'en_attente') DESC, id DESC"
+        : "SELECT * FROM questions_eleves WHERE filiere = ? ORDER BY (statut = 'en_attente') DESC, id DESC"
+    )
+    .all(...(req.scope === 'all' ? [] : [req.scope]));
+  const ep = db.prepare("SELECT value FROM settings WHERE key = 'question_semaine'").get();
+  res.json(rows.map((r) => ({ ...r, epingle: !!ep && Number(ep.value) === r.id })));
 });
 
 router.post('/questions/:id/repondre', admin, (req, res) => {
@@ -630,6 +658,14 @@ router.post('/questions/:id/repondre', admin, (req, res) => {
 });
 
 /* ------------------------- Boîte à idées ------------------------- */
+router.post('/questions/:id/epingler', admin, (req, res) => {
+  const id = Number(req.params.id);
+  const cur = db.prepare("SELECT value FROM settings WHERE key = 'question_semaine'").get();
+  const actuel = cur ? Number(cur.value) : 0;
+  const next = actuel === id ? 0 : id;
+  db.prepare("INSERT INTO settings (key, value) VALUES ('question_semaine', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(String(next));
+  res.json({ ok: true, epingle: next });
+});
 router.get('/idees', admin, (req, res) => {
   res.json(db.prepare('SELECT * FROM idees ORDER BY lu ASC, id DESC').all());
 });

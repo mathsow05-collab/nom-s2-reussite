@@ -12,6 +12,26 @@ function fmtDate(s) {
   }
 }
 
+function Spark({ serie }) {
+  const W = 560;
+  const H = 70;
+  const max = Math.max(1, ...serie.map((s) => Math.max(s.copies, s.questions)));
+  const px = (i) => (i / (serie.length - 1)) * (W - 8) + 4;
+  const py = (v) => H - 6 - (v / max) * (H - 14);
+  const line = (k) => serie.map((s, i) => `${px(i)},${py(s[k])}`).join(' ');
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="spark3" role="img" aria-label="Activité 14 jours">
+      <polyline points={line('questions')} fill="none" stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" />
+      <polyline points={line('copies')} fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" />
+      {serie.map((s, i) => (
+        <circle key={i} cx={px(i)} cy={py(s.copies)} r="2.6" fill="#1d4ed8">
+          <title>{`${s.d} : ${s.copies} copie(s), ${s.questions} question(s)`}</title>
+        </circle>
+      ))}
+    </svg>
+  );
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [err, setErr] = useState(null);
@@ -62,6 +82,14 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {stats.serie && (
+        <section className="panel">
+          <h2>Activité des 14 derniers jours</h2>
+          <Spark serie={stats.serie} />
+          <div className="muted small">Copies d'examens rendues (bleu) et questions reçues (gris), jour par jour.</div>
+        </section>
+      )}
 
       <section className="panel">
         <h2>Contenu par matière</h2>

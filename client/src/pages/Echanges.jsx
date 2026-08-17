@@ -7,6 +7,7 @@ export default function Echanges() {
   const [questions, setQuestions] = useState(null);
   const [idees, setIdees] = useState(null);
   const [commu, setCommu] = useState(null);
+  const [epingle, setEpingle] = useState(null);
   const [vue, setVue] = useState('perso');
   const [share, setShare] = useState(false);
   const [meId, setMeId] = useState(null);
@@ -19,7 +20,7 @@ export default function Echanges() {
   const load = () => {
     api('/eleve/questions').then(setQuestions);
     api('/eleve/idees').then(setIdees);
-    api('/eleve/communaute').then(setCommu).catch(() => setCommu([]));
+    api('/eleve/communaute').then((d) => { setCommu(d.liste || []); setEpingle(d.epingle || null); }).catch(() => setCommu([]));
   };
   useEffect(() => {
     api('/eleve/me').then((m) => setMeId(m.id));
@@ -28,7 +29,7 @@ export default function Echanges() {
 
   async function like(id) {
     await api('/eleve/communaute/like', { method: 'POST', body: { id } });
-    api('/eleve/communaute').then(setCommu);
+    api('/eleve/communaute').then((d) => setCommu(d.liste || []));
   }
 
   // Réponse admin en temps réel (poussée par le serveur via SSE)
@@ -89,6 +90,19 @@ export default function Echanges() {
       {vue === 'commu' && (
         <section className="panel">
           <h2>Questions partagées de ta filière</h2>
+          {epingle && (
+            <div className="pin3">
+              <div className="pin3-titre">Question de la semaine</div>
+              <div className="chat-bulle">
+                <span className="thread-from">Élève · {epingle.prenom} {epingle.nom}</span>
+                {epingle.message}
+              </div>
+              <div className="chat-bulle reponse-admin" style={{ marginTop: 8 }}>
+                <span className="thread-from">Administration</span>
+                {epingle.reponse}
+              </div>
+            </div>
+          )}
           {!commu || commu.length === 0 ? (
             <p className="muted">Pas encore de questions partagées. Coche « partager » en posant ta question pour aider les autres !</p>
           ) : (

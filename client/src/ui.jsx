@@ -35,7 +35,14 @@ export function Modal({ title, onClose, children, wide = false }) {
 }
 
 export function Spinner() {
-  return <div className="spinner" aria-label="Chargement" />;
+  // « Skeleton loader » : blocs qui scintillent pendant le chargement.
+  return (
+    <div className="skel-load" aria-label="Chargement">
+      <div className="skel skel-a" />
+      <div className="skel skel-b" />
+      <div className="skel skel-c" />
+    </div>
+  );
 }
 
 export function Badge({ children, tone = 'brand', style }) {

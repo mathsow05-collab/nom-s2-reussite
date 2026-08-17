@@ -1226,3 +1226,96 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 .ex-note { font-size: 2rem; font-weight: 800; }
 .ex-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .ex-actions .btn { flex: 1; }
+
+/* ================================================================
+   KAY DIANG v8 : dark mode, skeletons, typo héroïque, contenu riche
+   ================================================================ */
+
+/* Logo monogramme */
+.logo-kd {
+  width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #1d4ed8, #0e7490);
+  color: #fff; font-weight: 800; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center;
+  letter-spacing: 0.02em; box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
+}
+
+/* Typographie héroïque + respiration */
+.hello3 h1 { font-size: clamp(1.7rem, 6vw, 2.5rem); letter-spacing: -0.03em; line-height: 1.1; }
+.chips3 span { border: none; background: #eef2f7; }
+.chip-bac { background: #0f2557 !important; color: #fff !important; }
+.card, .panel { border-color: #eef1f6; }
+
+/* Skeleton loaders */
+.skel-load { display: grid; gap: 12px; padding: 8px 0; }
+.skel { border-radius: 14px; background: linear-gradient(90deg, #eef1f6 25%, #f8fafc 50%, #eef1f6 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+.skel-a { height: 90px; } .skel-b { height: 60px; width: 80%; } .skel-c { height: 60px; width: 60%; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Métadonnées cours */
+.cours-meta { display: flex; align-items: center; gap: 12px; margin: 2px 0 6px; color: var(--muted); font-size: 0.74rem; font-weight: 600; }
+.cours-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.diff3 { display: inline-flex; gap: 3px; }
+.diff3 i { width: 7px; height: 7px; border-radius: 50%; background: #e2e8f0; }
+.diff3 i.on { background: #1d4ed8; }
+.acquis3 { margin-top: 12px; background: #f8fafc; border: 1px solid #eef1f6; border-radius: 14px; padding: 12px 14px; }
+.acquis3 strong { font-size: 0.85rem; }
+.acquis3 ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.85rem; }
+
+/* Interrupteur mode sombre */
+.theme3 { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: none; background: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; padding: 4px 0; text-align: left; }
+.switch3 { width: 44px; height: 26px; border-radius: 99px; background: #e2e8f0; position: relative; transition: background 0.2s; flex: 0 0 auto; }
+.switch3::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.switch3.on { background: #1d4ed8; }
+.switch3.on::after { left: 21px; }
+
+/* Témoignages + métiers d'avenir */
+.temo3 { display: grid; gap: 10px; margin-bottom: 18px; }
+.temo3-card { padding: 14px 16px; border-radius: 18px; }
+.temo3-card blockquote { margin: 0 0 8px; font-size: 0.9rem; font-style: italic; }
+.temo3-card figcaption { color: var(--muted); font-size: 0.74rem; font-weight: 700; }
+.avenir3 { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.avenir3 span { background: #0f2557; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 0.74rem; font-weight: 700; }
+
+/* Question de la semaine */
+.pin3 { border: 1px solid #1d4ed8; background: #e8eefb; border-radius: 16px; padding: 12px; margin-bottom: 14px; }
+.pin3-titre { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #1d4ed8; margin-bottom: 8px; }
+
+/* Sparkline admin */
+.spark3 { width: 100%; height: 80px; }
+
+/* Accessibilité : réduire les animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------------- MODE SOMBRE ---------------- */
+[data-theme='dark'] body { background: #0b1220; color: #e6eaf3; }
+[data-theme='dark'] .topbar, [data-theme='dark'] .bnav { background: rgba(11, 18, 32, 0.85); border-color: #1c2740; }
+[data-theme='dark'] .card, [data-theme='dark'] .panel, [data-theme='dark'] .stat3, [data-theme='dark'] .reco3,
+[data-theme='dark'] .mode3, [data-theme='dark'] .search3, [data-theme='dark'] .bcard, [data-theme='dark'] .temo3-card,
+[data-theme='dark'] .sheet3-card, [data-theme='dark'] .quiz-config, [data-theme='dark'] .quiz-run, [data-theme='dark'] .quiz-result,
+[data-theme='dark'] .annale-card, [data-theme='dark'] .acquis3 {
+  background: #121a2e; border-color: #1c2740; color: #e6eaf3; box-shadow: none;
+}
+[data-theme='dark'] .input, [data-theme='dark'] select.input, [data-theme='dark'] textarea.input { background: #0e1526; border-color: #223052; color: #e6eaf3; }
+[data-theme='dark'] .muted, [data-theme='dark'] .muted small, [data-theme='dark'] small { color: #93a0b8; }
+[data-theme='dark'] .pill { background: #121a2e; border-color: #223052; color: #c6cfdd; }
+[data-theme='dark'] .pill.active { background: #e6eaf3; color: #0b1220; border-color: #e6eaf3; }
+[data-theme='dark'] .chips3 span { background: #16203a; color: #c6cfdd; }
+[data-theme='dark'] .chip-bac { background: #1d4ed8 !important; color: #fff !important; }
+[data-theme='dark'] .icon3 { background: #121a2e; border-color: #223052; color: #c6cfdd; }
+[data-theme='dark'] .btn-outline { background: transparent; color: #9db8e8; border-color: #223052; }
+[data-theme='dark'] .btn-ghost { color: #93a0b8; }
+[data-theme='dark'] .gs3-card, [data-theme='dark'] .modal-card { background: #121a2e; color: #e6eaf3; }
+[data-theme='dark'] .orient-tabs { background: #121a2e; border-color: #1c2740; }
+[data-theme='dark'] .otab { color: #93a0b8; }
+[data-theme='dark'] .otab.active { background: #1d4ed8; color: #fff; }
+[data-theme='dark'] .bico2, [data-theme='dark'] .mode3-ico, [data-theme='dark'] .badge3-ico, [data-theme='dark'] .stat3-emoji, [data-theme='dark'] .reco3-ico { background: #1a2440; color: #7ea6f5; }
+[data-theme='dark'] .bar3 { background: #1a2440; }
+[data-theme='dark'] .skel { background: linear-gradient(90deg, #16203a 25%, #1c2740 50%, #16203a 75%); background-size: 200% 100%; }
+[data-theme='dark'] .avatar-pick { background: #121a2e; border-color: #223052; }
+[data-theme='dark'] .chat-bulle { background: #1a2440; color: #e6eaf3; }
+[data-theme='dark'] .reponse-admin { background: #0e2a22; border-color: #14532d; }
+[data-theme='dark'] .pin3 { background: #12203a; border-color: #1d4ed8; }
+[data-theme='dark'] .ex-timer { background: #1a2440; color: #c6cfdd; }
+[data-theme='dark'] .ex-paper { background: #0e1526; border-color: #223052; color: #93a0b8; }
+[data-theme='dark'] .auth-card3 { background: rgba(18, 26, 46, 0.7); }
