@@ -26,7 +26,7 @@ export default function Examens() {
   const elapsed = (t) =>
     now - new Date(t.started_at).getTime() - (t.paused_ms || 0) - (t.paused_at ? now - new Date(t.paused_at).getTime() : 0);
   const restant = tent && tent.statut === 'en_cours' ? Math.max(0, tent.duree * 60000 - elapsed(tent)) : 0;
-  const fini = tent && tent.statut === 'en_cours' && restant <= 0;
+  const fini = tent && tent.statut === 'en_cours' && (restant <= 0 || tent.done === 1);
   const mm = String(Math.floor(restant / 60000)).padStart(2, '0');
   const ss = String(Math.floor((restant % 60000) / 1000)).padStart(2, '0');
 
@@ -49,13 +49,20 @@ export default function Examens() {
     setNow(Date.now());
   }
 
+  async function finir() {
+    await api(`/eleve/examens/tentative/${tent.id}/finir`, { method: 'POST', body: {} });
+    setTent({ ...tent, done: 1, paused_at: tent.paused_at || new Date().toISOString() });
+    setNow(Date.now());
+  }
+
   async function rendre(file) {
     setBusy(true);
     const fd = new FormData();
     fd.append('copie', file);
     try {
-      const res = await fetch(`/api/eleve/examens/tentative/${tent.id}/rendre?token=${encodeURIComponent(getToken())}`, {
+      const res = await fetch(`/api/eleve/examens/tentative/${tent.id}/rendre`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
         body: fd,
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Erreur d’envoi.');
@@ -111,10 +118,10 @@ export default function Examens() {
 
               {(tent.paused_at || fini) && (
                 <div className="ex-cache">
-                  <strong>{fini ? 'Temps écoulé' : 'Examen en pause'}</strong>
+                  <strong>{fini ? (tent.done ? 'Examen terminé' : 'Temps écoulé') : 'Examen en pause'}</strong>
                   <p className="muted small">
                     {fini
-                      ? 'Le temps est terminé : dépose ta copie scannée ci-dessous.'
+                      ? 'Le sujet est définitivement masqué : dépose ta copie scannée ci-dessous.'
                       : 'Le sujet est masqué et le chrono est arrêté. Reprends quand tu es prêt·e.'}
                   </p>
                   {!fini && (
@@ -131,6 +138,11 @@ export default function Examens() {
                 {!tent.paused_at && !fini && (
                   <button className="btn btn-outline" onClick={() => pause(true)}>
                     <Icon name="clock" size={15} /> Pause (sujet masqué)
+                  </button>
+                )}
+                {!fini && (
+                  <button className="btn btn-outline" onClick={finir}>
+                    <Icon name="check" size={15} /> J'ai fini avant l'heure
                   </button>
                 )}
                 <button className="btn btn-primary" disabled={busy} onClick={() => fileRef.current?.click()}>

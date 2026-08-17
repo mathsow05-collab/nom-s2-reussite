@@ -258,12 +258,21 @@ router.get('/examens/tentative/:tid', requireEleve(db), (req, res) => {
 router.post('/examens/tentative/:tid/pause', requireEleve(db), (req, res) => {
   const t = db.prepare("SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ? AND statut = 'en_cours'").get(req.params.tid, req.eleve.id);
   if (!t) return res.status(400).json({ error: 'Examen non actif.' });
+  if (t.done) return res.status(400).json({ error: 'Examen déjà terminé : dépose ta copie.' });
   if (req.body?.paused) {
     db.prepare('UPDATE examens_tentatives SET paused_at = ? WHERE id = ?').run(new Date().toISOString(), t.id);
   } else {
     const add = t.paused_at ? Date.now() - new Date(t.paused_at).getTime() : 0;
     db.prepare('UPDATE examens_tentatives SET paused_at = NULL, paused_ms = paused_ms + ? WHERE id = ?').run(add, t.id);
   }
+  res.json({ ok: true });
+});
+
+router.post('/examens/tentative/:tid/finir', requireEleve(db), (req, res) => {
+  const t = db.prepare("SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ? AND statut = 'en_cours'").get(req.params.tid, req.eleve.id);
+  if (!t) return res.status(400).json({ error: 'Examen non actif.' });
+  db.prepare('UPDATE examens_tentatives SET done = 1, paused_at = COALESCE(paused_at, ?) WHERE id = ?').run(new Date().toISOString(), t.id);
+  addLog('examen_termine', { source: 'eleve', eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: 'fin avant la limite' });
   res.json({ ok: true });
 });
 
@@ -283,7 +292,7 @@ router.post('/examens/tentative/:tid/rendre', requireEleve(db), copieUp, (req, r
 
 router.get('/examens/tentative/:tid/sujet', requireEleve(db, { allowQuery: true }), (req, res) => {
   const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
-  if (!t || t.statut !== 'en_cours' || t.paused_at) return res.status(403).json({ error: 'Sujet masqué pendant la pause ou après la fin.' });
+  if (!t || t.statut !== 'en_cours' || t.paused_at || t.done) return res.status(403).json({ error: 'Sujet masqué pendant la pause ou après la fin.' });
   const ex = db.prepare('SELECT sujet_pdf FROM examens WHERE id = ?').get(t.examen_id);
   const file = path.join(UPLOADS, ex.sujet_pdf);
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'PDF manquant.' });

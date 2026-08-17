@@ -200,5 +200,6 @@ CREATE TABLE IF NOT EXISTS examens_tentatives (
   corrected_at TEXT
 );
 `);
+ensureColumn('examens_tentatives', 'done', 'INTEGER NOT NULL DEFAULT 0');
 
 module.exports = db;
