@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 const db = require('../db');
 const sse = require('../sse');
 const { UPLOADS_DIR } = require('../paths');
@@ -200,6 +201,103 @@ router.get('/annales/:id/:type', requireEleve(db, { allowQuery: true }), (req, r
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${path.basename(file)}"`);
   return res.sendFile(file);
+});
+
+/* ------------------------------------------------------------------ */
+/* Examens maison : sujet masqué tant qu'on n'a pas démarré, pause qui  */
+/* cache le sujet, copie scannée déposée en PDF, 2 tentatives/semaine.  */
+/* ------------------------------------------------------------------ */
+const TMP = path.join(UPLOADS, 'tmp');
+fs.mkdirSync(TMP, { recursive: true });
+const copieUp = multer({ dest: TMP, limits: { fileSize: 25 * 1024 * 1024 } }).single('copie');
+
+function debutSemaine() {
+  const d = new Date();
+  const jour = (d.getDay() + 6) % 7; // lundi = 0
+  d.setDate(d.getDate() - jour);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+router.get('/examens', requireEleve(db), (req, res) => {
+  const f = req.eleve.filiere || 'S2';
+  const examens = db.prepare("SELECT * FROM examens WHERE filiere = ? OR filiere = 'all' ORDER BY id DESC").all(f);
+  const tentatives = db.prepare('SELECT * FROM examens_tentatives WHERE eleve_db_id = ? ORDER BY id DESC').all(req.eleve.id);
+  const sem = debutSemaine();
+  const fois = tentatives.filter((t) => t.started_at >= sem).length;
+  res.json({ examens, tentatives, restants: Math.max(0, 2 - fois) });
+});
+
+router.post('/examens/:id/start', requireEleve(db), (req, res) => {
+  const ex = db.prepare('SELECT * FROM examens WHERE id = ?').get(req.params.id);
+  const f = req.eleve.filiere || 'S2';
+  if (!ex || (ex.filiere !== 'all' && ex.filiere !== f)) return res.status(404).json({ error: 'Examen introuvable.' });
+  const enCours = db
+    .prepare("SELECT * FROM examens_tentatives WHERE examen_id = ? AND eleve_db_id = ? AND statut = 'en_cours'")
+    .get(ex.id, req.eleve.id);
+  if (enCours) return res.json({ tentative: enCours });
+  const sem = debutSemaine();
+  const n = db.prepare('SELECT COUNT(*) c FROM examens_tentatives WHERE eleve_db_id = ? AND started_at >= ?').get(req.eleve.id, sem).c;
+  if (n >= 2) return res.status(429).json({ error: 'Limite atteinte : 2 examens par semaine. Reviens lundi prochain !' });
+  const choisie = String(req.body?.duree);
+  const duree = ex.durees.split(';').includes(choisie) ? Number(choisie) : Number(ex.durees.split(';')[0]);
+  const info = db
+    .prepare('INSERT INTO examens_tentatives (examen_id, eleve_db_id, duree, started_at) VALUES (?,?,?,?)')
+    .run(ex.id, req.eleve.id, duree, new Date().toISOString());
+  addLog('examen_demarre', { source: 'eleve', eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: ex.titre });
+  res.status(201).json({ tentative: db.prepare('SELECT * FROM examens_tentatives WHERE id = ?').get(info.lastInsertRowid) });
+});
+
+router.get('/examens/tentative/:tid', requireEleve(db), (req, res) => {
+  const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
+  if (!t) return res.status(404).json({ error: 'Introuvable.' });
+  const ex = db.prepare('SELECT titre, corrige_pdf IS NOT NULL AS has_corrige FROM examens WHERE id = ?').get(t.examen_id);
+  res.json({ ...t, examen: ex });
+});
+
+router.post('/examens/tentative/:tid/pause', requireEleve(db), (req, res) => {
+  const t = db.prepare("SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ? AND statut = 'en_cours'").get(req.params.tid, req.eleve.id);
+  if (!t) return res.status(400).json({ error: 'Examen non actif.' });
+  if (req.body?.paused) {
+    db.prepare('UPDATE examens_tentatives SET paused_at = ? WHERE id = ?').run(new Date().toISOString(), t.id);
+  } else {
+    const add = t.paused_at ? Date.now() - new Date(t.paused_at).getTime() : 0;
+    db.prepare('UPDATE examens_tentatives SET paused_at = NULL, paused_ms = paused_ms + ? WHERE id = ?').run(add, t.id);
+  }
+  res.json({ ok: true });
+});
+
+router.post('/examens/tentative/:tid/rendre', requireEleve(db), copieUp, (req, res) => {
+  const t = db.prepare("SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ? AND statut = 'en_cours'").get(req.params.tid, req.eleve.id);
+  if (!t) return res.status(400).json({ error: 'Examen non actif.' });
+  if (!req.file) return res.status(400).json({ error: 'Le PDF de la copie est obligatoire.' });
+  const dir = path.join(UPLOADS, 'examens');
+  fs.mkdirSync(dir, { recursive: true });
+  const dest = path.join(dir, `copie-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.pdf`);
+  fs.renameSync(req.file.path, dest);
+  db.prepare("UPDATE examens_tentatives SET copie_pdf = ?, statut = 'rendu', finished_at = ?, paused_at = NULL WHERE id = ?")
+    .run(`examens/${path.basename(dest)}`, new Date().toISOString(), t.id);
+  addLog('examen_rendu', { source: 'eleve', eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req });
+  res.json({ ok: true });
+});
+
+router.get('/examens/tentative/:tid/sujet', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
+  if (!t || t.statut !== 'en_cours' || t.paused_at) return res.status(403).json({ error: 'Sujet masqué pendant la pause ou après la fin.' });
+  const ex = db.prepare('SELECT sujet_pdf FROM examens WHERE id = ?').get(t.examen_id);
+  const file = path.join(UPLOADS, ex.sujet_pdf);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'PDF manquant.' });
+  res.setHeader('Content-Type', 'application/pdf');
+  return res.sendFile(file);
+});
+
+router.get('/examens/tentative/:tid/corrige', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ? AND eleve_db_id = ?').get(req.params.tid, req.eleve.id);
+  if (!t || t.statut === 'en_cours') return res.status(403).json({ error: 'Corrigé disponible après le rendu de la copie.' });
+  const ex = db.prepare('SELECT corrige_pdf FROM examens WHERE id = ?').get(t.examen_id);
+  if (!ex.corrige_pdf) return res.status(404).json({ error: 'Pas de corrigé pour cet examen.' });
+  res.setHeader('Content-Type', 'application/pdf');
+  return res.sendFile(path.join(UPLOADS, ex.corrige_pdf));
 });
 
 /* ------------------------- Quiz d'auto-évaluation ------------------------- */

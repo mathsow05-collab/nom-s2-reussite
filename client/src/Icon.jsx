@@ -213,6 +213,12 @@ export default function Icon({ name, size = 18, className = '' }) {
       </>
     ),
     heart: <path d="M12 20s-7-4.5-9-9c-1.5-3.5 1-8 5-8 2.5 0 4 1.5 4 3 0-1.5 1.5-3 4-3 4 0 6.5 4.5 5 8-2 4.5-9 9-9 9Z" />,
+    upload: (
+      <>
+        <path d="M12 16V4M6 10l6-6 6 6" />
+        <path d="M4 20h16" />
+      </>
+    ),
     building: (
       <>
         <rect x="5" y="3" width="14" height="18" rx="2" />

@@ -486,6 +486,81 @@ router.delete('/annales/:id', admin, refuseAR, (req, res) => {
 });
 
 /* ------------------------- Quiz ------------------------- */
+/* ------------------------- Examens maison ------------------------- */
+const examenUpload = makeUploader(['.pdf'], 25).fields([
+  { name: 'sujet', maxCount: 1 },
+  { name: 'corrige', maxCount: 1 },
+]);
+
+router.get('/examens', admin, (req, res) => {
+  res.json(
+    db
+      .prepare(req.scope === 'all' ? 'SELECT * FROM examens ORDER BY id DESC' : 'SELECT * FROM examens WHERE filiere = ? ORDER BY id DESC')
+      .all(...(req.scope === 'all' ? [] : [req.scope]))
+  );
+});
+
+router.post('/examens', admin, examenUpload, (req, res) => {
+  const { titre, matiere, consignes, durees } = req.body || {};
+  if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
+  const f = req.files?.sujet?.[0];
+  if (!f) return res.status(400).json({ error: 'Le PDF du sujet est obligatoire.' });
+  const dir = path.join(UPLOADS, 'examens');
+  fs.mkdirSync(dir, { recursive: true });
+  const destS = path.join(dir, `sujet-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.pdf`);
+  fs.renameSync(f.path, destS);
+  const sujet_pdf = `examens/${path.basename(destS)}`;
+  let corrige_pdf = null;
+  const cf = req.files?.corrige?.[0];
+  if (cf) {
+    const destC = path.join(dir, `corrige-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.pdf`);
+    fs.renameSync(cf.path, destC);
+    corrige_pdf = `examens/${path.basename(destC)}`;
+  }
+  const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
+  const dur =
+    String(durees || '120')
+      .split(';')
+      .filter((d) => ['60', '120', '180'].includes(d))
+      .join(';') || '120';
+  const info = db
+    .prepare('INSERT INTO examens (titre, filiere, matiere, consignes, durees, sujet_pdf, corrige_pdf) VALUES (?,?,?,?,?,?,?)')
+    .run(String(titre).trim(), filiere, String(matiere || '').trim() || null, String(consignes || '').trim() || null, dur, sujet_pdf, corrige_pdf);
+  addLog('examen_cree', { source: 'admin', req, details: String(titre) });
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+router.delete('/examens/:id', admin, (req, res) => {
+  db.prepare('DELETE FROM examens WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM examens_tentatives WHERE examen_id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+router.get('/examens/:id/tentatives', admin, (req, res) => {
+  res.json(
+    db
+      .prepare('SELECT t.*, e.prenom, e.nom, e.eleve_id, e.classe FROM examens_tentatives t JOIN eleves e ON e.id = t.eleve_db_id WHERE t.examen_id = ? ORDER BY t.id DESC')
+      .all(req.params.id)
+  );
+});
+
+router.get('/examens/copie/:tid', admin, (req, res) => {
+  const t = db.prepare('SELECT * FROM examens_tentatives WHERE id = ?').get(req.params.tid);
+  if (!t?.copie_pdf) return res.status(404).json({ error: 'Copie absente.' });
+  const file = path.join(UPLOADS, t.copie_pdf);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Fichier manquant.' });
+  res.setHeader('Content-Type', 'application/pdf');
+  return res.sendFile(file);
+});
+
+router.post('/tentatives/:id/corriger', admin, (req, res) => {
+  const { score, commentaire } = req.body || {};
+  db.prepare("UPDATE examens_tentatives SET score = ?, commentaire = ?, statut = 'corrige', corrected_at = ? WHERE id = ?")
+    .run(String(score || '').trim(), String(commentaire || '').trim(), new Date().toISOString(), req.params.id);
+  addLog('examen_corrige', { source: 'admin', req, details: `tentative ${req.params.id}` });
+  res.json({ ok: true });
+});
+
 router.get('/quiz', admin, refuseAR, (req, res) => {
   res.json(
     db

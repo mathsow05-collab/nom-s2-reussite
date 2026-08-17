@@ -1206,3 +1206,23 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
   animation: tile-pop 0.4s both;
   animation-delay: calc(var(--i, 0) * 45ms);
 }
+
+/* ---------- Salle d'examen ---------- */
+.ex-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.ex-timer {
+  display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.15rem; color: #0f2557;
+  background: #e8eefb; border-radius: 12px; padding: 8px 12px; font-variant-numeric: tabular-nums;
+}
+.ex-timer.rouge { color: #b91c1c; background: #fee2e2; animation: pulse3 1s infinite; }
+@keyframes pulse3 { 50% { opacity: 0.6; } }
+.ex-regles p { display: flex; gap: 8px; align-items: center; margin: 6px 0; font-size: 0.85rem; color: #334155; }
+.ex-paper { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 10px 12px; font-size: 0.82rem; color: #475569; }
+.ex-sujet { margin-top: 12px; }
+.ex-cache {
+  margin-top: 12px; text-align: center; background: #0f2557; color: #fff; border-radius: 16px; padding: 22px 16px;
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+.ex-cache p { max-width: 46ch; }
+.ex-note { font-size: 2rem; font-weight: 800; }
+.ex-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.ex-actions .btn { flex: 1; }

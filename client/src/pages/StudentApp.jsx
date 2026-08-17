@@ -17,6 +17,7 @@ import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
 import Profil from './Profil.jsx';
+import Examens from './Examens.jsx';
 import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
 
 export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
@@ -272,6 +273,7 @@ export default function StudentApp() {
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'culture' && filiere === 'L2' && <Culture />}
       {tab === 'annales' && <Annales />}
+      {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
       {tab === 'orientation' && <Metiers />}
       {tab === 'agenda' && <Agenda />}
@@ -424,6 +426,7 @@ export default function StudentApp() {
 const TUILES = [
   { id: 'cours', icon: 'book', img: '/metiers/ecole.jpg', titre: 'Cours', sub: 'Vidéos & fiches PDF', cls: 't-indigo' },
   { id: 'annales', icon: 'file', img: '/metiers/lettres.jpg', titre: 'Annales', sub: 'Sujets d’examens', cls: 't-amber' },
+  { id: 'examens', icon: 'clock', img: '/metiers/juriste.jpg', titre: 'Examens', sub: 'Examens chronométrés', cls: 't-navy' },
   { id: 'quiz', icon: 'award', img: '/metiers/data.jpg', titre: 'Quiz', sub: 'Teste-toi', cls: 't-rose' },
   { id: 'agenda', icon: 'calendar', img: '/metiers/campus.jpg', titre: 'Agenda', sub: 'Échéances & planning', cls: 't-sky' },
   { id: 'echanges', icon: 'chat', img: '/metiers/diplomate.jpg', titre: 'Échanges', sub: 'Administration & communauté', cls: 't-green' },
@@ -434,7 +437,7 @@ const TUILES = [
   { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
 ];
 const ICO_TAB = {
-  cours: 'book', annales: 'file', quiz: 'target', agenda: 'calendar', echanges: 'chat',
+  cours: 'book', annales: 'file', examens: 'clock', quiz: 'target', agenda: 'calendar', echanges: 'chat',
   outils: 'chart', orientation: 'compass', ia: 'spark', parcours: 'book', culture: 'glob', suivi: 'chart', accueil: 'home',
 };
 

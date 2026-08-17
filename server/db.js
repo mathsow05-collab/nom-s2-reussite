@@ -171,4 +171,34 @@ ensureColumn('eleves', 'avatar', 'TEXT');
 ensureColumn('questions_eleves', 'public', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('questions_eleves', 'likes', "TEXT NOT NULL DEFAULT '[]'");
 
+/* ------------------------- Examens maison ------------------------- */
+db.exec(`
+CREATE TABLE IF NOT EXISTS examens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  filiere TEXT NOT NULL,
+  matiere TEXT,
+  consignes TEXT,
+  durees TEXT NOT NULL DEFAULT '120',
+  sujet_pdf TEXT NOT NULL,
+  corrige_pdf TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS examens_tentatives (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  examen_id INTEGER NOT NULL,
+  eleve_db_id INTEGER NOT NULL,
+  duree INTEGER NOT NULL,
+  started_at TEXT NOT NULL,
+  paused_at TEXT,
+  paused_ms INTEGER NOT NULL DEFAULT 0,
+  finished_at TEXT,
+  statut TEXT NOT NULL DEFAULT 'en_cours',
+  copie_pdf TEXT,
+  score TEXT,
+  commentaire TEXT,
+  corrected_at TEXT
+);
+`);
+
 module.exports = db;
