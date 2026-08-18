@@ -1570,3 +1570,38 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 .g3-calque { margin-left: auto; display: inline-flex; gap: 5px; align-items: center; font-size: 0.74rem; font-weight: 800; }
 .g3-txt { font-size: 0.9rem; line-height: 1.6; margin: 6px 0 12px; }
 .g3-nav { display: flex; justify-content: flex-end; }
+
+/* ================================================================
+   KAY DIANG v15 : globe v2 — zoom, onde, carte d'identité
+   ================================================================ */
+.globe3 { touch-action: none; }
+.globe3-wrap { position: relative; }
+.g3-zoom { position: absolute; right: 8px; bottom: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.g3-zoom button {
+  width: 38px; height: 38px; border-radius: 12px; border: 1px solid #e3eaf6; background: rgba(255, 255, 255, 0.94);
+  color: #0f2557; font-size: 1.2rem; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(15, 37, 87, 0.18);
+}
+.g3-zoom button:active { transform: scale(0.92); }
+.g3-ripple {
+  position: absolute; z-index: 4; width: 14px; height: 14px; border-radius: 50%;
+  border: 3px solid #1d4ed8; transform: translate(-50%, -50%); pointer-events: none;
+  animation: g3rip 0.45s ease-out both;
+}
+@keyframes g3rip {
+  from { opacity: 0.9; width: 10px; height: 10px; }
+  to { opacity: 0; width: 190px; height: 190px; }
+}
+.g3-card { animation: sheet3-up 0.3s cubic-bezier(0.2, 0.9, 0.25, 1.1) both; }
+.g3-pass { display: flex; align-items: center; gap: 12px; padding: 4px 0 12px; border-bottom: 2px dashed #e3eaf6; margin-bottom: 12px; }
+.g3-flag { font-size: 2.2rem; }
+.g3-pass-id { flex: 1; min-width: 0; }
+.g3-pass-id strong { font-size: 1.15rem; letter-spacing: -0.01em; display: block; }
+.g3-pass-id small { color: #64748b; font-size: 0.74rem; }
+.g3-txt { border-left: 4px solid #1d4ed8; padding-left: 12px; }
+.g3-fun {
+  display: flex; gap: 8px; align-items: center; background: linear-gradient(120deg, #e8eefb, #e0f2f1);
+  border-radius: 14px; padding: 10px 12px; font-size: 0.82rem; font-weight: 600; color: #0f2557; margin-bottom: 12px;
+}
+[data-theme='dark'] .g3-zoom button { background: #121a2e; border-color: #223052; color: #c6cfdd; }
+[data-theme='dark'] .g3-pass { border-color: #223052; }
+[data-theme='dark'] .g3-fun { background: #16203a; color: #c6cfdd; }
