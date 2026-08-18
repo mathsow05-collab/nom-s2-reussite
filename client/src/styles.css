@@ -1364,3 +1364,33 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 [data-theme='dark'] .pchip { background: #121a2e !important; border-color: #1c2740 !important; }
 [data-theme='dark'] .pchip small { color: #c6cfdd; }
 [data-theme='dark'] .pbar { background: #1a2440; }
+
+/* ================================================================
+   KAY DIANG v10 : lecteur vidéo 100 % maison par-dessus l'API YouTube
+   ================================================================ */
+.vp-tap { position: absolute; inset: 0; z-index: 2; cursor: pointer; }
+.vp-play-big {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(15, 37, 87, 0.85); color: #fff; display: flex; align-items: center; justify-content: center;
+  padding-left: 5px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); animation: pop3 0.3s both;
+}
+.vp-load {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 4;
+  width: 42px; height: 42px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff; animation: spin3 0.9s linear infinite;
+}
+@keyframes spin3 { to { transform: translate(-50%, -50%) rotate(360deg); } }
+/* Notre barre de contrôles */
+.vpc {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 10px;
+  padding: 26px 12px 10px; background: linear-gradient(0deg, rgba(5, 10, 25, 0.85), transparent);
+  opacity: 0; transform: translateY(6px); transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+}
+.vpc.show { opacity: 1; transform: none; pointer-events: auto; }
+.vpc-btn { border: none; background: none; color: #fff; cursor: pointer; display: flex; align-items: center; padding: 4px; }
+.vpc-time { color: #dbe7ff; font-size: 0.7rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vpc-bar { flex: 1; height: 14px; display: flex; align-items: center; cursor: pointer; }
+.vpc-bar::before { content: ''; position: absolute; height: 4px; width: 100%; border-radius: 99px; background: rgba(255, 255, 255, 0.25); }
+.vpc-bar { position: relative; }
+.vpc-bar i { position: relative; display: block; height: 4px; border-radius: 99px; background: linear-gradient(90deg, #4f83f7, #2dd4bf); }
