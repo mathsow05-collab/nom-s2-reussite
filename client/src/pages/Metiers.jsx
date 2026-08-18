@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
-import CarteOrientation from './CarteOrientation.jsx';
+import ExplorateurOrientation from './ExplorateurOrientation.jsx';
 
 const norm = (s) =>
   String(s || '')
@@ -34,7 +34,7 @@ export default function Metiers() {
 
   return (
     <main className="container orient">
-      <CarteOrientation
+      <ExplorateurOrientation
         filiere={me.filiere}
         onOpenMetier={(nom) => {
           const hit = typeof nom === 'string' ? findMetier(nom) : nom;
