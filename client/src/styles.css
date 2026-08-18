@@ -1932,3 +1932,23 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
   .xo-node, .xo-edge, .xo-panel, .xo-monde { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; }
   .xo-node.dim { opacity: 0.38 !important; }
 }
+
+/* ================================================================
+   KAY DIANG v23b : replis navigateurs anciens (mobile / WebView)
+   Les couleurs color-mix() ne sont appliquées que si supportées.
+   ================================================================ */
+.xo-chip { background: var(--card); }
+.xo-canvas { background: var(--bg); }
+.xo-node { background: var(--card); -webkit-backdrop-filter: blur(8px); }
+.xo-node.vert { background: var(--card); }
+.xo-node.in-path { border-color: var(--brand); }
+.xo-node.sel { box-shadow: 0 0 0 3px var(--brand-soft); }
+.xo-search { background: var(--card); }
+.xo-panel { background: var(--card); }
+@supports (color-mix(in srgb, red 50%, blue)) {
+  .xo-chip { background: color-mix(in srgb, var(--card) 82%, transparent); }
+  .xo-canvas { background: radial-gradient(900px 420px at 15% -10%, color-mix(in srgb, var(--brand) 9%, transparent), transparent), var(--bg); }
+  .xo-node { background: color-mix(in srgb, var(--card) 92%, transparent); }
+  .xo-node.in-path { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); }
+  .xo-node.sel { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent); }
+}
