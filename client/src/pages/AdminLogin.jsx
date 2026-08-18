@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, setToken } from '../api.js';
+import { api, setAdminToken } from '../api.js';
 import Icon from '../Icon.jsx';
 
 export default function AdminLogin() {
@@ -14,7 +14,7 @@ export default function AdminLogin() {
     setBusy(true);
     try {
       const { token } = await api('/admin/login', { method: 'POST', body: { username, password } });
-      setToken(token);
+      setAdminToken(token);
       window.location.hash = '#/admin/app';
     } catch (ex) {
       setErr(ex.message || 'Erreur de connexion.');

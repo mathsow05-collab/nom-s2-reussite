@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, clearToken } from '../api.js';
+import { api, clearAdminToken } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Spinner } from '../ui.jsx';
 import Dashboard from '../admin/Dashboard.jsx';
@@ -53,7 +53,7 @@ export default function AdminApp() {
         } catch (e) {
           if (e?.status === 401) {
             if (alive) {
-              clearToken();
+              clearAdminToken();
               window.location.hash = '#/admin';
             }
             return;
@@ -68,7 +68,7 @@ export default function AdminApp() {
   }, []);
 
   function logout() {
-    clearToken();
+    clearAdminToken();
     window.location.hash = '#/admin';
   }
 

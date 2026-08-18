@@ -33,6 +33,12 @@ ok(l1.status === 200 && l2.status === 200, 'logins élèves');
 const id1 = l1.body.eleve.id;
 const id2 = l2.body.eleve.id;
 
+const devs0 = await get('/eleve/devoirs', T1);
+ok(
+  Array.isArray(devs0.body) && devs0.body.some((d) => d.titre.includes('Devoir démo') || d.titre.includes('Devoir commun S2')),
+  'devoirs démo présents dans le seed'
+);
+
 const inv = await post('/eleve/chat/inviter', { vers_id: id2, type: 'binome' }, T1);
 ok(inv.status === 200, 'invitation envoyée');
 const h2 = await get('/eleve/chat/home', T2);

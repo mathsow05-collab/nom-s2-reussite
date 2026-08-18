@@ -735,6 +735,46 @@ function seed(db, log = console.log) {
     ['Figure de style par exagération ?', ['Une hyperbole', 'Une métonymie', 'Une litote'], 0],
   ]);
   log('[seed] Devoirs communs : devoirs de démonstration prêts pour les tests.');
+  /* Devoirs binômes de démonstration : toujours présents après un
+     redémarrage, pour tester sans les recréer. */
+  if (db.prepare("SELECT COUNT(*) c FROM devoirs_binomes WHERE titre LIKE 'Devoir démo%'").get().c === 0) {
+    const mk = (titre, desc, filiere, qs) => {
+      const r = db.prepare('INSERT INTO devoirs_binomes (titre, description, filiere) VALUES (?, ?, ?)').run(titre, desc, filiere);
+      const iq = db.prepare('INSERT INTO devoir_binome_questions (devoir_id, question, choix, bonne, ordre) VALUES (?, ?, ?, ?, ?)');
+      qs.forEach((q, i) => iq.run(r.lastInsertRowid, q[0], JSON.stringify(q[1]), q[2], i));
+    };
+    mk('Devoir démo — Puissances (S2)', 'Concertez-vous dans le chat puis choisissez la même réponse.', 'S2', [
+      ['10² × 10³ = ?', ['10⁵', '10⁶', '1000'], 0],
+      ['√81 = ?', ['8', '9', '10'], 1],
+      ['2⁴ = ?', ['8', '12', '16'], 2],
+    ]);
+    mk('Devoir démo — Figures de style (L2)', 'Discutez avec ton binôme avant de valider chaque réponse.', 'L2', [
+      ['« Il est fort comme un lion » est…', ['une comparaison', 'une métaphore', 'une litote'], 0],
+      ['« Je meurs de faim » est…', ['une hyperbole', 'un oxymore', 'une anaphore'], 0],
+      ['« Une obscure clarté » est…', ['un oxymore', 'une comparaison', 'une litote'], 0],
+    ]);
+    log('[seed] 2 devoirs binômes de démonstration créés (S2 + L2).');
+  }
+
+  /* Binômes de démonstration : deux paires déjà formées pour tester
+     immédiatement (Awa+Moussa en S2, Aminata+Ibrahima en L2). */
+  if (db.prepare('SELECT COUNT(*) c FROM chat_amis').get().c === 0) {
+    const find = (p, n) => db.prepare('SELECT id FROM eleves WHERE prenom = ? AND nom = ?').get(p, n);
+    const paires = [
+      [find('Awa', 'Diop'), find('Moussa', 'Ndiaye')],
+      [find('Aminata', 'Ba'), find('Ibrahima', 'Fall')],
+    ];
+    let n = 0;
+    for (const [a, b] of paires) {
+      if (a && b) {
+        db.prepare(
+          "INSERT INTO chat_amis (eleve_a, eleve_b, type, statut, accepted_at) VALUES (?, ?, 'binome', 'actif', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+        ).run(a.id, b.id);
+        n++;
+      }
+    }
+    log(`[seed] ${n} binômes de démonstration créés.`);
+  }
 
   return result;
 }

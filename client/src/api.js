@@ -1,8 +1,15 @@
 const TOKEN_KEY = 's2r_token';
+const ADMIN_TOKEN_KEY = 's2r_admin_token';
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-export const setToken = (t) => localStorage.setItem(TOKEN_KEY, t);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+/* Jetons en sessionStorage : chaque onglet garde SA session. On peut donc
+   tester avec deux élèves (ou un élève + un admin) dans deux onglets du même
+   navigateur sans se déconnecter mutuellement. */
+export const getToken = () => sessionStorage.getItem(TOKEN_KEY);
+export const setToken = (t) => sessionStorage.setItem(TOKEN_KEY, t);
+export const clearToken = () => sessionStorage.removeItem(TOKEN_KEY);
+export const getAdminToken = () => sessionStorage.getItem(ADMIN_TOKEN_KEY);
+export const setAdminToken = (t) => sessionStorage.setItem(ADMIN_TOKEN_KEY, t);
+export const clearAdminToken = () => sessionStorage.removeItem(ADMIN_TOKEN_KEY);
 
 export class ApiError extends Error {
   constructor(status, code, message) {
@@ -14,7 +21,7 @@ export class ApiError extends Error {
 
 export async function api(path, { method = 'GET', body, form = false } = {}) {
   const headers = {};
-  const token = getToken();
+  const token = path.startsWith('/admin') ? getAdminToken() : getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   let payload;
   if (form) {
@@ -34,7 +41,7 @@ export async function api(path, { method = 'GET', body, form = false } = {}) {
     // Session admin expirée (ex. après un redéploiement) : on renvoie
     // proprement vers l'écran de connexion au lieu d'afficher des erreurs.
     if (res.status === 401 && path.startsWith('/admin/') && !path.startsWith('/admin/login')) {
-      clearToken();
+      clearAdminToken();
       if (!window.location.hash.startsWith('#/admin')) window.location.hash = '#/admin';
       else window.location.reload();
     }
