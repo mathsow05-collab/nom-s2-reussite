@@ -47,7 +47,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
     };
   }, []);
 
-  const show3D = webgl && (force3d == null ? !isMobile : force3d);
+  const show3D = webgl && (force3d == null ? true : force3d);
 
   const results = useMemo(() => searchNodes(q), [q]);
   const sel = selected ? nodesById.get(selected) : null;

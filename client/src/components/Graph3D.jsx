@@ -180,8 +180,13 @@ export default function Graph3D({ cheminNodes, kids, selected, onNavigate, onFai
     }
 
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      const small = (holder.clientWidth || 300) < 700;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: !small, alpha: true });
+      } catch {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+      }
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2));
       renderer.setSize(holder.clientWidth || 300, holder.clientHeight || 400);
       holder.appendChild(renderer.domElement);
       el = renderer.domElement;
@@ -189,7 +194,8 @@ export default function Graph3D({ cheminNodes, kids, selected, onNavigate, onFai
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(55, (holder.clientWidth || 300) / (holder.clientHeight || 400), 0.1, 100);
-      targetZ = (holder.clientWidth || 300) < 640 ? 12 : 9.5;
+      const w0 = holder.clientWidth || 300;
+      targetZ = w0 < 480 ? 13.5 : w0 < 700 ? 11.5 : 9.5;
       camera.position.set(0, 0.6, targetZ);
       world = new THREE.Group();
       scene.add(world);
