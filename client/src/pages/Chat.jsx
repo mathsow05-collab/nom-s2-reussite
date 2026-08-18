@@ -143,7 +143,7 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
           notifier={notifier}
         />
         {duelId != null && <DuelJeu id={duelId} onClose={() => setDuelId(null)} notifier={notifier} />}
-        {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} />}
+        {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} moiId={me.id} />}
         {toast && <div className="chat-toast">{toast}</div>}
         {lumiere && (
           <div className="chat-lightbox" onClick={() => setLumiere(null)}>
@@ -309,7 +309,7 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
       )}
 
       {duelId != null && <DuelJeu id={duelId} onClose={() => setDuelId(null)} notifier={notifier} />}
-      {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} />}
+      {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} moiId={me.id} />}
       {toast && <div className="chat-toast">{toast}</div>}
       {lumiere && (
         <div className="chat-lightbox" onClick={() => setLumiere(null)}>
@@ -851,6 +851,33 @@ function CarteSpeciale({ m, onOuvrirDuel, onOuvrirDevoir, onOuvrirContenu }) {
   }
 
   if (m.type === 'devoir') {
+    if (p.action === 'propose')
+      return (
+        <div className="carte-sys">
+          <span className="carte-sys-ico devoirico">
+            <Icon name="users" size={16} />
+          </span>
+          <div className="carte-sys-txt">
+            <strong>{p.de} veut faire un devoir avec toi</strong>
+            <small>{p.titre} — accepte ou refuse</small>
+          </div>
+          <button className="btn btn-primary" onClick={() => onOuvrirDevoir(p.devoir_id)}>
+            Voir
+          </button>
+        </div>
+      );
+    if (p.action === 'devoir-accepte')
+      return (
+        <div className="carte-sys mini ok">
+          <Icon name="check" size={13} /> Devoir « {p.titre} » accepté : c'est parti, mettez-vous d'accord sur les réponses !
+        </div>
+      );
+    if (p.action === 'devoir-refuse')
+      return (
+        <div className="carte-sys mini ko">
+          <Icon name="x" size={13} /> {p.de} a refusé le devoir « {p.titre} ».
+        </div>
+      );
     if (p.action === 'nouveau')
       return (
         <div className="carte-sys">

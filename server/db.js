@@ -299,6 +299,15 @@ CREATE TABLE IF NOT EXISTS devoir_binome_questions (
   bonne INTEGER NOT NULL,
   ordre INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS devoir_binome_participations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  devoir_id INTEGER NOT NULL,
+  lien_id INTEGER NOT NULL,
+  statut TEXT NOT NULL DEFAULT 'propose',
+  propose_par INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE (devoir_id, lien_id)
+);
 CREATE TABLE IF NOT EXISTS devoir_binome_reponses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   devoir_id INTEGER NOT NULL,

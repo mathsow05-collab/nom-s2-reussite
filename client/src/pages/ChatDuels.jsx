@@ -178,7 +178,7 @@ export function DuelJeu({ id, onClose, notifier }) {
   const [idx, setIdx] = useState(null);
   const [choisi, setChoisi] = useState(null);
 
-  const charger = useCallback(() => api(`/duel/${id}`).then(setData).catch(() => onClose()), [id, onClose]);
+  const charger = useCallback(() => api(`/eleve/duel/${id}`).then(setData).catch(() => onClose()), [id, onClose]);
   useEffect(() => {
     charger();
     const t = setInterval(charger, 5000);
@@ -201,7 +201,7 @@ export function DuelJeu({ id, onClose, notifier }) {
 
   async function accepter(action) {
     try {
-      await api(`/duel/${id}/${action}`, { method: 'POST' });
+      await api(`/eleve/duel/${id}/${action}`, { method: 'POST' });
       charger();
     } catch (err) {
       notifier(err.message);
@@ -212,7 +212,7 @@ export function DuelJeu({ id, onClose, notifier }) {
     if (choisi != null) return;
     setChoisi(i);
     try {
-      await api(`/duel/${id}/repondre`, { method: 'POST', body: { question_id: q.id, reponse: i } });
+      await api(`/eleve/duel/${id}/repondre`, { method: 'POST', body: { question_id: q.id, reponse: i } });
       const reste = questions.filter((qq) => mes_reponses[qq.id] === undefined && qq.id !== q.id);
       setTimeout(() => {
         setChoisi(null);

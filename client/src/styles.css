@@ -1786,3 +1786,4 @@ button.chat-row.cliquable:hover { background: var(--brand-soft); }
 .rang { width: 34px; text-align: center; font-weight: 800; color: var(--brand-dark); flex-shrink: 0; }
 .rang-moi { background: var(--brand-soft); border-radius: 10px; }
 .rang-score { font-weight: 800; color: var(--ok); flex-shrink: 0; }
+.devoir-part { border: 1px dashed var(--brand); border-radius: 14px; padding: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }

@@ -1021,6 +1021,9 @@ router.get('/devoir/:id', requireEleve(db), (req, res) => {
   const lien = monLienActif(moi);
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme (Chat & binômes) pour participer.' });
   const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  const participation = db
+    .prepare('SELECT statut, propose_par FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+    .get(d.id, lien.id) || null;
   const questions = db
     .prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id')
     .all(d.id)
@@ -1058,8 +1061,56 @@ router.get('/devoir/:id', requireEleve(db), (req, res) => {
       fini: devoirEstFini(d),
     },
     partenaire: chatPublic(chatInfoEleve(partenaire)),
+    participation: participation ? { statut: participation.statut, par: participation.propose_par } : null,
     questions,
   });
+});
+
+router.post('/devoir/:id/proposer', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  db.prepare(
+    'INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par) VALUES (?, ?, ?, ?) ON CONFLICT (devoir_id, lien_id) DO NOTHING'
+  ).run(d.id, lien.id, 'propose', moi);
+  chatMsgSysteme(partenaire, 'devoir', { action: 'propose', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
+});
+
+router.post('/devoir/:id/accepter', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  db.prepare(
+    'INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par) VALUES (?, ?, ?, ?) ON CONFLICT (devoir_id, lien_id) DO UPDATE SET statut = ?, propose_par = propose_par'
+  ).run(d.id, lien.id, 'accepte', moi, 'accepte');
+  chatMsgSysteme(partenaire, 'devoir', { action: 'devoir-accepte', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
+  chatMsgSysteme(moi, 'devoir', { action: 'devoir-accepte', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
+});
+
+router.post('/devoir/:id/refuser', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  db.prepare(
+    'INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par) VALUES (?, ?, ?, ?) ON CONFLICT (devoir_id, lien_id) DO UPDATE SET statut = ?'
+  ).run(d.id, lien.id, 'refuse', moi, 'refuse');
+  chatMsgSysteme(partenaire, 'devoir', { action: 'devoir-refuse', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
+  chatMsgSysteme(moi, 'devoir', { action: 'devoir-refuse', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
 });
 
 router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
@@ -1069,6 +1120,11 @@ router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
   if (devoirEstFini(d)) return res.status(400).json({ error: 'Le délai est dépassé.' });
   const lien = monLienActif(moi);
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const part = db
+    .prepare('SELECT statut FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+    .get(d.id, lien.id);
+  if (!part || part.statut !== 'accepte')
+    return res.status(400).json({ error: 'Le devoir doit être accepté par les deux membres du binôme avant de répondre.' });
   const q = db.prepare('SELECT * FROM devoir_binome_questions WHERE id = ? AND devoir_id = ?').get(req.params.qid, d.id);
   if (!q) return res.status(404).json({ error: 'Question introuvable.' });
   let choix;

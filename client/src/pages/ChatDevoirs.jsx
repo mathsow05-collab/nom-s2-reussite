@@ -90,11 +90,20 @@ export default function Devoirs({ notifier }) {
 
 /* Panneau du devoir : chaque question montre mon choix, celui de mon binôme,
    et ne se verrouille que si les deux choix sont identiques. */
-export function DevoirPanneau({ id, onClose, notifier }) {
+export function DevoirPanneau({ id, onClose, notifier, moiId }) {
   const [data, setData] = useState(null);
   const [envoi, setEnvoi] = useState(null);
+  const [errDevoir, setErrDevoir] = useState(null);
 
-  const charger = useCallback(() => api(`/devoir/${id}`).then(setData).catch((e) => notifier(e.message)), [id, notifier]);
+  const charger = useCallback(() => {
+    setErrDevoir(null);
+    api(`/eleve/devoir/${id}`)
+      .then(setData)
+      .catch((e) => {
+        notifier(e.message);
+        setErrDevoir(e.message);
+      });
+  }, [id, notifier]);
   useEffect(() => {
     charger();
     const t = setInterval(charger, 5000);
@@ -110,7 +119,7 @@ export function DevoirPanneau({ id, onClose, notifier }) {
     if (q.validee || data?.devoir.fini || envoi != null) return;
     setEnvoi(q.id);
     try {
-      const r = await api(`/devoir/${id}/question/${q.id}`, { method: 'POST', body: { choix: i } });
+      const r = await api(`/eleve/devoir/${id}/question/${q.id}`, { method: 'POST', body: { choix: i } });
       if (r.validee) notifier(r.bonne ? `Question ${q.num} validée — bonne réponse !` : `Question ${q.num} validée — ce n'était pas la bonne.`);
       charger();
     } catch (err) {
@@ -129,6 +138,16 @@ export function DevoirPanneau({ id, onClose, notifier }) {
     );
 
   const { devoir, partenaire, questions } = data;
+  const part = data.participation;
+
+  async function participationAction(action) {
+    try {
+      await api(`/eleve/devoir/${id}/${action}`, { method: 'POST' });
+      charger();
+    } catch (e) {
+      notifier(e.message);
+    }
+  }
 
   return (
     <div className="chat-lightbox">
@@ -145,7 +164,55 @@ export function DevoirPanneau({ id, onClose, notifier }) {
           discutez dans le chat puis choisissez la même réponse.
         </p>
 
-        {questions.map((q) => (
+        {errDevoir && (
+          <div className="chat-vide">
+            <Icon name="alert" size={24} />
+            <strong>Problème</strong>
+            <p className="muted small">{errDevoir}</p>
+            <button className="btn btn-primary" onClick={charger}>
+              Réessayer
+            </button>
+          </div>
+        )}
+
+        {!errDevoir && !devoir.fini && !part && (
+          <div className="devoir-part">
+            <p className="muted small">Pour commencer, propose le devoir à ton binôme : il pourra accepter ou refuser.</p>
+            <button className="btn btn-primary" onClick={() => participationAction('proposer')}>
+              <Icon name="send" size={15} /> Proposer à {partenaire?.prenom} de faire ce devoir
+            </button>
+          </div>
+        )}
+        {!errDevoir && part?.statut === 'propose' && part.par !== moiId && (
+          <div className="devoir-part">
+            <p className="muted small">
+              <strong>{partenaire?.prenom}</strong> veut faire ce devoir avec toi. Tu acceptes ?
+            </p>
+            <div className="chat-inv-actions">
+              <button className="btn btn-primary" onClick={() => participationAction('accepter')}>
+                <Icon name="check" size={15} /> Accepter
+              </button>
+              <button className="btn btn-ghost" onClick={() => participationAction('refuser')}>
+                Refuser
+              </button>
+            </div>
+          </div>
+        )}
+        {!errDevoir && part?.statut === 'propose' && part.par === moiId && (
+          <div className="devoir-part">
+            <p className="muted small">
+              Proposition envoyée : en attente de l'accord de <strong>{partenaire?.prenom}</strong>…
+            </p>
+          </div>
+        )}
+        {!errDevoir && part?.statut === 'refuse' && (
+          <div className="devoir-part">
+            <p className="err-text">Ce devoir a été refusé : vous ne le ferez pas ensemble.</p>
+          </div>
+        )}
+
+        {part?.statut === 'accepte' &&
+          questions.map((q) => (
           <div className={`devoir-q${q.validee ? ' validee' : ''}`} key={q.id}>
             <p className="duel-question">
               {q.num}. {q.question}
@@ -205,7 +272,7 @@ function Classement({ id, onClose }) {
   const [rows, setRows] = useState(null);
 
   useEffect(() => {
-    api(`/devoir/${id}/classement`).then(setRows).catch(() => setRows([]));
+    api(`/eleve/devoir/${id}/classement`).then(setRows).catch(() => setRows([]));
   }, [id]);
 
   return (
