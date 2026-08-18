@@ -1617,3 +1617,13 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
   position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 0.62rem; font-weight: 700;
   color: #fff; background: rgba(8, 15, 35, 0.7); padding: 2px 8px; border-radius: 999px; white-space: nowrap;
 }
+
+/* ================================================================
+   KAY DIANG v17 : vraie Terre 3D (three.js)
+   ================================================================ */
+.globe3-wrap { position: relative; height: min(92vw, 430px); border-radius: 22px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #0a1730, #050b18 75%); }
+.globe3-canvas { position: absolute; inset: 0; }
+.globe3-canvas canvas { display: block; }
+.globe3-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9db8e8; font-size: 0.85rem; font-weight: 700; }
+.globe3-wrap .g3-ripple { z-index: 6; }
+.globe3-wrap .g3-zoom { z-index: 7; }
