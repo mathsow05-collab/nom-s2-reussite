@@ -1627,3 +1627,21 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 .globe3-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #9db8e8; font-size: 0.85rem; font-weight: 700; }
 .globe3-wrap .g3-ripple { z-index: 6; }
 .globe3-wrap .g3-zoom { z-index: 7; }
+
+/* ================================================================
+   KAY DIANG v18 : PWA + téléchargements « à la YouTube »
+   ================================================================ */
+.h2-flex { display: flex; align-items: center; gap: 8px; }
+.hl-count { min-width: 22px; height: 22px; border-radius: 11px; background: #4338ca; color: #fff; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 7px; }
+.hl-note { line-height: 1.5; }
+.hl-btn.hl-saved { color: #15803d; border-color: #86efac; background: #f0fdf4; }
+[data-theme='dark'] .hl-btn.hl-saved { color: #4ade80; border-color: #14532d; background: #052e16; }
+.hl-row { display: flex; align-items: center; gap: 10px; }
+.hl-row + .hl-row { margin-top: 8px; }
+.hl-ico { background: #eef2ff !important; color: #4338ca !important; flex-shrink: 0; }
+[data-theme='dark'] .hl-ico { background: #1e1b4b !important; color: #a5b4fc !important; }
+.hl-row .hist3-txt { flex: 1; min-width: 0; }
+.hl-lire { flex-shrink: 0; padding: 7px 12px; font-size: 0.82rem; }
+.hl-del { flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; border: none; background: transparent; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.15s; }
+.hl-del:hover { background: #fee2e2; color: #b91c1c; }
+[data-theme='dark'] .hl-del:hover { background: #450a0a; color: #f87171; }

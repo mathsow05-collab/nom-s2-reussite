@@ -8,3 +8,10 @@ createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>
 );
+
+// PWA : enregistre le service worker (rend l'application utilisable hors ligne).
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}

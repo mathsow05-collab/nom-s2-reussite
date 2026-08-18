@@ -16,6 +16,7 @@ import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
+import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Examens from './Examens.jsx';
 import Flashcards from './Flashcards.jsx';
@@ -813,9 +814,12 @@ function Viewer({ c, onClose }) {
           </button>
         )}
         {pdfUrl && (
-          <a className="btn btn-ghost" href={pdfUrl} download>
-            <Icon name="download" size={16} /> Télécharger
-          </a>
+          <TelechargerHL
+            id={`cours-${c.id}`}
+            titre={c.titre}
+            sous={`${MATIERE_BY_ID[c.matiere]?.label || 'Cours'} · PDF`}
+            url={pdfUrl}
+          />
         )}
       </div>
     </Modal>

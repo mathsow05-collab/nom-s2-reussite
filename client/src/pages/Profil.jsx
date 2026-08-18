@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
+import { Modal } from '../ui.jsx';
+import PdfViewer from '../components/PdfViewer.jsx';
+import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
 import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
@@ -11,6 +15,23 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
   const badges = badgesOf(prog, stats);
   const tousBadges = 9;
   const derniersQuiz = [...prog.quiz].sort((a, b) => b.t - a.t).slice(0, 5);
+  const hl = useHorsLigne();
+  const install = useInstall();
+  const [lecture, setLecture] = useState(null);
+  const tailleTotale = hl.items.reduce((s, f) => s + (f.taille || 0), 0);
+
+  async function ouvrir(f) {
+    const rec = await lireHL(f.id).catch(() => null);
+    if (!rec?.blob) return;
+    setLecture({ titre: f.titre, url: URL.createObjectURL(rec.blob) });
+  }
+  function fermerLecture() {
+    setLecture((l) => {
+      if (l?.url) URL.revokeObjectURL(l.url);
+      return null;
+    });
+  }
+
 
   return (
     <main className="container profil3">
@@ -81,6 +102,62 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
       </section>
 
       <section className="card s3card">
+        <h2>
+          <span className="h2-flex">
+            Téléchargements hors ligne
+            {hl.items.length > 0 && <span className="hl-count">{hl.items.length}</span>}
+          </span>
+        </h2>
+        <p className="muted small hl-note">
+          Comme sur YouTube : tes documents enregistrés restent <strong>dans l'application</strong> et se lisent sans
+          connexion. Ils ne sortent pas vers le téléphone.
+        </p>
+        {hl.items.length === 0 ? (
+          <p className="muted">
+            Rien pour l'instant. Dans un cours ou une annale, appuie sur <strong>Hors ligne</strong> pour garder le
+            PDF avec toi.
+          </p>
+        ) : (
+          <>
+            <div>
+              {hl.items.map((f) => (
+                <div className="hist3 hl-row" key={f.id}>
+                  <span className="hist3-ico hl-ico">
+                    <Icon name="file" size={16} />
+                  </span>
+                  <div className="hist3-txt">
+                    <strong>{f.titre}</strong>
+                    <small>
+                      {f.sous} · {fmtTaille(f.taille)} ·{' '}
+                      {new Date(f.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </small>
+                  </div>
+                  <button className="btn btn-outline hl-lire" onClick={() => ouvrir(f)}>
+                    <Icon name="book" size={14} /> Lire
+                  </button>
+                  <button
+                    className="hl-del"
+                    title="Retirer de mes téléchargements"
+                    onClick={() => supprimerHL(f.id)}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="muted small" style={{ marginTop: 8 }}>
+              Espace utilisé : {fmtTaille(tailleTotale)}
+            </div>
+          </>
+        )}
+        {install.peut && (
+          <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={install.installer}>
+            <Icon name="download" size={16} /> Installer l'application sur mon téléphone
+          </button>
+        )}
+      </section>
+
+      <section className="card s3card">
         <h2>Mon avatar</h2>
         <div className="avatar-grid">
           {AVATARS.map((a) => (
@@ -117,6 +194,15 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
           </button>
         </div>
       </section>
+
+      {lecture && (
+        <Modal title={lecture.titre} onClose={fermerLecture} wide>
+          <PdfViewer url={lecture.url} />
+          <div className="muted small hl-note" style={{ marginTop: 8 }}>
+            Lecture hors ligne — ce document reste dans l'application.
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }

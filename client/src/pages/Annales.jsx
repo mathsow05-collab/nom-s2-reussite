@@ -3,6 +3,7 @@ import { api, getToken, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
+import { TelechargerHL } from '../offline.jsx';
 
 const ANNEES = Array.from({ length: 27 }, (_, i) => 2026 - i); // 2026 → 2000
 
@@ -111,6 +112,14 @@ export default function Annales() {
       {viewer && (
         <Modal title={`${viewer.a.titre} — ${viewer.type === 'sujet' ? 'Sujet' : 'Corrigé'}`} onClose={() => setViewer(null)} wide>
           <PdfViewer url={`/api/eleve/annales/${viewer.a.id}/${viewer.type}?token=${encodeURIComponent(getToken())}`} />
+          <div className="viewer-foot">
+            <TelechargerHL
+              id={`annale-${viewer.a.id}-${viewer.type}`}
+              titre={`${viewer.a.titre} — ${viewer.type === 'sujet' ? 'Sujet' : 'Corrigé'}`}
+              sous={`Session ${viewer.a.annee} · PDF`}
+              url={`/api/eleve/annales/${viewer.a.id}/${viewer.type}?token=${encodeURIComponent(getToken())}`}
+            />
+          </div>
         </Modal>
       )}
     </main>
