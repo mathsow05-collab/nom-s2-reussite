@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FILIERES } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal } from '../ui.jsx';
@@ -31,7 +31,23 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [webgl, setWebgl] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia?.('(max-width: 860px)')?.matches || false);
+  const [force3d, setForce3d] = useState(null); // null = auto : 3D sur grand écran, liste sur mobile
   const dragRef = useRef(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia?.('(max-width: 860px)');
+    if (!mq) return undefined;
+    const h = (e) => setIsMobile(e.matches);
+    if (mq.addEventListener) mq.addEventListener('change', h);
+    else if (mq.addListener) mq.addListener(h);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', h);
+      else if (mq.removeListener) mq.removeListener(h);
+    };
+  }, []);
+
+  const show3D = webgl && (force3d == null ? !isMobile : force3d);
 
   const results = useMemo(() => searchNodes(q), [q]);
   const sel = selected ? nodesById.get(selected) : null;
@@ -134,6 +150,9 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
               </div>
             )}
           </div>
+          <button className="btn btn-outline" onClick={() => setForce3d(!show3D)}>
+            <Icon name={show3D ? 'grid' : 'globe'} size={15} /> {show3D ? 'Vue liste' : 'Vue 3D'}
+          </button>
           <button className="btn btn-outline" onClick={() => setQuiz(true)}>
             <Icon name="bulb" size={15} /> Je ne sais pas quoi faire
           </button>
@@ -155,7 +174,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
       </nav>
 
       {/* --------------------------- graphe 3D arborescent --------------------------- */}
-      {webgl && (
+      {show3D && (
         <div className="xo-canvas3d">
           <Graph3D
             cheminNodes={chemin.map((id) => nodesById.get(id))}
@@ -171,7 +190,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
       )}
 
       {/* ---------------------------- parcours vertical (repli) ---------------------------- */}
-      {!webgl && (
+      {!show3D && (
       <div className="xo-vert force">
         {chemin.map((id, i) => {
           const n = nodesById.get(id);
