@@ -148,6 +148,21 @@ export default function StudentApp() {
     return () => clearInterval(t);
   }, [me]);
 
+  // Contenu recommandé depuis le chat : ouvre directement le cours ou l'annale.
+  const [annalesFocus, setAnnalesFocus] = useState(null);
+  function ouvrirContenu(payload) {
+    if (payload?.kind === 'cours') {
+      const c = (cours || []).find((x) => x.id === payload.id);
+      if (c) {
+        setTab('cours');
+        setViewer(c);
+      }
+    } else if (payload?.kind === 'annale') {
+      setAnnalesFocus({ id: payload.id });
+      setTab('annales');
+    }
+  }
+
   // Chat & binômes : lien d'invitation reçu dans l'URL (?inviter=CODE) + badge.
   const [chatCode, setChatCode] = useState(null);
   const [chatBadge, setChatBadge] = useState(0);
@@ -327,7 +342,7 @@ export default function StudentApp() {
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'culture' && filiere === 'L2' && <Culture />}
-      {tab === 'annales' && <Annales />}
+      {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
       {tab === 'flash' && <Flashcards meId={me.eleve_id} />}
@@ -335,7 +350,9 @@ export default function StudentApp() {
       {tab === 'agenda' && <Agenda />}
       {tab === 'outils' && <Outils />}
       {tab === 'echanges' && <Echanges />}
-      {tab === 'chat' && <Chat me={me} codeInvite={chatCode} onCodeTraite={() => setChatCode(null)} />}
+      {tab === 'chat' && (
+        <Chat me={me} codeInvite={chatCode} onCodeTraite={() => setChatCode(null)} onOuvrirContenu={ouvrirContenu} />
+      )}
 
       {tab === 'cours' && (
         <main className="container">

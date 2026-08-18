@@ -1,7 +1,9 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { api, getToken } from '../api.js';
+import { api, getToken, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Spinner } from '../ui.jsx';
+import Duels, { DuelJeu } from './ChatDuels.jsx';
+import Devoirs, { DevoirPanneau } from './ChatDevoirs.jsx';
 
 /* ------------------------------------------------------------------ */
 /* CHAT & BINÔMES : espace de discussion privé entre élèves.           */
@@ -45,12 +47,15 @@ function ChoixType({ value, onChange }) {
   );
 }
 
-export default function Chat({ me, codeInvite, onCodeTraite }) {
+export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) {
   const [home, setHome] = useState(null);
+  const [devoirs, setDevoirs] = useState([]);
   const [vue, setVue] = useState('liste');
   const [convo, setConvo] = useState(null);
   const [toast, setToast] = useState(null);
   const [lumiere, setLumiere] = useState(null);
+  const [duelId, setDuelId] = useState(null);
+  const [devoirId, setDevoirId] = useState(null);
   const toastT = useRef(null);
 
   const notifier = useCallback((t) => {
@@ -74,6 +79,19 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
   useEffect(() => {
     if (codeInvite) setVue('lien');
   }, [codeInvite]);
+
+  useEffect(() => {
+    const maj = () => api('/eleve/devoirs').then(setDevoirs).catch(() => {});
+    maj();
+    const t = setInterval(maj, 30000);
+    window.addEventListener('kd-chat', maj);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('kd-chat', maj);
+    };
+  }, []);
+
+  const devoirsActifs = devoirs.filter((d) => !d.fini && d.binome);
 
   const lienPerso = home ? `${location.origin}${location.pathname}?inviter=${home.moi.code}` : '';
   async function copier() {
@@ -100,6 +118,7 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
         <Convo
           lien={convo}
           moiId={me.id}
+          devoirsActifs={devoirsActifs}
           onRetour={() => {
             setConvo(null);
             setVue('liste');
@@ -112,8 +131,13 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
             notifier('Lien retiré.');
           }}
           onImage={setLumiere}
+          onOuvrirDuel={setDuelId}
+          onOuvrirDevoir={setDevoirId}
+          onOuvrirContenu={onOuvrirContenu}
           notifier={notifier}
         />
+        {duelId != null && <DuelJeu id={duelId} onClose={() => setDuelId(null)} notifier={notifier} />}
+        {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} />}
         {toast && <div className="chat-toast">{toast}</div>}
         {lumiere && (
           <div className="chat-lightbox" onClick={() => setLumiere(null)}>
@@ -138,6 +162,12 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
           </button>
           <button className={vue === 'invitations' ? 'on' : ''} onClick={() => setVue('invitations')}>
             Invitations{home?.invitations.length > 0 && <span className="chat-badge">{home.invitations.length}</span>}
+          </button>
+          <button className={vue === 'duels' ? 'on' : ''} onClick={() => setVue('duels')}>
+            Duels
+          </button>
+          <button className={vue === 'devoirs' ? 'on' : ''} onClick={() => setVue('devoirs')}>
+            Devoirs{devoirsActifs.length > 0 && <span className="chat-badge">{devoirsActifs.length}</span>}
           </button>
         </div>
       </header>
@@ -213,7 +243,13 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
                           ? `${l.dernier.de_id === me.id ? 'Toi : ' : ''}${l.dernier.texte}`
                           : l.dernier.type === 'audio'
                             ? 'Note vocale'
-                            : 'Photo'
+                            : l.dernier.type === 'partage'
+                              ? 'Contenu recommandé'
+                              : l.dernier.type === 'duel'
+                                ? 'Duel de quiz'
+                                : l.dernier.type === 'devoir'
+                                  ? 'Devoir commun'
+                                  : 'Photo'
                         : `Dites-vous bonjour !`}
                     </small>
                   </div>
@@ -249,10 +285,15 @@ export default function Chat({ me, codeInvite, onCodeTraite }) {
         </section>
       )}
 
+      {home && vue === 'duels' && <Duels home={home} notifier={notifier} />}
+      {home && vue === 'devoirs' && <Devoirs notifier={notifier} />}
+
       {home && vue === 'lien' && codeInvite && (
         <VueLien code={codeInvite} notifier={notifier} onFini={() => { onCodeTraite(); setVue('liste'); charger(); }} onVoirInvitations={() => { onCodeTraite(); setVue('invitations'); }} />
       )}
 
+      {duelId != null && <DuelJeu id={duelId} onClose={() => setDuelId(null)} notifier={notifier} />}
+      {devoirId != null && <DevoirPanneau id={devoirId} onClose={() => setDevoirId(null)} notifier={notifier} />}
       {toast && <div className="chat-toast">{toast}</div>}
       {lumiere && (
         <div className="chat-lightbox" onClick={() => setLumiere(null)}>
@@ -457,11 +498,12 @@ function VueLien({ code, notifier, onFini, onVoirInvitations }) {
 }
 
 /* ------------------------------ Conversation ------------------------------ */
-function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
+function Convo({ lien, moiId, onRetour, onRetirer, onImage, devoirsActifs, onOuvrirDuel, onOuvrirDevoir, onOuvrirContenu, notifier }) {
   const [msgs, setMsgs] = useState([]);
   const [texte, setTexte] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [rec, setRec] = useState(null); // secondes écoulées pendant l'enregistrement
+  const [partage, setPartage] = useState(null); // null | { cours: [], annales: [] }
   const finRef = useRef(null);
   const lastId = useRef(0);
   const recRef = useRef(null);
@@ -585,6 +627,35 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
     setRec(null);
   }
 
+  async function ouvrirPartage() {
+    if (partage) {
+      setPartage(null);
+      return;
+    }
+    setPartage({ cours: [], annales: [] });
+    const [c, a] = await Promise.all([api('/eleve/cours').catch(() => []), api('/eleve/annales').catch(() => [])]);
+    setPartage({ cours: c || [], annales: a || [] });
+  }
+
+  async function partagerContenu(kind, item) {
+    const payload = {
+      kind,
+      id: item.id,
+      titre: item.titre,
+      sub: kind === 'cours' ? MATIERE_BY_ID[item.matiere]?.label || 'Cours' : `Annales ${item.annee}`,
+    };
+    setPartage(null);
+    try {
+      await api('/eleve/chat/messages', {
+        method: 'POST',
+        body: { vers_id: lien.ami.id, type: 'partage', texte: JSON.stringify(payload) },
+      });
+      charger(lastId.current);
+    } catch (err) {
+      notifier(err.message);
+    }
+  }
+
   async function retirer() {
     if (!window.confirm(`Retirer le lien avec ${lien.ami.prenom} ? La conversation restera dans l'historique du serveur mais ne sera plus visible.`)) return;
     try {
@@ -615,6 +686,15 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
         </button>
       </header>
 
+      {devoirsActifs.length > 0 && (
+        <button className="devoir-banniere" onClick={() => onOuvrirDevoir(devoirsActifs[0].id)}>
+          <Icon name="users" size={15} />
+          <span>
+            Devoir commun : {devoirsActifs[0].titre} · {devoirsActifs[0].validees}/{devoirsActifs[0].total} — Ouvrir
+          </span>
+        </button>
+      )}
+
       <div className="convo-flot">
         {msgs.length === 0 && (
           <div className="chat-vide">
@@ -630,6 +710,9 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
           return (
             <Fragment key={m.id}>
               {jour !== prec && <div className="chat-jour">{jour}</div>}
+              {['duel', 'devoir', 'partage'].includes(m.type) ? (
+                <CarteSpeciale m={m} onOuvrirDuel={onOuvrirDuel} onOuvrirDevoir={onOuvrirDevoir} onOuvrirContenu={onOuvrirContenu} />
+              ) : (
               <div className={mien ? 'bulle bulle-moi' : 'bulle bulle-ami'}>
                 {m.type === 'texte' && <p>{m.texte}</p>}
                 {m.type === 'image' && (
@@ -640,6 +723,7 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
                 {m.type === 'audio' && <AudioBulle id={m.id} />}
                 <span className="bulle-heure">{heure(m.created_at)}</span>
               </div>
+              )}
             </Fragment>
           );
         })}
@@ -666,6 +750,9 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
             <button type="button" className="chat-ico" onClick={demarrerMicro} title="Note vocale">
               <Icon name="mic" size={20} />
             </button>
+            <button type="button" className="chat-ico" onClick={ouvrirPartage} title="Recommander un cours ou une annale">
+              <Icon name="plus" size={20} />
+            </button>
             <input
               className="chat-input"
               value={texte}
@@ -680,7 +767,138 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, notifier }) {
           </>
         )}
       </form>
+      {partage && <PartageSheet data={partage} onChoix={partagerContenu} onFermer={() => setPartage(null)} />}
     </>
+  );
+}
+
+/* Carte centrée pour les événements : défi de duel, devoir commun, contenu
+   recommandé. de_id = 0 côté serveur : ce n'est aucun des deux élèves. */
+function CarteSpeciale({ m, onOuvrirDuel, onOuvrirDevoir, onOuvrirContenu }) {
+  let p = {};
+  try {
+    p = JSON.parse(m.texte || '{}');
+  } catch {
+    return <div className="carte-sys mini">{m.texte}</div>;
+  }
+
+  if (m.type === 'duel') {
+    const mat = MATIERE_BY_ID[p.matiere]?.label || 'Quiz';
+    if (p.action === 'defi')
+      return (
+        <div className="carte-sys">
+          <span className="carte-sys-ico zap">
+            <Icon name="zap" size={16} />
+          </span>
+          <div className="carte-sys-txt">
+            <strong>{p.de} te défie !</strong>
+            <small>
+              {mat} · {p.n} questions
+            </small>
+          </div>
+          <button className="btn btn-primary" onClick={() => onOuvrirDuel(p.duel_id)}>
+            Relever
+          </button>
+        </div>
+      );
+    if (p.action === 'resultat')
+      return (
+        <div className="carte-sys">
+          <span className="carte-sys-ico trophy">
+            <Icon name="trophy" size={16} />
+          </span>
+          <div className="carte-sys-txt">
+            <strong>
+              Duel terminé : {p.score_a} – {p.score_b}
+            </strong>
+            <small>{p.gagnant ? `Gagné par ${p.gagnant}` : 'Égalité parfaite !'}</small>
+          </div>
+          <button className="btn btn-outline" onClick={() => onOuvrirDuel(p.duel_id)}>
+            Voir
+          </button>
+        </div>
+      );
+    if (p.action === 'accepte')
+      return (
+        <div className="carte-sys mini">
+          <Icon name="zap" size={13} /> {p.de} a accepté le duel — à toi de jouer !
+          <button className="btn btn-outline" onClick={() => onOuvrirDuel(p.duel_id)}>
+            Jouer
+          </button>
+        </div>
+      );
+    return (
+      <div className="carte-sys mini">
+        {p.de} a refusé le duel.
+      </div>
+    );
+  }
+
+  if (m.type === 'devoir') {
+    if (p.action === 'nouveau')
+      return (
+        <div className="carte-sys">
+          <span className="carte-sys-ico devoirico">
+            <Icon name="users" size={16} />
+          </span>
+          <div className="carte-sys-txt">
+            <strong>Nouveau devoir commun</strong>
+            <small>{p.titre} — à résoudre avec ton binôme</small>
+          </div>
+          <button className="btn btn-primary" onClick={() => onOuvrirDevoir(p.devoir_id)}>
+            Ouvrir
+          </button>
+        </div>
+      );
+    return (
+      <div className={`carte-sys mini ${p.bonne ? 'ok' : 'ko'}`}>
+        <Icon name={p.bonne ? 'check' : 'alert'} size={13} />
+        Question {p.num} validée {p.bonne ? '— bonne réponse !' : '— ce n’était pas la bonne.'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="carte-sys">
+      <span className="carte-sys-ico partage">
+        <Icon name={p.kind === 'annale' ? 'file' : 'book'} size={16} />
+      </span>
+      <div className="carte-sys-txt">
+        <strong>{p.titre}</strong>
+        <small>{p.sub} · recommandé pour toi</small>
+      </div>
+      <button className="btn btn-primary" onClick={() => onOuvrirContenu?.(p)}>
+        Ouvrir
+      </button>
+    </div>
+  );
+}
+
+function PartageSheet({ data, onChoix, onFermer }) {
+  return (
+    <div className="sheet3" onClick={onFermer}>
+      <div className="sheet3-card" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet3-handle" />
+        <h2 className="sheet3-title">Recommander un contenu</h2>
+        <div className="partage-liste">
+          {data.cours.length > 0 && <h3>Cours</h3>}
+          {data.cours.map((c) => (
+            <button key={`c${c.id}`} onClick={() => onChoix('cours', c)}>
+              <Icon name="book" size={15} /> {c.titre}
+            </button>
+          ))}
+          {data.annales.length > 0 && <h3>Annales</h3>}
+          {data.annales.map((a) => (
+            <button key={`a${a.id}`} onClick={() => onChoix('annale', a)}>
+              <Icon name="file" size={15} /> {a.titre} ({a.annee})
+            </button>
+          ))}
+          {data.cours.length === 0 && data.annales.length === 0 && (
+            <p className="muted small">Chargement…</p>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

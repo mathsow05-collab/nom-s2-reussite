@@ -15,6 +15,7 @@ import QuestionsAdmin from '../admin/Questions.jsx';
 import IdeesAdmin from '../admin/Idees.jsx';
 import CultureAdmin from '../admin/Culture.jsx';
 import IaSettings from '../admin/IaSettings.jsx';
+import DevoirsBinomes from '../admin/Devoirs.jsx';
 
 const TABS = [
   { id: 'dash', label: 'Tableau de bord', icon: 'grid' },
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'examens', label: 'Examens', icon: 'clock' },
   { id: 'flash', label: 'Flashcards', icon: 'layers' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
+  { id: 'devoirs', label: 'Devoirs binômes', icon: 'users' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
   { id: 'questions', label: 'Questions élèves', icon: 'chat' },
   { id: 'idees', label: 'Boîte à idées', icon: 'bulb' },
@@ -79,7 +81,7 @@ export default function AdminApp() {
 
   // Périmètres : Arabe = essentiel seulement ; S2 = pas de Culture (contenu L2).
   const visibleTabs = TABS.filter((t) => {
-    if (me.filiere === 'AR' && ['annales', 'quiz', 'agenda', 'metiers', 'culture'].includes(t.id)) return false;
+    if (me.filiere === 'AR' && ['annales', 'quiz', 'agenda', 'metiers', 'culture', 'devoirs'].includes(t.id)) return false;
     if (me.filiere === 'S2' && t.id === 'culture') return false;
     return true;
   });
@@ -119,6 +121,7 @@ export default function AdminApp() {
         {tab === 'examens' && <ExamensAdmin adminScope={me.filiere} />}
         {tab === 'flash' && <FlashAdmin />}
         {tab === 'quiz' && <QuizAdmin adminScope={me.filiere} />}
+        {tab === 'devoirs' && <DevoirsBinomes />}
         {tab === 'agenda' && <AgendaAdmin />}
         {tab === 'questions' && <QuestionsAdmin adminScope={me.filiere} />}
         {tab === 'idees' && <IdeesAdmin />}

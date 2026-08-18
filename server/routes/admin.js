@@ -736,4 +736,108 @@ router.delete('/echeances/:id', admin, refuseAR, (req, res) => {
   res.json({ ok: true });
 });
 
+/* ------------------------------------------------------------------ */
+/* DEVOIRS COMMUNS (binômes) : l'admin crée un devoir QCM ; chaque     */
+/* binôme doit se concerter dans son chat et donner UNE réponse        */
+/* commune (validée uniquement si les deux choisissent pareil).        */
+/* ------------------------------------------------------------------ */
+router.get('/devoirs-binomes', admin, refuseAR, (req, res) => {
+  const rows = db.prepare('SELECT * FROM devoirs_binomes ORDER BY id DESC').all();
+  res.json(
+    rows.map((d) => {
+      const nbQ = db.prepare('SELECT COUNT(*) AS n FROM devoir_binome_questions WHERE devoir_id = ?').get(d.id).n;
+      const nbPairs = db.prepare('SELECT COUNT(DISTINCT lien_id) AS n FROM devoir_binome_reponses WHERE devoir_id = ?').get(d.id).n;
+      return { ...d, nb_questions: nbQ, nb_binomes: nbPairs };
+    })
+  );
+});
+
+router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
+  const { titre, description, filiere, deadline, questions } = req.body || {};
+  if (!titre || !Array.isArray(questions) || questions.length === 0)
+    return res.status(400).json({ error: 'Titre et au moins une question requis.' });
+  for (const q of questions) {
+    if (!q.question || !Array.isArray(q.choix) || q.choix.length < 2 || !Number.isInteger(Number(q.bonne)))
+      return res.status(400).json({ error: 'Chaque question doit avoir un énoncé, au moins 2 choix et une bonne réponse.' });
+  }
+  const r = db
+    .prepare('INSERT INTO devoirs_binomes (titre, description, filiere, deadline) VALUES (?, ?, ?, ?)')
+    .run(
+      String(titre).slice(0, 120),
+      String(description || '').slice(0, 500),
+      ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
+      /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : null
+    );
+  const insQ = db.prepare('INSERT INTO devoir_binome_questions (devoir_id, question, choix, bonne, ordre) VALUES (?, ?, ?, ?, ?)');
+  questions.forEach((q, i) =>
+    insQ.run(r.lastInsertRowid, String(q.question).slice(0, 500), JSON.stringify(q.choix.slice(0, 6)), Number(q.bonne), i)
+  );
+
+  // Annonce dans le chat de chaque binôme actif de la filière ciblée.
+  const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
+  const cible = ['S2', 'L2', 'AR'].includes(filiere) ? filiere : null;
+  for (const l of liens) {
+    const e = db.prepare('SELECT filiere FROM eleves WHERE id = ?').get(l.eleve_a);
+    if (cible && e?.filiere !== cible) continue;
+    const obj = { action: 'nouveau', devoir_id: r.lastInsertRowid, titre: String(titre).slice(0, 120) };
+    db.prepare('INSERT INTO chat_messages (de_id, vers_id, type, texte) VALUES (0, ?, ?, ?)').run(l.eleve_a, 'devoir', JSON.stringify(obj));
+    db.prepare('INSERT INTO chat_messages (de_id, vers_id, type, texte) VALUES (0, ?, ?, ?)').run(l.eleve_b, 'devoir', JSON.stringify(obj));
+    sse.send(l.eleve_a, 'chat', { t: 'devoir' });
+    sse.send(l.eleve_b, 'chat', { t: 'devoir' });
+  }
+  addLog('devoir_binome_cree', { source: 'admin', req, details: titre });
+  res.status(201).json({ ok: true, id: r.lastInsertRowid });
+});
+
+router.get('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const questions = db.prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
+  const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
+  const resultats = [];
+  for (const l of liens) {
+    let validees = 0;
+    let score = 0;
+    for (const q of questions) {
+      const reps = db.prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?').all(q.id, l.id);
+      if (reps.length === 2 && reps[0].choix === reps[1].choix) {
+        validees++;
+        if (q.bonne === reps[0].choix) score++;
+      }
+    }
+    if (validees === 0 && !db.prepare('SELECT COUNT(*) AS n FROM devoir_binome_reponses WHERE devoir_id = ? AND lien_id = ?').get(d.id, l.id).n) continue;
+    const ea = db.prepare('SELECT prenom, nom FROM eleves WHERE id = ?').get(l.eleve_a);
+    const eb = db.prepare('SELECT prenom, nom FROM eleves WHERE id = ?').get(l.eleve_b);
+    resultats.push({
+      binome: `${ea?.prenom || '?'} ${ea?.nom || ''} + ${eb?.prenom || '?'} ${eb?.nom || ''}`,
+      type: l.type,
+      validees,
+      score,
+    });
+  }
+  resultats.sort((a, b) => b.score - a.score || b.validees - a.validees);
+  res.json({ devoir: d, nb_questions: questions.length, resultats });
+});
+
+router.put('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const { titre, description, deadline, actif } = req.body || {};
+  db.prepare('UPDATE devoirs_binomes SET titre = ?, description = ?, deadline = ?, actif = ? WHERE id = ?').run(
+    titre ? String(titre).slice(0, 120) : d.titre,
+    description != null ? String(description).slice(0, 500) : d.description,
+    /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : d.deadline,
+    actif === false || actif === 0 ? 0 : 1,
+    d.id
+  );
+  res.json({ ok: true });
+});
+
+router.delete('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
+  db.prepare('DELETE FROM devoir_binome_reponses WHERE devoir_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM devoir_binome_questions WHERE devoir_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM devoirs_binomes WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 module.exports = router;

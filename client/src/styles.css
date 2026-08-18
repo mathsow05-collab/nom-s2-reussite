@@ -1726,3 +1726,63 @@ button.chat-row.cliquable:hover { background: var(--brand-soft); }
 .chat-lightbox img { max-width: 100%; max-height: 92vh; border-radius: 10px; }
 .sheet3-grid button { position: relative; }
 .tile-badge { position: absolute; top: 4px; right: 4px; background: #e11d48; color: #fff; border-radius: 999px; min-width: 18px; height: 18px; font-size: 0.66rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; }
+
+/* ================================================================
+   KAY DIANG v20 : duels, devoirs communs, recommandations
+   ================================================================ */
+.duel-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.duel-ico { width: 36px; height: 36px; border-radius: 12px; background: var(--warn-soft); color: var(--warn); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.duel-ico.fini { background: var(--ok-soft); color: var(--ok); }
+.duel-verdict { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; }
+.duel-verdict.gagne { background: var(--ok-soft); color: var(--ok); }
+.duel-verdict.perdu { background: var(--danger-soft); color: var(--danger); }
+.duel-verdict.egal { background: var(--brand-soft); color: var(--brand-dark); }
+.chat-modal { background: var(--card); border-radius: 18px; padding: 16px; width: min(560px, 94vw); max-height: 88vh; overflow: auto; box-shadow: var(--shadow); cursor: default; color: var(--ink); }
+.chat-modal h3 { margin: 0 0 8px; }
+.duel-jeu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.duel-question { font-weight: 600; margin: 10px 0; line-height: 1.45; }
+.quiz-choix { display: flex; flex-direction: column; gap: 8px; }
+.quiz-choix-btn { display: flex; justify-content: space-between; gap: 8px; align-items: center; text-align: left; padding: 11px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font: inherit; font-size: 0.9rem; cursor: pointer; color: var(--ink); transition: 0.15s; }
+.quiz-choix-btn:not(:disabled):hover { border-color: var(--brand); background: var(--brand-soft); }
+.quiz-choix-btn:disabled { cursor: default; opacity: 0.95; }
+.quiz-choix-btn.choix-on { border-color: var(--brand-dark); background: var(--brand-soft); font-weight: 600; }
+.quiz-choix-btn.choix-lui { outline: 2px dashed var(--warn); outline-offset: -2px; }
+.quiz-choix-btn.choix-bon { border-color: var(--ok); background: var(--ok-soft); }
+.quiz-choix-btn.choix-mauvais { border-color: var(--danger); background: var(--danger-soft); }
+.choix-txt { flex: 1; }
+.choix-marques { display: inline-flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.marque { font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; }
+.marque.moi { background: var(--brand-dark); color: #fff; }
+.marque.lui { background: var(--warn-soft); color: var(--warn); }
+.duel-score-final { display: flex; gap: 12px; align-items: center; font-size: 2rem; font-weight: 800; color: var(--brand-dark); }
+.duel-score-final em { color: var(--muted); font-style: normal; }
+.devoir-carte { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.devoir-carte:last-child { border-bottom: none; }
+.devoir-banniere { display: flex; gap: 8px; align-items: center; width: 100%; margin-top: 10px; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--brand); background: var(--brand-soft); color: var(--brand-dark); font-weight: 600; font-size: 0.84rem; cursor: pointer; text-align: left; }
+.devoir-panneau { width: min(640px, 94vw); }
+.devoir-q { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 12px; }
+.devoir-q.validee { border-color: var(--ok); background: var(--ok-soft); }
+[data-theme='dark'] .devoir-q.validee { background: #052e16; }
+.err-text { color: var(--danger); font-weight: 600; font-size: 0.8rem; }
+.carte-sys { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 440px; margin: 2px auto; padding: 10px 12px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.carte-sys .btn { padding: 7px 12px; font-size: 0.8rem; flex-shrink: 0; }
+.carte-sys-ico { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.carte-sys-ico.zap { background: var(--warn-soft); color: var(--warn); }
+.carte-sys-ico.trophy { background: var(--ok-soft); color: var(--ok); }
+.carte-sys-ico.devoirico { background: var(--brand-soft); color: var(--brand-dark); }
+.carte-sys-ico.partage { background: #fce7f3; color: #be185d; }
+[data-theme='dark'] .carte-sys-ico.partage { background: #3b0f24; color: #f9a8d4; }
+.carte-sys-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.carte-sys-txt strong { font-size: 0.88rem; }
+.carte-sys-txt small { color: var(--muted); }
+.carte-sys.mini { justify-content: center; font-size: 0.8rem; color: var(--muted); gap: 6px; padding: 7px 12px; box-shadow: none; background: var(--brand-soft); border-color: transparent; }
+.carte-sys.mini.ok { background: var(--ok-soft); color: var(--ok); }
+.carte-sys.mini.ko { background: var(--warn-soft); color: var(--warn); }
+.carte-sys.mini .btn { padding: 4px 10px; font-size: 0.72rem; }
+.partage-liste { max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: 2px; }
+.partage-liste h3 { margin: 10px 0 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.partage-liste button { display: flex; gap: 8px; align-items: center; padding: 9px 10px; border: none; background: none; border-radius: 10px; font: inherit; font-size: 0.9rem; color: var(--ink); cursor: pointer; text-align: left; }
+.partage-liste button:hover { background: var(--brand-soft); }
+.rang { width: 34px; text-align: center; font-weight: 800; color: var(--brand-dark); flex-shrink: 0; }
+.rang-moi { background: var(--brand-soft); border-radius: 10px; }
+.rang-score { font-weight: 800; color: var(--ok); flex-shrink: 0; }

@@ -715,10 +715,10 @@ router.get('/chat/messages/:amiId', requireEleve(db), (req, res) => {
   const since = Number(req.query.since) || 0;
   const rows = db
     .prepare(
-      'SELECT * FROM chat_messages WHERE ((de_id = ? AND vers_id = ?) OR (de_id = ? AND vers_id = ?)) AND id > ? ORDER BY id LIMIT 200'
+      `SELECT * FROM chat_messages WHERE ((de_id = ? AND vers_id = ?) OR (de_id = ? AND vers_id = ?) OR (de_id = 0 AND vers_id = ?)) AND id > ? ORDER BY id LIMIT 200`
     )
-    .all(moi, amiId, amiId, moi, since);
-  db.prepare('UPDATE chat_messages SET lu = 1 WHERE de_id = ? AND vers_id = ? AND lu = 0').run(amiId, moi);
+    .all(moi, amiId, amiId, moi, moi, since);
+  db.prepare('UPDATE chat_messages SET lu = 1 WHERE vers_id = ? AND lu = 0 AND (de_id = ? OR de_id = 0)').run(moi, amiId);
   res.json(
     rows.map((m) => ({
       id: m.id,
@@ -755,6 +755,8 @@ router.post('/chat/messages', requireEleve(db), (req, res) => {
       fichier = `chat/${req.file.filename}`;
       mime = req.file.mimetype;
     } else {
+      // « partage » = recommandation de contenu (cours/annale) : le texte est un JSON.
+      type = String(req.body?.type || 'texte') === 'partage' ? 'partage' : 'texte';
       texte = String(req.body?.texte || '').trim().slice(0, 2000);
       if (!texte) return res.status(400).json({ error: 'Message vide.' });
     }
@@ -775,6 +777,367 @@ router.get('/chat/fichier/:id', requireEleve(db, { allowQuery: true }), (req, re
   if (!fs.existsSync(file)) return res.status(404).json({ error: 'Fichier introuvable.' });
   res.setHeader('Content-Type', m.mime || 'application/octet-stream');
   return res.sendFile(file);
+});
+
+/* ------------------------------------------------------------------ */
+/* MESSAGES SYSTÈME DANS LE CHAT (annonces duels, devoirs, résultats) */
+/* ------------------------------------------------------------------ */
+function chatMsgSysteme(versId, type, obj) {
+  db.prepare('INSERT INTO chat_messages (de_id, vers_id, type, texte) VALUES (0, ?, ?, ?)').run(
+    versId,
+    type,
+    JSON.stringify(obj)
+  );
+  sse.send(versId, 'chat', { t: 'msg', de: 0 });
+}
+
+const eleveCourt = (id) => {
+  const e = chatInfoEleve(id);
+  return e ? `${e.prenom} ${e.nom}` : '?';
+};
+
+/* ------------------------------------------------------------------ */
+/* DUELS DE QUIZ : on défie son binôme sur les mêmes questions ;      */
+/* chacun répond de son côté, les scores sont comparés à la fin.      */
+/* ------------------------------------------------------------------ */
+router.post('/duel/defier', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const vers = Number(req.body?.vers_id);
+  const lien = chatRelation(moi, vers);
+  if (!lien || lien.statut !== 'actif') return res.status(403).json({ error: 'Vous n’êtes pas en lien avec cet élève.' });
+  const matiere = String(req.body?.matiere || 'all');
+  const n = Math.max(5, Math.min(15, parseInt(req.body?.n || '10', 10) || 10));
+  const filiere = req.eleve.filiere || 'S2';
+  let rows;
+  if (matiere && matiere !== 'all') {
+    rows = db.prepare('SELECT id FROM quiz_questions WHERE filiere = ? AND matiere = ?').all(filiere, matiere);
+  } else {
+    rows = db.prepare('SELECT id FROM quiz_questions WHERE filiere = ?').all(filiere);
+  }
+  if (rows.length < n) return res.status(400).json({ error: `Pas assez de questions disponibles (${rows.length}).` });
+  for (let i = rows.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rows[i], rows[j]] = [rows[j], rows[i]];
+  }
+  const ids = rows.slice(0, n).map((r) => r.id);
+  const r = db
+    .prepare('INSERT INTO duels (lien_id, createur, adversaire, matiere, question_ids) VALUES (?, ?, ?, ?, ?)')
+    .run(lien.id, moi, vers, matiere, JSON.stringify(ids));
+  chatMsgSysteme(vers, 'duel', { action: 'defi', duel_id: r.lastInsertRowid, matiere, n, de: eleveCourt(moi) });
+  sse.send(vers, 'chat', { t: 'duel' });
+  addLog('duel_defi', { eleveDbId: moi, eleveRef: req.eleve.eleve_id, req, details: `vers ${vers} (${matiere}, ${n}q)` });
+  res.json({ ok: true, id: r.lastInsertRowid });
+});
+
+router.get('/duels', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const rows = db
+    .prepare('SELECT * FROM duels WHERE createur = ? OR adversaire = ? ORDER BY id DESC LIMIT 40')
+    .all(moi, moi);
+  res.json(
+    rows.map((d) => ({
+      id: d.id,
+      matiere: d.matiere,
+      statut: d.statut,
+      n: JSON.parse(d.question_ids).length,
+      createur: chatPublic(chatInfoEleve(d.createur)),
+      adversaire: chatPublic(chatInfoEleve(d.adversaire)),
+      je_suis_createur: d.createur === moi,
+      mon_score: d.createur === moi ? d.score_a : d.score_b,
+      son_score: d.createur === moi ? d.score_b : d.score_a,
+      fini_at: d.fini_at,
+      created_at: d.created_at,
+    }))
+  );
+});
+
+router.post('/duel/:id/accepter', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare("SELECT * FROM duels WHERE id = ? AND statut = 'en_attente'").get(req.params.id);
+  if (!d || (d.adversaire !== moi && d.createur !== moi)) return res.status(404).json({ error: 'Duel introuvable.' });
+  db.prepare("UPDATE duels SET statut = 'en_cours' WHERE id = ?").run(d.id);
+  const autre = d.adversaire === moi ? d.createur : d.adversaire;
+  chatMsgSysteme(autre, 'duel', { action: 'accepte', duel_id: d.id, de: eleveCourt(moi) });
+  sse.send(autre, 'chat', { t: 'duel' });
+  res.json({ ok: true });
+});
+
+router.post('/duel/:id/refuser', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare("SELECT * FROM duels WHERE id = ? AND statut = 'en_attente' AND adversaire = ?").get(req.params.id, moi);
+  if (!d) return res.status(404).json({ error: 'Duel introuvable.' });
+  db.prepare("UPDATE duels SET statut = 'refuse' WHERE id = ?").run(d.id);
+  chatMsgSysteme(d.createur, 'duel', { action: 'refuse', duel_id: d.id, de: eleveCourt(moi) });
+  res.json({ ok: true });
+});
+
+router.get('/duel/:id', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM duels WHERE id = ?').get(req.params.id);
+  if (!d || (d.createur !== moi && d.adversaire !== moi)) return res.status(404).json({ error: 'Duel introuvable.' });
+  const ids = JSON.parse(d.question_ids);
+  const questions = ids
+    .map((id) => {
+      const q = db.prepare('SELECT id, question, choix, matiere, lecon, bonne FROM quiz_questions WHERE id = ?').get(id);
+      if (!q) return null;
+      try {
+        q.choix = JSON.parse(q.choix);
+      } catch {
+        q.choix = [];
+      }
+      return q;
+    })
+    .filter(Boolean);
+  const mesRep = db
+    .prepare('SELECT question_id, reponse FROM duel_reponses WHERE duel_id = ? AND eleve_id = ?')
+    .all(d.id, moi)
+    .reduce((acc, r) => ((acc[r.question_id] = r.reponse), acc), {});
+  const opposantId = d.createur === moi ? d.adversaire : d.createur;
+  const nbOpp = db.prepare('SELECT COUNT(*) AS n FROM duel_reponses WHERE duel_id = ? AND eleve_id = ?').get(d.id, opposantId).n;
+  res.json({
+    duel: {
+      id: d.id,
+      matiere: d.matiere,
+      statut: d.statut,
+      score_a: d.score_a,
+      score_b: d.score_b,
+      createur: chatPublic(chatInfoEleve(d.createur)),
+      adversaire: chatPublic(chatInfoEleve(d.adversaire)),
+      je_suis_createur: d.createur === moi,
+    },
+    questions,
+    mes_reponses: mesRep,
+    opposant: { repondues: nbOpp, total: questions.length },
+  });
+});
+
+router.post('/duel/:id/repondre', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM duels WHERE id = ?').get(req.params.id);
+  if (!d || (d.createur !== moi && d.adversaire !== moi)) return res.status(404).json({ error: 'Duel introuvable.' });
+  if (d.statut !== 'en_cours') return res.status(400).json({ error: 'Ce duel n’est pas en cours.' });
+  const ids = JSON.parse(d.question_ids);
+  const qid = Number(req.body?.question_id);
+  const rep = Number(req.body?.reponse);
+  if (!ids.includes(qid) || !Number.isInteger(rep)) return res.status(400).json({ error: 'Réponse invalide.' });
+  db.prepare(
+    'INSERT INTO duel_reponses (duel_id, eleve_id, question_id, reponse) VALUES (?, ?, ?, ?) ON CONFLICT (duel_id, eleve_id, question_id) DO NOTHING'
+  ).run(d.id, moi, qid, rep);
+
+  // Si j'ai tout répondu : on fige mon score.
+  const mesReps = db.prepare('SELECT question_id, reponse FROM duel_reponses WHERE duel_id = ? AND eleve_id = ?').all(d.id, moi);
+  if (mesReps.length === ids.length) {
+    let score = 0;
+    for (const r of mesReps) {
+      const q = db.prepare('SELECT bonne FROM quiz_questions WHERE id = ?').get(r.question_id);
+      if (q && q.bonne === r.reponse) score++;
+    }
+    const col = d.createur === moi ? 'score_a' : 'score_b';
+    db.prepare(`UPDATE duels SET ${col} = ? WHERE id = ?`).run(score, d.id);
+
+    const fraiche = db.prepare('SELECT * FROM duels WHERE id = ?').get(d.id);
+    if (fraiche.score_a != null && fraiche.score_b != null) {
+      db.prepare("UPDATE duels SET statut = 'fini', fini_at = ? WHERE id = ?").run(new Date().toISOString(), d.id);
+      const gagnant =
+        fraiche.score_a === fraiche.score_b
+          ? null
+          : fraiche.score_a > fraiche.score_b
+            ? eleveCourt(d.createur)
+            : eleveCourt(d.adversaire);
+      const obj = {
+        action: 'resultat',
+        duel_id: d.id,
+        score_a: fraiche.score_a,
+        score_b: fraiche.score_b,
+        createur: eleveCourt(d.createur),
+        adversaire: eleveCourt(d.adversaire),
+        gagnant,
+      };
+      chatMsgSysteme(d.createur, 'duel', obj);
+      chatMsgSysteme(d.adversaire, 'duel', obj);
+    }
+  }
+  res.json({ ok: true });
+});
+
+/* ------------------------------------------------------------------ */
+/* DEVOIRS COMMUNS : proposés par l'admin, résolus à deux. Une        */
+/* réponse n'est validée QUE si les deux membres du binôme            */
+/* choisissent la même option — il faut se discuter dans le chat !    */
+/* ------------------------------------------------------------------ */
+function monLienActif(moi) {
+  const l = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif' AND (eleve_a = ? OR eleve_b = ?)").all(moi, moi);
+  return l[0] || null;
+}
+
+function devoirEstFini(d) {
+  if (!d.deadline) return false;
+  return new Date(d.deadline).getTime() < Date.now();
+}
+
+router.get('/devoirs', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const filiere = req.eleve.filiere || 'S2';
+  const rows = db
+    .prepare("SELECT * FROM devoirs_binomes WHERE actif = 1 AND (filiere = 'all' OR filiere = ?) ORDER BY id DESC")
+    .all(filiere);
+  const lien = monLienActif(moi);
+  res.json(
+    rows.map((d) => {
+      const questions = db.prepare('SELECT id FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
+      let validees = 0;
+      let score = 0;
+      if (lien) {
+        for (const q of questions) {
+          const reps = db
+            .prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?')
+            .all(q.id, lien.id);
+          if (reps.length === 2 && reps[0].choix === reps[1].choix) {
+            validees++;
+            const qq = db.prepare('SELECT bonne FROM devoir_binome_questions WHERE id = ?').get(q.id);
+            if (qq && qq.bonne === reps[0].choix) score++;
+          }
+        }
+      }
+      return {
+        id: d.id,
+        titre: d.titre,
+        description: d.description,
+        deadline: d.deadline,
+        fini: devoirEstFini(d),
+        total: questions.length,
+        validees,
+        score,
+        binome: !!lien,
+      };
+    })
+  );
+});
+
+router.get('/devoir/:id', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme (Chat & binômes) pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  const questions = db
+    .prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id')
+    .all(d.id)
+    .map((q, i) => {
+      let choix = [];
+      try {
+        choix = JSON.parse(q.choix);
+      } catch {
+        choix = [];
+      }
+      const reps = db
+        .prepare('SELECT eleve_id, choix FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?')
+        .all(q.id, lien.id);
+      const moiRep = reps.find((r) => r.eleve_id === moi);
+      const luiRep = reps.find((r) => r.eleve_id === partenaire);
+      const validee = reps.length === 2 && reps[0].choix === reps[1].choix;
+      return {
+        id: q.id,
+        num: i + 1,
+        question: q.question,
+        choix,
+        mon_choix: moiRep ? moiRep.choix : null,
+        son_choix: luiRep ? luiRep.choix : null,
+        validee,
+        // La bonne réponse n'est révélée qu'une fois la réponse validée ou le délai passé.
+        bonne: validee || devoirEstFini(d) ? q.bonne : null,
+      };
+    });
+  res.json({
+    devoir: {
+      id: d.id,
+      titre: d.titre,
+      description: d.description,
+      deadline: d.deadline,
+      fini: devoirEstFini(d),
+    },
+    partenaire: chatPublic(chatInfoEleve(partenaire)),
+    questions,
+  });
+});
+
+router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  if (devoirEstFini(d)) return res.status(400).json({ error: 'Le délai est dépassé.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const q = db.prepare('SELECT * FROM devoir_binome_questions WHERE id = ? AND devoir_id = ?').get(req.params.qid, d.id);
+  if (!q) return res.status(404).json({ error: 'Question introuvable.' });
+  let choix;
+  try {
+    choix = JSON.parse(q.choix);
+  } catch {
+    choix = [];
+  }
+  const rep = Number(req.body?.choix);
+  if (!Number.isInteger(rep) || rep < 0 || rep >= choix.length) return res.status(400).json({ error: 'Choix invalide.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+
+  db.prepare(
+    `INSERT INTO devoir_binome_reponses (devoir_id, question_id, lien_id, eleve_id, choix) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (question_id, lien_id, eleve_id) DO UPDATE SET choix = excluded.choix`
+  ).run(d.id, q.id, lien.id, moi, rep);
+
+  const reps = db.prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?').all(q.id, lien.id);
+  const s2rnum = db.prepare('SELECT ordre FROM devoir_binome_questions WHERE id = ?').get(q.id);
+  const num =
+    db.prepare('SELECT id FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id).findIndex((x) => x.id === q.id) + 1;
+
+  if (reps.length === 2 && reps[0].choix === reps[1].choix) {
+    // Réponse validée par le binôme : définitive, révélée, annoncée dans le chat.
+    const bonne = q.bonne === reps[0].choix;
+    const obj = { action: 'validee', devoir_id: d.id, num, bonne, titre: d.titre };
+    chatMsgSysteme(moi, 'devoir', obj);
+    chatMsgSysteme(partenaire, 'devoir', obj);
+    return res.json({ ok: true, validee: true, bonne });
+  }
+
+  // Choix simple (ou désaccord) : le partenaire est prévenu en temps réel.
+  sse.send(partenaire, 'chat', { t: 'devoir', devoir_id: d.id });
+  void s2rnum;
+  res.json({ ok: true, validee: false });
+});
+
+router.get('/devoir/:id/classement', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const questions = db.prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
+  const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
+  const classement = [];
+  for (const l of liens) {
+    let validees = 0;
+    let score = 0;
+    for (const q of questions) {
+      const reps = db
+        .prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?')
+        .all(q.id, l.id);
+      if (reps.length === 2 && reps[0].choix === reps[1].choix) {
+        validees++;
+        if (q.bonne === reps[0].choix) score++;
+      }
+    }
+    if (validees === 0) continue;
+    classement.push({
+      lien_id: l.id,
+      mon_binome: l.eleve_a === moi || l.eleve_b === moi,
+      eleve_a: chatPublic(chatInfoEleve(l.eleve_a)),
+      eleve_b: chatPublic(chatInfoEleve(l.eleve_b)),
+      validees,
+      score,
+      total: questions.length,
+    });
+  }
+  classement.sort((a, b) => b.score - a.score || b.validees - a.validees);
+  res.json(classement);
 });
 
 module.exports = router;

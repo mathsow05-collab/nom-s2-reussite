@@ -256,4 +256,60 @@ CREATE INDEX IF NOT EXISTS idx_chat_msg_pair ON chat_messages (de_id, vers_id, i
 CREATE INDEX IF NOT EXISTS idx_chat_msg_lu ON chat_messages (vers_id, lu);
 `);
 
+/* ------------------------- Duels de quiz entre binômes -------------------- */
+db.exec(`
+CREATE TABLE IF NOT EXISTS duels (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lien_id INTEGER NOT NULL,
+  createur INTEGER NOT NULL,
+  adversaire INTEGER NOT NULL,
+  matiere TEXT NOT NULL,
+  question_ids TEXT NOT NULL,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  score_a INTEGER,
+  score_b INTEGER,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  fini_at TEXT
+);
+CREATE TABLE IF NOT EXISTS duel_reponses (
+  duel_id INTEGER NOT NULL,
+  eleve_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  reponse INTEGER NOT NULL,
+  UNIQUE (duel_id, eleve_id, question_id)
+);
+
+/* ------------------- Devoirs communs proposés par l'admin ------------------
+   Le binôme doit se mettre d'accord : une réponse n'est validée que si les
+   deux membres choisissent la même option.                                  */
+CREATE TABLE IF NOT EXISTS devoirs_binomes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  description TEXT,
+  filiere TEXT NOT NULL DEFAULT 'all',
+  deadline TEXT,
+  actif INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS devoir_binome_questions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  devoir_id INTEGER NOT NULL,
+  question TEXT NOT NULL,
+  choix TEXT NOT NULL,
+  bonne INTEGER NOT NULL,
+  ordre INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS devoir_binome_reponses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  devoir_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  lien_id INTEGER NOT NULL,
+  eleve_id INTEGER NOT NULL,
+  choix INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE (question_id, lien_id, eleve_id)
+);
+CREATE INDEX IF NOT EXISTS idx_devoir_rep_pair ON devoir_binome_reponses (devoir_id, lien_id);
+`);
+
 module.exports = db;

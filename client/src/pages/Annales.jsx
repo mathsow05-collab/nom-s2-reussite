@@ -7,9 +7,30 @@ import { TelechargerHL } from '../offline.jsx';
 
 const ANNEES = Array.from({ length: 27 }, (_, i) => 2026 - i); // 2026 → 2000
 
-export default function Annales() {
+export default function Annales({ focus, onFocusLu }) {
   const [me, setMe] = useState(null);
   const [list, setList] = useState(null);
+
+  // Une annale recommandée depuis le chat s'ouvre directement ici.
+  useEffect(() => {
+    if (!focus) return undefined;
+    let dead = false;
+    (async () => {
+      let a = list?.find((x) => x.id === focus.id);
+      if (!a) {
+        const full = await api('/eleve/annales').catch(() => []);
+        a = full.find((x) => x.id === focus.id);
+      }
+      if (!dead) {
+        if (a) setViewer({ a, type: a.has_sujet ? 'sujet' : 'corrige' });
+        onFocusLu?.();
+      }
+    })();
+    return () => {
+      dead = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus]);
   const [annee, setAnnee] = useState('all');
   const [matiere, setMatiere] = useState('all');
   const [q, setQ] = useState('');
