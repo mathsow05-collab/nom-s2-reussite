@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
-import Arbre from './Arbre.jsx';
+import CarteOrientation from './CarteOrientation.jsx';
 
 const norm = (s) =>
   String(s || '')
@@ -34,15 +34,7 @@ export default function Metiers() {
 
   return (
     <main className="container orient">
-      <section className="banner">
-        <h2>Mon parcours</h2>
-        <p>Du Bac jusqu'au métier : déroule chaque filière, compare université et écoles, découvre les salaires. Touche, explore, projette-toi.</p>
-        <button className="btn btn-outline" onClick={() => setQuiz(true)}>
-          <Icon name="target" size={15} /> Je ne sais pas encore : aide-moi à choisir
-        </button>
-      </section>
-
-      <Arbre
+      <CarteOrientation
         filiere={me.filiere}
         onOpenMetier={(nom) => {
           const hit = typeof nom === 'string' ? findMetier(nom) : nom;
