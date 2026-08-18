@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon.jsx';
-import { WORLD_PATH } from '../data/worldmap.js';
+import { WORLD_PATH } from '../geo/worldmap.js';
 
 /* Globe 3D v2 : rotation horizontale ET verticale au doigt, zoom (+/− et
    double-tap), inertie douce. Un appui sur un pays déclenche une onde qui
