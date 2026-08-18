@@ -1952,3 +1952,19 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
   .xo-node.in-path { border-color: color-mix(in srgb, var(--brand) 55%, var(--line)); }
   .xo-node.sel { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent); }
 }
+
+/* ================================================================
+   KAY DIANG v24 : graphe 3D arborescent
+   ================================================================ */
+.xo-canvas3d { position: relative; height: clamp(430px, 62vh, 660px); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--bg); background: radial-gradient(1000px 520px at 50% -20%, color-mix(in srgb, var(--brand) 11%, transparent), transparent), var(--bg); }
+.g3d-holder { position: absolute; inset: 0; }
+.g3d-holder canvas { display: block; cursor: grab; }
+.g3d-holder canvas:active { cursor: grabbing; }
+.xo-hint { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.68rem; color: var(--muted); background: var(--card); background: color-mix(in srgb, var(--card) 78%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 5px 14px; border-radius: 999px; display: flex; gap: 6px; align-items: center; pointer-events: none; z-index: 4; white-space: nowrap; }
+.xo-vert.force { display: block; }
+@media (max-width: 860px) {
+  .xo-canvas3d { height: min(58vh, 520px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xo-canvas3d { background: var(--bg); }
+}

@@ -4,6 +4,7 @@ import Icon from '../Icon.jsx';
 import { Modal } from '../ui.jsx';
 import { SLOGAN } from '../orientation/data.js';
 import { nodesById, childrenOf, parentsOf, pathTo, searchNodes, conseiller, TYPE_META, INTERETS_LIST } from '../orientation/engine.js';
+import Graph3D from '../components/Graph3D.jsx';
 
 /* Couche INTERFACE de l'explorateur d'orientation.
    Desktop : graphe horizontal (nœuds + connexions SVG, zoom/pan, panneau latéral).
@@ -29,6 +30,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
   const [showCompar, setShowCompar] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [webgl, setWebgl] = useState(true);
   const dragRef = useRef(null);
 
   const results = useMemo(() => searchNodes(q), [q]);
@@ -152,63 +154,25 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
         ))}
       </nav>
 
-      {/* ------------------------------ graphe desktop ------------------------------ */}
-      <div className="xo-canvas" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={up}>
-        <div className="xo-zoom">
-          <button onClick={() => setZoom((z) => Math.max(0.6, z - 0.15))} title="Zoom arrière">−</button>
-          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="Réinitialiser">⌂</button>
-          <button onClick={() => setZoom((z) => Math.min(1.6, z + 0.15))} title="Zoom avant">+</button>
+      {/* --------------------------- graphe 3D arborescent --------------------------- */}
+      {webgl && (
+        <div className="xo-canvas3d">
+          <Graph3D
+            cheminNodes={chemin.map((id) => nodesById.get(id))}
+            kids={kids}
+            selected={selected}
+            onNavigate={aller}
+            onFail={() => setWebgl(false)}
+          />
+          <div className="xo-hint">
+            <Icon name="globe" size={12} /> Glisse pour tourner · pince / molette pour zoomer · touche une bulle pour l'ouvrir
+          </div>
         </div>
-        <div className="xo-monde" style={{ width: W, height: H, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}>
-          <svg width={W} height={H} className="xo-svg">
-            {edges.map((e, i) => {
-              const a = positions.get(e.a);
-              const b = positions.get(e.b);
-              if (!a || !b) return null;
-              const x1 = a.x + NODE_W;
-              const y1 = a.y + NODE_H / 2;
-              const x2 = b.x;
-              const y2 = b.y + NODE_H / 2;
-              const mx = (x1 + x2) / 2;
-              return (
-                <path
-                  key={i}
-                  className={e.on ? 'xo-edge on' : 'xo-edge'}
-                  d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
-                  style={{ animationDelay: `${i * 40}ms` }}
-                />
-              );
-            })}
-          </svg>
-          {cols.map((col, ci) =>
-            col.map((n, ri) => {
-              const p = positions.get(n.id);
-              const dim = n.type === 'branche' && chemin.length > 1 && chemin[1] !== n.id;
-              const inPath = chemin.includes(n.id);
-              return (
-                <button
-                  key={n.id}
-                  className={`xo-node t-${n.type}${inPath ? ' in-path' : ''}${dim ? ' dim' : ''}${selected === n.id ? ' sel' : ''}`}
-                  style={{ left: p.x, top: p.y, width: NODE_W, height: NODE_H, animationDelay: `${ci * 90 + ri * 40}ms` }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => aller(n.id)}
-                >
-                  <span className="xo-node-ico" style={{ color: TYPE_META[n.type]?.color }}>
-                    <Icon name={n.icon || 'star'} size={14} />
-                  </span>
-                  <span className="xo-node-txt">
-                    <strong>{n.label}</strong>
-                    <small>{n.sub}</small>
-                  </span>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
+      )}
 
-      {/* ---------------------------- parcours vertical mobile ---------------------------- */}
-      <div className="xo-vert">
+      {/* ---------------------------- parcours vertical (repli) ---------------------------- */}
+      {!webgl && (
+      <div className="xo-vert force">
         {chemin.map((id, i) => {
           const n = nodesById.get(id);
           return (
@@ -241,6 +205,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
           ))}
         </div>
       </div>
+      )}
 
       {/* --------------------------- panneau / bottom sheet --------------------------- */}
       {sel && (
