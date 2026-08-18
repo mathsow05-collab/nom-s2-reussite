@@ -987,7 +987,12 @@ router.get('/devoirs', requireEleve(db), (req, res) => {
       const questions = db.prepare('SELECT id FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
       let validees = 0;
       let score = 0;
+      let participation = null;
       if (lien) {
+        const part = db
+          .prepare('SELECT statut, propose_par FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+          .get(d.id, lien.id);
+        participation = part ? { statut: part.statut, par: part.propose_par } : null;
         for (const q of questions) {
           const reps = db
             .prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?')
@@ -1009,6 +1014,7 @@ router.get('/devoirs', requireEleve(db), (req, res) => {
         validees,
         score,
         binome: !!lien,
+        participation,
       };
     })
   );

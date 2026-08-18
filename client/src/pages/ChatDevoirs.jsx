@@ -19,11 +19,21 @@ function resteTemps(deadline) {
   return `Encore ${h} h ${m} min`;
 }
 
-export default function Devoirs({ notifier }) {
+export default function Devoirs({ notifier, meId }) {
   const [liste, setListe] = useState(null);
   const [errListe, setErrListe] = useState(null);
   const [ouvert, setOuvert] = useState(null);
   const [classement, setClassement] = useState(null);
+
+  async function agir(id, action) {
+    try {
+      await api(`/eleve/devoir/${id}/${action}`, { method: 'POST' });
+      notifier(action === 'accepter' ? 'Devoir accepté : ouvre-le et mettez-vous d’accord !' : 'Devoir refusé.');
+      charger();
+    } catch (e) {
+      notifier(e.message);
+    }
+  }
 
   const charger = useCallback(() => {
     setErrListe(null);
@@ -56,30 +66,48 @@ export default function Devoirs({ notifier }) {
           </p>
         )}
         {liste && liste.length === 0 && <p className="muted">Aucun devoir pour l'instant.</p>}
-        {(liste || []).map((d) => (
-          <div className="devoir-carte" key={d.id}>
-            <div className="chat-row-txt">
-              <strong>{d.titre}</strong>
-              {d.description && <small className="muted">{d.description}</small>}
-              <small className="muted">
-                {d.fini ? 'Délai dépassé' : resteTemps(d.deadline) || 'Sans délai'} · {d.validees}/{d.total} réponses
-                validées{d.validees > 0 ? ` · score ${d.score}` : ''}
-              </small>
-            </div>
-            {!d.binome ? (
-              <span className="chat-etat">Binôme requis</span>
-            ) : (
-              <div className="chat-dec-actions">
-                <button className="btn btn-primary" onClick={() => setOuvert(d.id)}>
-                  Ouvrir
-                </button>
-                <button className="btn btn-outline" onClick={() => setClassement(d.id)}>
-                  Classement
-                </button>
+        {(liste || []).map((d) => {
+          const attendMoi = d.participation?.statut === 'propose' && d.participation.par !== meId;
+          const attenduAutre = d.participation?.statut === 'propose' && d.participation.par === meId;
+          const refuse = d.participation?.statut === 'refuse';
+          return (
+            <div className={`devoir-carte${attendMoi ? ' attend-moi' : ''}`} key={d.id}>
+              <div className="chat-row-txt">
+                <strong>{d.titre}</strong>
+                {d.description && <small className="muted">{d.description}</small>}
+                <small className="muted">
+                  {d.fini ? 'Délai dépassé' : resteTemps(d.deadline) || 'Sans délai'} · {d.validees}/{d.total} réponses
+                  validées{d.validees > 0 ? ` · score ${d.score}` : ''}
+                </small>
+                {attendMoi && <small className="ok-text">Ton binôme veut faire ce devoir avec toi : accepte ou refuse.</small>}
+                {attenduAutre && <small className="muted">Proposition envoyée, en attente de ton binôme…</small>}
+                {refuse && <small className="err-text">Devoir refusé.</small>}
+                {d.participation?.statut === 'accepte' && <small className="ok-text">Devoir accepté : choisissez les mêmes réponses !</small>}
               </div>
-            )}
-          </div>
-        ))}
+              {!d.binome ? (
+                <span className="chat-etat">Binôme requis</span>
+              ) : attendMoi ? (
+                <div className="chat-dec-actions">
+                  <button className="btn btn-primary" onClick={() => agir(d.id, 'accepter')}>
+                    <Icon name="check" size={15} /> Accepter
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => agir(d.id, 'refuser')}>
+                    Refuser
+                  </button>
+                </div>
+              ) : (
+                <div className="chat-dec-actions">
+                  <button className="btn btn-primary" onClick={() => setOuvert(d.id)}>
+                    Ouvrir
+                  </button>
+                  <button className="btn btn-outline" onClick={() => setClassement(d.id)}>
+                    Classement
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </section>
 
       {ouvert != null && <DevoirPanneau id={ouvert} onClose={() => { setOuvert(null); charger(); }} notifier={notifier} />}

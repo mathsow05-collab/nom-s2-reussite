@@ -51,6 +51,7 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
   const [home, setHome] = useState(null);
   const [homeErr, setHomeErr] = useState(null);
   const [devoirs, setDevoirs] = useState([]);
+  const [duels, setDuels] = useState([]);
   const [vue, setVue] = useState('liste');
   const [convo, setConvo] = useState(null);
   const [toast, setToast] = useState(null);
@@ -87,7 +88,10 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
   }, [codeInvite]);
 
   useEffect(() => {
-    const maj = () => api('/eleve/devoirs').then(setDevoirs).catch(() => {});
+    const maj = () => {
+      api('/eleve/devoirs').then(setDevoirs).catch(() => {});
+      api('/eleve/duels').then(setDuels).catch(() => {});
+    };
     maj();
     const t = setInterval(maj, 30000);
     window.addEventListener('kd-chat', maj);
@@ -98,6 +102,10 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
   }, []);
 
   const devoirsActifs = devoirs.filter((d) => !d.fini && d.binome);
+  const devoirsAAccapter = devoirs.filter(
+    (d) => !d.fini && d.participation?.statut === 'propose' && d.participation.par !== me.id
+  );
+  const duelsARelever = duels.filter((d) => d.statut === 'en_attente' && !d.je_suis_createur);
 
   const lienPerso = home ? `${location.origin}${location.pathname}?inviter=${home.moi.code}` : '';
   async function copier() {
@@ -170,10 +178,13 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
             Invitations{home?.invitations.length > 0 && <span className="chat-badge">{home.invitations.length}</span>}
           </button>
           <button className={vue === 'duels' ? 'on' : ''} onClick={() => setVue('duels')}>
-            Duels
+            Duels{duelsARelever.length > 0 && <span className="chat-badge">{duelsARelever.length}</span>}
           </button>
           <button className={vue === 'devoirs' ? 'on' : ''} onClick={() => setVue('devoirs')}>
-            Devoirs{devoirsActifs.length > 0 && <span className="chat-badge">{devoirsActifs.length}</span>}
+            Devoirs
+            {(devoirsAAccapter.length > 0 || devoirsActifs.length > 0) && (
+              <span className="chat-badge">{devoirsAAccapter.length || devoirsActifs.length}</span>
+            )}
           </button>
         </div>
       </header>
@@ -302,7 +313,7 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
       )}
 
       {home && vue === 'duels' && <Duels home={home} notifier={notifier} />}
-      {home && vue === 'devoirs' && <Devoirs notifier={notifier} />}
+      {home && vue === 'devoirs' && <Devoirs notifier={notifier} meId={me.id} />}
 
       {home && vue === 'lien' && codeInvite && (
         <VueLien code={codeInvite} notifier={notifier} onFini={() => { onCodeTraite(); setVue('liste'); charger(); }} onVoirInvitations={() => { onCodeTraite(); setVue('invitations'); }} />
