@@ -8,6 +8,7 @@ import Cours from '../admin/Cours.jsx';
 import MetiersAdmin from '../admin/Metiers.jsx';
 import AnnalesAdmin from '../admin/Annales.jsx';
 import ExamensAdmin from '../admin/Examens.jsx';
+import FlashAdmin from '../admin/Flash.jsx';
 import QuizAdmin from '../admin/Quiz.jsx';
 import AgendaAdmin from '../admin/Agenda.jsx';
 import QuestionsAdmin from '../admin/Questions.jsx';
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'culture', label: 'Culture du monde', icon: 'bulb' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'examens', label: 'Examens', icon: 'clock' },
+  { id: 'flash', label: 'Flashcards', icon: 'layers' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
   { id: 'questions', label: 'Questions élèves', icon: 'chat' },
@@ -115,6 +117,7 @@ export default function AdminApp() {
         {tab === 'culture' && <CultureAdmin />}
         {tab === 'annales' && <AnnalesAdmin adminScope={me.filiere} />}
         {tab === 'examens' && <ExamensAdmin adminScope={me.filiere} />}
+        {tab === 'flash' && <FlashAdmin />}
         {tab === 'quiz' && <QuizAdmin adminScope={me.filiere} />}
         {tab === 'agenda' && <AgendaAdmin />}
         {tab === 'questions' && <QuestionsAdmin adminScope={me.filiere} />}

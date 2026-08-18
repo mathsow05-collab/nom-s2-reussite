@@ -104,6 +104,14 @@ const ART = {
       <circle cx="58" cy="40" r="26" fill="none" stroke={N} strokeWidth="3" />
     </>
   ),
+  flash: (
+    <>
+      <rect x="28" y="26" width="62" height="42" rx="7" fill={M} transform="rotate(-7 59 47)" />
+      <rect x="30" y="20" width="62" height="42" rx="7" fill="#fff" stroke={M} strokeWidth="2.5" transform="rotate(4 61 41)" />
+      <path d="M44 34h34M44 44h22" stroke={B} strokeWidth="3.5" strokeLinecap="round" transform="rotate(4 61 41)" />
+      <path d="M84 58l6 3-2.5 2 3 5-3 1.6-3-5-3.4 1Z" fill={T} />
+    </>
+  ),
 };
 
 export default function Illu({ name, size }) {

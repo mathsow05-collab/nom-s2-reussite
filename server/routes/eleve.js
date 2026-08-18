@@ -203,6 +203,26 @@ router.get('/annales/:id/:type', requireEleve(db, { allowQuery: true }), (req, r
   return res.sendFile(file);
 });
 
+/* ------------------------- Flashcards (type Anki) ------------------------- */
+router.get('/flash', requireEleve(db), (req, res) => {
+  const f = req.eleve.filiere || 'S2';
+  const decks = db.prepare("SELECT * FROM flash_decks WHERE filiere IN (?, 'all') ORDER BY id").all(f);
+  const cnt = db.prepare('SELECT deck_id, COUNT(*) c FROM flash_cards GROUP BY deck_id');
+  const m = {};
+  for (const r of cnt.all()) m[r.deck_id] = r.c;
+  const out = decks.map((d) => ({ ...d, nb: m[d.id] || 0 }));
+  const nLex = db.prepare('SELECT COUNT(*) c FROM lexique').get().c;
+  if (nLex > 0) out.push({ id: 'lexique', titre: 'Lexique arabe → français', filiere: 'all', matiere: null, nb: nLex });
+  res.json(out);
+});
+
+router.get('/flash/:id/cards', requireEleve(db), (req, res) => {
+  if (req.params.id === 'lexique') {
+    return res.json(db.prepare('SELECT id, mot_ar AS recto, mot_fr AS verso FROM lexique ORDER BY categorie, id').all());
+  }
+  res.json(db.prepare('SELECT id, recto, verso FROM flash_cards WHERE deck_id = ? ORDER BY ordre, id').all(req.params.id));
+});
+
 /* ------------------------------------------------------------------ */
 /* Examens maison : sujet masqué tant qu'on n'a pas démarré, pause qui  */
 /* cache le sujet, copie scannée déposée en PDF, 2 tentatives/semaine.  */

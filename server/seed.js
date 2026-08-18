@@ -678,6 +678,41 @@ function seed(db, log = console.log) {
     log(`[seed] Orientation : ${extras.length} métiers L2 ajoutés.`);
   }
 
+  /* ------------------------- Paquets de flashcards ------------------------- */
+  if (db.prepare('SELECT COUNT(*) c FROM flash_decks').get().c === 0) {
+    const D = (titre, filiere, matiere, cartes) => {
+      const d = db.prepare('INSERT INTO flash_decks (titre, filiere, matiere) VALUES (?,?,?)').run(titre, filiere, matiere);
+      const ins = db.prepare('INSERT INTO flash_cards (deck_id, recto, verso, ordre) VALUES (?,?,?,?)');
+      cartes.forEach(([r, v], i) => ins.run(d.lastInsertRowid, r, v, i + 1));
+    };
+    D('Maths — Essentiels Seconde', 'S2', 'maths', [
+      ['aⁿ × aᵐ = ?', 'aⁿ⁺ᵐ'],
+      ['(aⁿ)ᵐ = ?', 'aⁿˣᵐ'],
+      ['a⁰ = ?', '1'],
+      ['a⁻ⁿ = ?', '1 / aⁿ'],
+      ['√(a × b) = ?', '√a × √b'],
+      ['(a + b)² = ?', 'a² + 2ab + b²'],
+      ['(a − b)² = ?', 'a² − 2ab + b²'],
+      ['(a + b)(a − b) = ?', 'a² − b²'],
+    ]);
+    D('Physique-Chimie — Réflexes', 'S2', 'physique-chimie', [
+      ['Unité de la force ?', 'Le newton (N)'],
+      ['P = m × g : que calcule-t-on ?', 'Le poids (en newtons)'],
+      ['1 L = ? m³', '0,001 m³ (10⁻³ m³)'],
+      ['Formule de la masse volumique ?', 'ρ = m / V'],
+      ['Qu’est-ce qu’une mole ?', '6,022 × 10²³ entités (NA)'],
+    ]);
+    D('Français — Figures de style', 'L2', 'francais', [
+      ['Rapprochement avec « comme »', 'Une comparaison'],
+      ['Image sans outil de comparaison', 'Une métaphore'],
+      ['Donner vie à un objet', 'Une personnification'],
+      ['Exagération volontaire', 'Une hyperbole'],
+      ['Répétition en début de phrase', 'Une anaphore'],
+      ['Dire le contraire avec ironie', 'Une antiphrase'],
+    ]);
+    log('[seed] Flashcards : 3 paquets de démarrage créés.');
+  }
+
   return result;
 }
 

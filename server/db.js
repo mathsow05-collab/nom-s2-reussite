@@ -206,4 +206,22 @@ CREATE TABLE IF NOT EXISTS examens_tentatives (
 ensureColumn('examens_tentatives', 'done', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('examens_tentatives', 'copie_corrigee_pdf', 'TEXT');
 
+/* ------------------------- Flashcards (type Anki) ------------------------- */
+db.exec(`
+CREATE TABLE IF NOT EXISTS flash_decks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  filiere TEXT NOT NULL DEFAULT 'all',
+  matiere TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS flash_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  deck_id INTEGER NOT NULL,
+  recto TEXT NOT NULL,
+  verso TEXT NOT NULL,
+  ordre INTEGER NOT NULL DEFAULT 0
+);
+`);
+
 module.exports = db;

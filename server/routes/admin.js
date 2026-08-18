@@ -514,6 +514,39 @@ router.delete('/annales/:id', admin, refuseAR, (req, res) => {
 });
 
 /* ------------------------- Quiz ------------------------- */
+/* ------------------------- Flashcards ------------------------- */
+router.get('/flash', admin, (req, res) => {
+  const decks = db
+    .prepare(req.scope === 'all' ? 'SELECT * FROM flash_decks ORDER BY id DESC' : "SELECT * FROM flash_decks WHERE filiere IN (?, 'all') ORDER BY id DESC")
+    .all(...(req.scope === 'all' ? [] : [req.scope]));
+  const cnt = db.prepare('SELECT deck_id, COUNT(*) c FROM flash_cards GROUP BY deck_id');
+  const m = {};
+  for (const r of cnt.all()) m[r.deck_id] = r.c;
+  res.json(decks.map((d) => ({ ...d, nb: m[d.id] || 0 })));
+});
+
+router.post('/flash', admin, (req, res) => {
+  const { titre, filiere, matiere, lignes } = req.body || {};
+  if (!titre || !String(titre).trim()) return res.status(400).json({ error: 'Le titre est obligatoire.' });
+  const cartes = String(lignes || '')
+    .split('\n')
+    .map((l) => l.split('|').map((x) => x.trim()))
+    .filter((p) => p.length >= 2 && p[0] && p[1]);
+  if (!cartes.length) return res.status(400).json({ error: 'Ajoutez au moins une carte (format : recto | verso).' });
+  const f = req.scope !== 'all' ? req.scope : filiere === 'L2' ? 'L2' : filiere === 'AR' ? 'AR' : 'all';
+  const info = db.prepare('INSERT INTO flash_decks (titre, filiere, matiere) VALUES (?,?,?)').run(String(titre).trim(), f, String(matiere || '').trim() || null);
+  const ins = db.prepare('INSERT INTO flash_cards (deck_id, recto, verso, ordre) VALUES (?,?,?,?)');
+  cartes.forEach(([r, v], i) => ins.run(info.lastInsertRowid, r, v, i + 1));
+  addLog('flash_deck_cree', { source: 'admin', req, details: `${titre} (${cartes.length} cartes)` });
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+router.delete('/flash/:id', admin, (req, res) => {
+  db.prepare('DELETE FROM flash_cards WHERE deck_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM flash_decks WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 /* ------------------------- Examens maison ------------------------- */
 const examenUpload = makeUploader(['.pdf'], 25).fields([
   { name: 'sujet', maxCount: 1 },
