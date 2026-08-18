@@ -18,6 +18,7 @@ import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
 import Profil from './Profil.jsx';
 import Examens from './Examens.jsx';
+import Illu from '../components/Illustrations.jsx';
 import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
 
 export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
@@ -501,20 +502,58 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
         </button>
       )}
 
-      <div className="chips3">
-        <span className="chip-bac">
-          <Icon name="cap" size={13} /> Bac 2027 : J-{Math.max(0, Math.ceil((new Date('2027-06-15') - Date.now()) / 86400000))}
-        </span>
-        <span>
-          <Icon name="book" size={13} /> {stats.vues}/{stats.total} cours
-        </span>
-        <span>
-          <Icon name="target" size={13} /> {stats.pctMoy} % en quiz
-        </span>
-        <span>
-          <Icon name="clock" size={13} /> {fmtMin(prog.minutes)}
-        </span>
-      </div>
+      {stats.vues === 0 && stats.nq === 0 ? (
+        <section className="card welcome3">
+          <div className="welcome3-illu">
+            <Illu name="cours" />
+          </div>
+          <div className="welcome3-txt">
+            <strong>Bienvenue ! Ta progression s'affichera ici.</strong>
+            <p className="muted small">Commence par une étape, ta barre de progrès démarre aujourd'hui :</p>
+            <div className="bar3">
+              <div style={{ width: '4%' }} />
+            </div>
+            <div className="welcome3-btns">
+              <button className="btn btn-primary" onClick={() => onGo('cours')}>
+                Ouvrir mon premier cours
+              </button>
+              <button className="btn btn-outline" onClick={() => onGo('quiz')}>
+                Tester un quiz
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <div className="chips3">
+          <span className="chip-bac">
+            <Icon name="cap" size={13} /> Bac 2027 : J-{Math.max(0, Math.ceil((new Date('2027-06-15') - Date.now()) / 86400000))}
+          </span>
+          <span className="pchip">
+            <small>
+              <Icon name="book" size={12} /> {stats.vues}/{stats.total} cours
+            </small>
+            <span className="pbar">
+              <i style={{ width: `${Math.round((stats.vues / Math.max(1, stats.total)) * 100)}%` }} />
+            </span>
+          </span>
+          <span className="pchip">
+            <small>
+              <Icon name="target" size={12} /> {stats.pctMoy} % en quiz
+            </small>
+            <span className="pbar">
+              <i style={{ width: `${stats.pctMoy}%` }} />
+            </span>
+          </span>
+          <span className="pchip">
+            <small>
+              <Icon name="clock" size={12} /> {fmtMin(prog.minutes)} / 1 h
+            </small>
+            <span className="pbar">
+              <i style={{ width: `${Math.min(100, Math.round((prog.minutes / 60) * 100))}%` }} />
+            </span>
+          </span>
+        </div>
+      )}
 
       {conseils.length > 0 && (
         <div className="recos3">
@@ -539,15 +578,14 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
             style={{ '--i': i }}
             onClick={() => onOpen(t.id)}
           >
-            <img src={t.img} alt="" loading="lazy" />
-            <span className="ptile-shade" />
-            <span className="ptile-ico">
-              <Icon name={t.icon} size={15} />
+            <span className="ptile-illu">
+              <Illu name={t.id} />
             </span>
-            <span className="ptile-txt">
+            <span className="ptile-txt2">
               <strong>{t.titre}</strong>
               <small>{t.sub}</small>
             </span>
+            {t.id === 'cours' && <span className="bgo">→</span>}
           </button>
         ))}
       </div>

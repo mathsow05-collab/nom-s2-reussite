@@ -1,6 +1,6 @@
 export default function Icon({ name, size = 18, className = '' }) {
   const paths = {
-    play: <path d="M8 5v14l11-7z" fill="currentColor" stroke="none" />,
+    play: <path d="M8 5v14l11-7z" />,
     file: (
       <>
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

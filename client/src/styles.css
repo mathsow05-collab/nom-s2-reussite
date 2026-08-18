@@ -1319,3 +1319,48 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 [data-theme='dark'] .ex-timer { background: #1a2440; color: #c6cfdd; }
 [data-theme='dark'] .ex-paper { background: #0e1526; border-color: #223052; color: #93a0b8; }
 [data-theme='dark'] .auth-card3 { background: rgba(18, 26, 46, 0.7); }
+
+/* ================================================================
+   KAY DIANG v9 : illustrations de marque, accueil motivant, micro-joie
+   ================================================================ */
+
+/* Tuiles illustrées (fini les photos stock) */
+.ptile {
+  position: relative; display: flex; flex-direction: column; gap: 8px; text-align: left; cursor: pointer;
+  background: linear-gradient(165deg, #f7faff, #e9effb); border: 1px solid #e3eaf6; border-radius: 18px;
+  padding: 14px; min-height: 148px; animation: tile-pop 0.45s both; animation-delay: calc(var(--i) * 50ms);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.ptile:hover { box-shadow: 0 10px 24px rgba(15, 37, 87, 0.10); }
+.ptile:active { transform: scale(0.97); }
+.ptile-illu { flex: 1; display: flex; align-items: center; justify-content: center; }
+.ptile-illu svg { width: 100%; max-height: 76px; }
+.ptile-txt2 { display: flex; flex-direction: column; gap: 1px; }
+.ptile-txt2 strong { color: #0f172a; font-size: 0.98rem; letter-spacing: -0.01em; }
+.ptile-txt2 small { color: #64748b; font-size: 0.72rem; }
+.ptile.feat { flex-direction: row; align-items: center; gap: 12px; min-height: 120px; }
+.ptile.feat .ptile-illu { flex: 0 0 42%; }
+.ptile.feat .ptile-txt2 { flex: 1; }
+.ptile.feat .bgo { color: #1d4ed8; font-size: 1.3rem; font-weight: 800; }
+
+/* Chips de progression */
+.pchip { display: flex; flex-direction: column; gap: 4px; background: #fff !important; border: 1px solid #eef1f6 !important; border-radius: 12px; padding: 7px 12px; min-width: 118px; }
+.pchip small { display: flex; align-items: center; gap: 5px; color: #334155; font-size: 0.72rem; font-weight: 700; }
+.pbar { height: 5px; border-radius: 99px; background: #eef0f6; overflow: hidden; }
+.pbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1d4ed8, #0e7490); animation: bar-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Carte de bienvenue */
+.welcome3 { display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: 20px; }
+.welcome3-illu { flex: 0 0 110px; }
+.welcome3-illu svg { width: 110px; }
+.welcome3-txt { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.welcome3-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 480px) { .welcome3 { flex-direction: column; align-items: stretch; } .welcome3-illu { display: none; } }
+
+/* Mode sombre : tuiles + chips */
+[data-theme='dark'] .ptile { background: linear-gradient(165deg, #121a2e, #101728); border-color: #1c2740; }
+[data-theme='dark'] .ptile-txt2 strong { color: #e6eaf3; }
+[data-theme='dark'] .ptile-txt2 small { color: #93a0b8; }
+[data-theme='dark'] .pchip { background: #121a2e !important; border-color: #1c2740 !important; }
+[data-theme='dark'] .pchip small { color: #c6cfdd; }
+[data-theme='dark'] .pbar { background: #1a2440; }
