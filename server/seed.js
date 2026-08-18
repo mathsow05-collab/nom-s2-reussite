@@ -713,6 +713,29 @@ function seed(db, log = console.log) {
     log('[seed] Flashcards : 3 paquets de démarrage créés.');
   }
 
+  /* --------- Devoirs communs de démonstration (prêts pour tester les binômes) --------- */
+  const devoirDemo = (titre, filiere, description, questions) => {
+    if (db.prepare('SELECT COUNT(*) c FROM devoirs_binomes WHERE titre = ?').get(titre).c > 0) return;
+    const r = db
+      .prepare('INSERT INTO devoirs_binomes (titre, description, filiere) VALUES (?, ?, ?)')
+      .run(titre, description, filiere);
+    const insQ = db.prepare('INSERT INTO devoir_binome_questions (devoir_id, question, choix, bonne, ordre) VALUES (?, ?, ?, ?, ?)');
+    questions.forEach((q, i) => insQ.run(r.lastInsertRowid, q[0], JSON.stringify(q[1]), q[2], i));
+  };
+  devoirDemo('Devoir commun S2 nº1 — Maths & Physique', 'S2', 'Concertez-vous : une réponse n’est validée que si vous choisissez la même option.', [
+    ['Solution de 2x + 6 = 0 ?', ['x = 3', 'x = −3', 'x = 6'], 1],
+    ['Unité de la force ?', ['Le joule', 'Le newton', 'Le watt'], 1],
+    ['Discriminant de x² + 2x + 1 ?', ['0', '1', '4'], 0],
+    ['1 L équivaut à ?', ['0,001 m³', '0,01 m³', '0,1 m³'], 0],
+  ]);
+  devoirDemo('Devoir commun L2 nº1 — Français & Histoire', 'L2', 'Concertez-vous : une réponse n’est validée que si vous choisissez la même option.', [
+    ['Auteur des « Misérables » ?', ['Victor Hugo', 'Émile Zola', 'Molière'], 0],
+    ['Indépendance du Sénégal ?', ['1958', '1960', '1963'], 1],
+    ['Quel mot est un adverbe ?', ['rapidement', 'rapide', 'rapidité'], 0],
+    ['Figure de style par exagération ?', ['Une hyperbole', 'Une métonymie', 'Une litote'], 0],
+  ]);
+  log('[seed] Devoirs communs : devoirs de démonstration prêts pour les tests.');
+
   return result;
 }
 

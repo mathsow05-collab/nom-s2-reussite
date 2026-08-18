@@ -30,7 +30,16 @@ export async function api(path, { method = 'GET', body, form = false } = {}) {
   } catch {
     /* corps vide */
   }
-  if (!res.ok) throw new ApiError(res.status, data?.code, data?.error || 'Erreur serveur');
+  if (!res.ok) {
+    // Session admin expirée (ex. après un redéploiement) : on renvoie
+    // proprement vers l'écran de connexion au lieu d'afficher des erreurs.
+    if (res.status === 401 && path.startsWith('/admin/') && !path.startsWith('/admin/login')) {
+      clearToken();
+      if (!window.location.hash.startsWith('#/admin')) window.location.hash = '#/admin';
+      else window.location.reload();
+    }
+    throw new ApiError(res.status, data?.code, data?.error || 'Erreur serveur');
+  }
   return data;
 }
 
