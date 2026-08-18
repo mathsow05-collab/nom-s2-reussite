@@ -18,6 +18,36 @@ const norm = (s) =>
     .replace(/[\u0300-\u036f]/g, '');
 const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+/* Secteurs professionnels : deuxième filtre (indépendant du type de parcours). */
+export const SECTEURS = [
+  { id: 'num', label: 'Informatique & Numérique', icon: 'zap' },
+  { id: 'data', label: 'Maths, Stats & Data', icon: 'target' },
+  { id: 'sante', label: 'Santé & Social', icon: 'heart' },
+  { id: 'ing', label: 'Ingénierie, Énergie & BTP', icon: 'building' },
+  { id: 'sci', label: 'Sciences & Laboratoire', icon: 'bulb' },
+  { id: 'commerce', label: 'Commerce, Finance & Gestion', icon: 'briefcase' },
+  { id: 'droit', label: 'Droit, Admin & Politique', icon: 'shield' },
+  { id: 'lettres', label: 'Lettres, Langues & Com', icon: 'chat' },
+  { id: 'edu', label: 'Enseignement & Recherche', icon: 'cap' },
+  { id: 'env', label: 'Environnement, Agro & Nature', icon: 'globe' },
+  { id: 'tourisme', label: 'Tourisme, Transport & Hôtels', icon: 'compass' },
+  { id: 'medias', label: 'Médias, Création & Culture', icon: 'image' },
+];
+
+const LIC_SECT = {
+  maths: ['data'], info: ['num'], physique: ['ing', 'sci'], chimie: ['sci', 'env'], svt: ['sci', 'env', 'sante'],
+  eco: ['commerce', 'data'], gestion: ['commerce'], compta: ['commerce'], droit: ['droit'], scpo: ['droit', 'lettres'],
+  lettres: ['lettres', 'medias', 'edu'], anglais: ['lettres', 'tourisme'], geo: ['env', 'lettres'], socio: ['sante', 'lettres'],
+  psy: ['sante'], medecine: ['sante'], ens: ['edu'],
+};
+const DOM_SECT = {
+  info: ['num'], sante: ['sante'], commerce: ['commerce'], com: ['medias', 'lettres'], genie: ['ing'], compta: ['commerce'],
+  droit: ['droit'], btp: ['ing'], transport: ['tourisme', 'commerce'], tourisme: ['tourisme'],
+};
+const PRO_SECT = { bts: ['commerce', 'num'], dut: ['ing', 'num'], licpro: ['num', 'commerce'], certif: ['num', 'medias'] };
+const CONC_SECT = { ingenieur: ['ing', 'num'], sante: ['sante'], admin: ['droit'], enseignement: ['edu'], journalisme: ['medias'], vet: ['env', 'sante'] };
+const ALT_SECT = { 'alt-1': ['ing', 'num', 'commerce'], 'alt-2': ['num', 'commerce'], 'alt-3': ['commerce', 'num', 'medias'] };
+
 function addNode(n) {
   if (!NODES.some((x) => x.id === n.id)) NODES.push(n);
   return n;
@@ -69,6 +99,11 @@ for (const u of UNIVERSITES) {
         presentation: L.presentation,
         passerelles: L.passerelles,
         tags: L.tags,
+        secteurs: LIC_SECT[lid] || ['sci'],
+        metiers: L.apres.metiers,
+        masters: L.apres.masters,
+        concoursList: L.apres.concours,
+        secteursPro: L.apres.secteurs,
         compare: {
           prix: L.frais, duree: L.duree, admission: L.admission, diplome: 'Licence (Bac+3)',
           matieres: L.matieres.join(', '), masters: L.apres.masters.join(' · '),
@@ -126,6 +161,9 @@ for (const d of DOMAINES_ECOLES) {
         'Inscription': e.fraisInscription, 'Scolarité': e.fraisScolarite, 'Débouchés': e.debouches, 'Poursuite': e.masters.join(' · '),
       },
       tags: { matieres: [], interets: e.interets, budget: e.budget, select: e.select },
+      secteurs: DOM_SECT[e.domaine] || ['commerce'],
+      metiers: e.metiers,
+      masters: e.masters,
       compare: {
         prix: `${e.fraisInscription} + ${e.fraisScolarite}`, duree: e.duree, admission: e.admission, diplome: e.diplome,
         matieres: e.debouches, masters: e.masters.join(' · '), debouches: e.debouches, metiers: e.metiers.join(', '),
@@ -148,6 +186,8 @@ for (const p of PRO) {
     details: { 'Durée': p.duree, 'Admission': p.admission, 'Coût': p.cout, 'Diplôme': p.diplome, 'Débouchés': p.debouches, 'Passerelle': p.passerelle },
     compare: { prix: p.cout, duree: p.duree, admission: p.admission, diplome: p.diplome, matieres: p.debouches, masters: p.passerelle, debouches: p.debouches, metiers: p.metiers.join(', ') },
     tags: p.tags,
+    secteurs: PRO_SECT[p.id] || ['commerce'],
+    metiers: p.metiers,
   });
   edge('b-pro', pid);
   edge('b-alternance', pid, 'souvent en alternance');
@@ -163,14 +203,14 @@ const ALT = [
   { id: 'alt-3', label: 'Écoles privées en alternance', sub: 'Commerce, informatique, compta', details: { 'Principe': 'L’entreprise paie la scolarité ; contrat d’apprentissage ou de professionnalisation.', 'Vigilance': 'Vérifie le réseau d’entreprises partenaires de l’école.' } },
 ];
 for (const a of ALT) {
-  addNode({ ...a, type: 'alternance', icon: 'refresh' });
+  addNode({ ...a, type: 'alternance', icon: 'refresh', secteurs: ALT_SECT[a.id] || ['commerce'] });
   edge('b-alternance', a.id);
 }
 
 /* ------------------------------ concours etc. ------------------------------ */
 for (const c of CONCOURS) {
   const cid = `c-${c.id}`;
-  addNode({ id: cid, type: 'concours', label: c.nom, sub: c.preparation.slice(0, 50) + '…', icon: 'award', details: { 'Préparation': c.preparation, 'Durée après réussite': c.dureeApres, 'Conseil': c.conseil } });
+  addNode({ id: cid, type: 'concours', label: c.nom, sub: c.preparation.slice(0, 50) + '…', icon: 'award', details: { 'Préparation': c.preparation, 'Durée après réussite': c.dureeApres, 'Conseil': c.conseil }, secteurs: CONC_SECT[c.id] || ['droit'], metiers: c.metiers });
   edge('b-concours', cid);
   for (const met of c.metiers) {
     const kid = `met-${slug(met)}`;
@@ -180,12 +220,12 @@ for (const c of CONCOURS) {
 }
 for (const x of ETRANGER) {
   const xid = `et-${x.id}`;
-  addNode({ id: xid, type: 'etranger', label: x.nom, sub: x.budget, icon: 'globe', details: { 'Budget': x.budget, 'Conditions': x.conditions, 'Atouts': x.atouts, 'Vigilance': x.vigilance } });
+  addNode({ id: xid, type: 'etranger', label: x.nom, sub: x.budget, icon: 'globe', details: { 'Budget': x.budget, 'Conditions': x.conditions, 'Atouts': x.atouts, 'Vigilance': x.vigilance }, secteurs: ['all'] });
   edge('b-etranger', xid);
 }
 for (const t of TRAVAIL) {
   const tid = `tr-${slug(t.nom)}`;
-  addNode({ id: tid, type: 'travail', label: t.nom, sub: t.atout, icon: 'zap', details: { 'Atout': t.atout, 'Risque': t.risque, 'Reprendre des études': t.passerelle } });
+  addNode({ id: tid, type: 'travail', label: t.nom, sub: t.atout, icon: 'zap', details: { 'Atout': t.atout, 'Risque': t.risque, 'Reprendre des études': t.passerelle }, secteurs: ['all'] });
   edge('b-travail', tid);
   edge(tid, 'b-pro', 'reprendre des études');
 }
