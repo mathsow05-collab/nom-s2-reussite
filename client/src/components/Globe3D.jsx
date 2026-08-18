@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon.jsx';
+import { WORLD_PATH } from '../data/worldmap.js';
 
 /* Globe 3D v2 : rotation horizontale ET verticale au doigt, zoom (+/− et
    double-tap), inertie douce. Un appui sur un pays déclenche une onde qui
@@ -181,13 +182,19 @@ export default function Globe3D() {
           onPointerLeave={() => setDrag(null)}
           onDoubleClick={() => zoomer(zoom > (ZMIN + ZMAX) / 2 ? -1 : 1)}
         >
-          <div
-            className="globe3-map"
-            style={{
-              backgroundSize: `${200 * zoom}% ${100 * zoom}%`,
-              backgroundPosition: `${((offX * zoom) / (2 * zoom - 1)) * 100}% ${zoom > 1 ? ((offY * zoom) / (zoom - 1)) * 100 : 50}%`,
-            }}
-          />
+          <div className="g3-maplayer" style={{ top: `${-offY * zoom * 100}%` }}>
+            {[0, 1].map((k) => (
+              <svg
+                key={k}
+                viewBox="0 0 1000 500"
+                preserveAspectRatio="none"
+                className="g3-svg"
+                style={{ left: `${(k * 2 - offX) * zoom * 100}%`, width: `${2 * zoom * 100}%`, height: `${zoom * 100}%` }}
+              >
+                <path d={WORLD_PATH} className="g3-land" />
+              </svg>
+            ))}
+          </div>
           <div className="globe3-shade" />
           {ripple && (
             <span key={ripple.key} className="g3-ripple" style={{ left: `${ripple.x}%`, top: `${ripple.y}%`, borderColor: c.color }} />
@@ -221,6 +228,7 @@ export default function Globe3D() {
                 title={p.nom}
               >
                 <i />
+                {zoom >= 1.5 && <b className="g3-name">{p.nom}</b>}
               </button>
             );
           })}

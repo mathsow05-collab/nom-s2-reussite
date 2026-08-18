@@ -1605,3 +1605,15 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 [data-theme='dark'] .g3-zoom button { background: #121a2e; border-color: #223052; color: #c6cfdd; }
 [data-theme='dark'] .g3-pass { border-color: #223052; }
 [data-theme='dark'] .g3-fun { background: #16203a; color: #c6cfdd; }
+
+/* ================================================================
+   KAY DIANG v16 : globe avec vrais continents (Natural Earth)
+   ================================================================ */
+.globe3 { background: radial-gradient(circle at 40% 35%, #123a7a, #0b1f4b 70%); }
+.g3-maplayer { position: absolute; left: 0; width: 100%; pointer-events: none; }
+.g3-svg { position: absolute; top: 0; }
+.g3-land { fill: #a9c3ea; stroke: #e4eefb; stroke-width: 0.5; }
+.g3-name {
+  position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 0.62rem; font-weight: 700;
+  color: #fff; background: rgba(8, 15, 35, 0.7); padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
