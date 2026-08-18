@@ -38,6 +38,12 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'S2 Réussite API', date: new Date().toISOString() }));
+app.get('/api/version', (req, res) =>
+  res.json({
+    version: '2026-08-18 · duels, devoirs communs, recommandations',
+    commit: process.env.RENDER_GIT_COMMIT || 'local',
+  })
+);
 
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/eleve', require('./routes/eleve'));

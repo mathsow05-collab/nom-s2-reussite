@@ -21,10 +21,16 @@ function resteTemps(deadline) {
 
 export default function Devoirs({ notifier }) {
   const [liste, setListe] = useState(null);
+  const [errListe, setErrListe] = useState(null);
   const [ouvert, setOuvert] = useState(null);
   const [classement, setClassement] = useState(null);
 
-  const charger = useCallback(() => api('/eleve/devoirs').then(setListe).catch(() => {}), []);
+  const charger = useCallback(() => {
+    setErrListe(null);
+    api('/eleve/devoirs')
+      .then(setListe)
+      .catch((e) => setErrListe(e.message || 'Erreur API'));
+  }, []);
   useEffect(() => {
     charger();
     const h = () => charger();
@@ -40,7 +46,15 @@ export default function Devoirs({ notifier }) {
           Proposés par l'administration : discute avec ton binôme et mettez-vous d'accord — une réponse n'est validée
           que si vous choisissez la même option.
         </p>
-        {!liste && <Spinner />}
+        {!liste && !errListe && <Spinner />}
+        {errListe && (
+          <p className="err-text">
+            Impossible de charger : {errListe}
+            <button className="btn btn-ghost" style={{ marginLeft: 8 }} onClick={charger}>
+              Réessayer
+            </button>
+          </p>
+        )}
         {liste && liste.length === 0 && <p className="muted">Aucun devoir pour l'instant.</p>}
         {(liste || []).map((d) => (
           <div className="devoir-carte" key={d.id}>

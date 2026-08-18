@@ -49,6 +49,7 @@ function ChoixType({ value, onChange }) {
 
 export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) {
   const [home, setHome] = useState(null);
+  const [homeErr, setHomeErr] = useState(null);
   const [devoirs, setDevoirs] = useState([]);
   const [vue, setVue] = useState('liste');
   const [convo, setConvo] = useState(null);
@@ -64,7 +65,12 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
     toastT.current = setTimeout(() => setToast(null), 4200);
   }, []);
 
-  const charger = useCallback(() => api('/eleve/chat/home').then(setHome).catch(() => {}), []);
+  const charger = useCallback(() => {
+    setHomeErr(null);
+    api('/eleve/chat/home')
+      .then(setHome)
+      .catch((e) => setHomeErr(e.message || 'Erreur API'));
+  }, []);
   useEffect(() => {
     charger();
     const t = setInterval(charger, 12000);
@@ -172,7 +178,17 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
         </div>
       </header>
 
-      {!home && <Spinner />}
+      {!home && !homeErr && <Spinner />}
+      {homeErr && (
+        <section className="card chat-vide">
+          <Icon name="alert" size={24} />
+          <strong>Problème de chargement</strong>
+          <p className="muted small">{homeErr}</p>
+          <button className="btn btn-primary" onClick={charger}>
+            Réessayer
+          </button>
+        </section>
+      )}
 
       {home && vue === 'liste' && (
         <>

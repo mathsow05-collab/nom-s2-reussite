@@ -17,10 +17,16 @@ const matiereLabel = (id) => {
 
 export default function Duels({ home, notifier }) {
   const [duels, setDuels] = useState(null);
+  const [errDuels, setErrDuels] = useState(null);
   const [ouvert, setOuvert] = useState(null);
   const [defi, setDefi] = useState(false);
 
-  const charger = useCallback(() => api('/eleve/duels').then(setDuels).catch(() => {}), []);
+  const charger = useCallback(() => {
+    setErrDuels(null);
+    api('/eleve/duels')
+      .then(setDuels)
+      .catch((e) => setErrDuels(e.message || 'Erreur API'));
+  }, []);
   useEffect(() => {
     charger();
     const h = () => charger();
@@ -69,7 +75,15 @@ export default function Duels({ home, notifier }) {
 
       <section className="card">
         <h2 className="chat-h2">Mes duels</h2>
-        {!duels && <Spinner />}
+        {errDuels && (
+          <p className="err-text">
+            Impossible de charger : {errDuels}
+            <button className="btn btn-ghost" style={{ marginLeft: 8 }} onClick={charger}>
+              Réessayer
+            </button>
+          </p>
+        )}
+        {!duels && !errDuels && <Spinner />}
         {duels && duels.length === 0 && <p className="muted">Aucun duel pour l'instant. Lance ton premier défi !</p>}
         {(duels || []).map((d) => (
           <button className="chat-row cliquable" key={d.id} onClick={() => setOuvert(d.id)}>
