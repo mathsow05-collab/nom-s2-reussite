@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
+import Arbre from './Arbre.jsx';
 
 // Décode le texte des blocs : lignes « Sous-titre : » puis métiers séparés par « ; ».
 export function parseBlocs(texte) {
@@ -334,6 +335,7 @@ export default function Metiers() {
       <div className="orient-tabs" role="tablist">
         {[
           ['metiers', `Métiers (${metiers.length})`],
+          ['arbre', 'Mon parcours'],
           ['etudes', `Études → Métiers (${parcours.length})`],
         ].map(([id, lbl]) => (
           <button key={id} className={vue === id ? 'otab active' : 'otab'} onClick={() => setVue(id)}>
@@ -378,6 +380,17 @@ export default function Metiers() {
             </div>
           )}
         </div>
+      )}
+
+      {vue === 'arbre' && (
+        <Arbre
+          filiere={me.filiere}
+          metiers={metiers}
+          onOpenMetier={(m) => {
+            setVue('metiers');
+            setOpen(m);
+          }}
+        />
       )}
 
       {vue === 'etudes' && (
