@@ -1,125 +1,295 @@
 import { useRef, useState } from 'react';
 import Icon from '../Icon.jsx';
-import { Modal } from '../ui.jsx';
 
-/* Arbre des parcours : BAC → voie → filière → années → Master → métier.
-   Chaque nœud s'ouvre sur : conditions, matières, compétences, débouchés,
-   salaires indicatifs, formations. Effet 3D (tilt) sur les cartes filières. */
+/* « Mon parcours » — expérience immersive post-Bac.
+   Données organisées comme les sites d'orientation professionnels :
+   voie universitaire (LMD : Licence 3 ans → Master +2 → Doctorat +3,
+   inscription publique via Campusen) et voie écoles/formations (concours,
+   BTS/DUT 2-3 ans), avec métiers, salaires indicatifs et conseil pratique. */
 
 const DATA = {
   S2: {
-    bac: { label: 'BAC S2', img: '/metiers/ecole.jpg', sub: 'Sciences expérimentales & maths' },
+    bac: 'BAC S2',
+    img: '/metiers/ecole.jpg',
     filieres: [
       {
-        id: 'maths', label: 'Maths & Stats', img: '/metiers/data.jpg',
-        conditions: 'Bac S2 avec un bon niveau en mathématiques.',
-        matieres: 'Analyse, algèbre, probabilités, statistiques, informatique.',
-        competences: 'Raisonnement abstrait, rigueur, logique, modélisation.',
-        debouches: 'Enseignement, actuariat, data science, recherche, banques.',
-        salaires: '≈ 150 000 – 350 000 F/mois en début · 600 000 F et + avec l’expérience.',
-        formations: 'Université : licence → master maths/stats (UCAD, UGB) ; ENSAE Dakar ; écoles d’ingénieurs ; prépa.',
-        metiers: ['Actuaire', 'Statisticien', 'Data scientist', 'Enseignant·e'],
+        id: 'data', label: 'Maths, Stats & Data', img: '/metiers/data.jpg',
+        resume: 'La voie des chiffres : modéliser, prévoir, décider avec les données.',
+        competences: ['Raisonnement abstrait', 'Rigueur', 'Statistiques', 'Anglais technique'],
+        univ: {
+          etabs: 'UCAD — Faculté des Sciences & Techniques (FST), UGB Saint-Louis, Université de Thiès',
+          etapes: [
+            ['Licence', '3 ans', 'Maths, statistiques, informatique, probabilités. Sélection en master sur dossier.'],
+            ['Master', '+2 ans', 'Statistique appliquée, data science, actuariat, modélisation.'],
+            ['Doctorat', '+3 ans', 'Recherche et enseignement supérieur (Bac+8 au total).'],
+          ],
+        },
+        ecoles: [
+          ['ENSAE Dakar', '3-4 ans', 'Concours — statistique & économie, la référence'],
+          ['ESP / EPT', '5 ans', 'Concours post-Bac — diplôme d’ingénieur (maths appliquées)'],
+          ['BTS / DUT informatique', '2-3 ans', 'Voie courte pour entrer vite dans la data'],
+        ],
+        metiers: [
+          ['Actuaire', '300 000 – 700 000 F/mois'],
+          ['Data scientist', '250 000 – 1 000 000 F/mois'],
+          ['Statisticien', '200 000 – 450 000 F/mois'],
+          ['Enseignant·e-chercheur', 'selon grille fonction publique'],
+        ],
+        conseil: 'Les maths du S2 sont ton ticket d’entrée : garde un bon niveau et vise l’ENSAE ou un master data.',
       },
       {
-        id: 'info', label: 'Informatique', img: '/metiers/info.jpg',
-        conditions: 'Bac S2 ; la logique compte plus que le matériel possédé.',
-        matieres: 'Algorithmique, programmation, bases de données, réseaux.',
-        competences: 'Résolution de problèmes, autonomie, anglais technique.',
-        debouches: 'Développement web/mobile, cybersécurité, IA, freelance international.',
-        salaires: '≈ 200 000 – 500 000 F/mois en début · télétravail international bien au-delà.',
-        formations: 'ESP Dakar, EPT, licence-master info UCAD, BTS SIO + école, certifications en ligne.',
-        metiers: ['Ingénieur en informatique', 'Data scientist'],
+        id: 'info', label: 'Informatique & Numérique', img: '/metiers/info.jpg',
+        resume: 'Coder, sécuriser, connecter : le secteur qui recrute le plus vite.',
+        competences: ['Logique', 'Autonomie', 'Projets personnels', 'Anglais'],
+        univ: {
+          etabs: 'UCAD (FST) — licence & master Informatique, UGB, Université de Thiès',
+          etapes: [
+            ['Licence', '3 ans', 'Algorithmique, programmation, bases de données, réseaux.'],
+            ['Master', '+2 ans', 'Génie logiciel, IA, cybersécurité, systèmes distribués.'],
+            ['Doctorat', '+3 ans', 'Recherche en informatique.'],
+          ],
+        },
+        ecoles: [
+          ['ESP Dakar / EPT Thiès', '5 ans', 'Concours — ingénieurs en informatique & télécoms'],
+          ['BTS SIO / DUT réseaux', '2-3 ans', 'Emploi rapide puis passerelles vers licence pro'],
+          ['Certifications en ligne', 'continu', 'Complètent le diplôme (Cisco, AWS, Google)'],
+        ],
+        metiers: [
+          ['Développeur web/mobile', '200 000 – 600 000 F/mois'],
+          ['Expert cybersécurité', '400 000 – 1 200 000 F/mois'],
+          ['Ingénieur télécoms', '300 000 – 700 000 F/mois'],
+        ],
+        conseil: 'Un portfolio (petits projets en ligne) vaut souvent autant que le diplôme aux yeux des recruteurs.',
       },
       {
-        id: 'phys', label: 'Physique & Ingénierie', img: '/metiers/energie.jpg',
-        conditions: 'Bac S2, physique et maths solides.',
-        matieres: 'Mécanique, électricité, thermodynamique, électronique.',
-        competences: 'Calcul, expérimentation, travail en équipe, CAO.',
-        debouches: 'Énergie solaire, BTP, télécoms, maintenance industrielle.',
-        salaires: '≈ 200 000 – 450 000 F/mois en début · ingénieurs très demandés.',
-        formations: 'EPT Thiès, ESP, ENSUT ; DUT/BTS puis diplôme d’ingénieur.',
-        metiers: ['Ingénieur civil', 'Ingénieur électrotechnique', 'Ingénieur en télécommunications'],
+        id: 'ing', label: 'Physique & Ingénierie', img: '/metiers/energie.jpg',
+        resume: 'Construire, produire, électrifier : le Sénégal bâtit et se met au solaire.',
+        competences: ['Physique', 'Calcul', 'CAO & manipulations', 'Travail d’équipe'],
+        univ: {
+          etabs: 'UCAD (FST) licence physique/électronique → masters énergie & matériaux',
+          etapes: [
+            ['Licence', '3 ans', 'Physique, électronique, mécanique, maths appliquées.'],
+            ['Master', '+2 ans', 'Énergies renouvelables, matériaux, électronique.'],
+            ['Doctorat', '+3 ans', 'Recherche appliquée.'],
+          ],
+        },
+        ecoles: [
+          ['ESP / EPT / ENSUT', '5 ans', 'Concours — génie civil, électrotechnique, télécoms'],
+          ['DUT génie civil / élec', '2-3 ans', 'Technicien supérieur, chantier rapide'],
+          ['ENSTP', 'variable', 'Travaux publics'],
+        ],
+        metiers: [
+          ['Ingénieur civil', '300 000 – 800 000 F/mois'],
+          ['Ingénieur électrotechnique', '300 000 – 700 000 F/mois'],
+          ['Chef de chantier', '250 000 – 500 000 F/mois'],
+        ],
+        conseil: 'Les stages en entreprise dès la 2e année font la différence à l’embauche.',
       },
       {
-        id: 'sante', label: 'Santé', img: '/metiers/medecin.jpg',
-        conditions: 'Bac S2 + concours (médecine, pharmacie, soins).',
-        matieres: 'Biologie, chimie, anatomie, physiologie.',
-        competences: 'Mémoire, sang-froid, empathie, endurance.',
-        debouches: 'Hôpitaux, cliniques, pharmacies, santé publique, ONG.',
-        salaires: '≈ 250 000 F en début · spécialistes et privé nettement plus.',
-        formations: 'FMPOS UCAD, facultés de médecine Thiès/Ziguinchor, écoles d’infirmiers et sages-femmes.',
-        metiers: ['Médecin', 'Pharmacien', 'Sage-femme', 'Infirmier diplômé d’État'],
+        id: 'sante', label: 'Santé & Médecine', img: '/metiers/medecin.jpg',
+        resume: 'Soigner et sauver : longues études, métier respecté, besoin énorme.',
+        competences: ['Mémoire', 'Empathie', 'Sang-froid', 'Endurance'],
+        univ: {
+          etabs: 'FMPOS (UCAD), Facultés de médecine de Thiès & Ziguinchor',
+          etapes: [
+            ['Concours + 1er cycle', '1-3 ans', 'Sélection sévère après le Bac S2 (notes + concours).'],
+            ['2e/3e cycle médecine', '+4-6 ans', 'Externat, internat, spécialisation (7 à 10 ans au total).'],
+            ['Pharmacie / Odontologie', '6 ans', 'Thèse de docteur en pharmacie ou chirurgie dentaire.'],
+          ],
+        },
+        ecoles: [
+          ['ENDSS', '2-3 ans', 'Infirmiers, sages-femmes, techniciens de santé'],
+          ['Écoles privées agréées', '2-3 ans', 'Vérifie l’agrément avant de t’inscrire'],
+        ],
+        metiers: [
+          ['Médecin', '350 000 F et + /mois'],
+          ['Pharmacien', '400 000 F et + /mois'],
+          ['Infirmier d’État', '150 000 – 300 000 F/mois'],
+          ['Sage-femme', '180 000 – 350 000 F/mois'],
+        ],
+        conseil: 'Prépare le concours dès la Terminale : SVT, physique et surtout maths.',
       },
       {
-        id: 'agro', label: 'Agro & Terre', img: '/metiers/agronome.jpg',
-        conditions: 'Bac S2 ; intérêt pour la nature et l’alimentation.',
-        matieres: 'SVT, biologie, géologie, agronomie, gestion de l’eau.',
-        competences: 'Observation, terrain, gestion de projets.',
-        debouches: 'Agro-industrie, élevage, environnement, mines, hydraulique.',
-        salaires: '≈ 150 000 – 350 000 F/mois · secteur stratégique en croissance.',
-        formations: 'ENSA Thiès, licence-master biologie/géologie (UCAD), EISMV (vétérinaire).',
-        metiers: ['Ingénieur agronome', 'Vétérinaire', 'Géologue', 'Biologiste'],
+        id: 'agro', label: 'Agro, Environnement & Terre', img: '/metiers/agronome.jpg',
+        resume: 'Nourrir, protéger, explorer : souveraineté alimentaire et ressources.',
+        competences: ['SVT', 'Terrain', 'Gestion de projet', 'Sensibilité écologique'],
+        univ: {
+          etabs: 'UCAD (FST biologie/géologie), ISE (environnement), IST (géologues)',
+          etapes: [
+            ['Licence', '3 ans', 'Biologie, géologie, écologie, chimie.'],
+            ['Master', '+2 ans', 'Environnement, ressources en eau, mines.'],
+            ['Doctorat', '+3 ans', 'Recherche (ISRA, IRD…).'],
+          ],
+        },
+        ecoles: [
+          ['ENSA Thiès', '5 ans', 'Concours — ingénieurs agronomes'],
+          ['EISMV Dakar', '6 ans', 'Vétérinaire (école inter-États)'],
+          ['BTS agricole', '2 ans', 'Technicien, insertion rapide'],
+        ],
+        metiers: [
+          ['Ingénieur agronome', '250 000 – 600 000 F/mois'],
+          ['Vétérinaire', '300 000 – 700 000 F/mois'],
+          ['Géologue', '300 000 – 800 000 F/mois'],
+        ],
+        conseil: 'Le pétrole, le gaz et les mines ouvrent grand cette filière au Sénégal dans les années qui viennent.',
+      },
+      {
+        id: 'eco', label: 'Économie & Gestion', img: '/metiers/finance.jpg',
+        resume: 'Comprendre l’argent, les marchés, les organisations.',
+        competences: ['Calcul', 'Synthèse', 'Communication', 'Excel & outils'],
+        univ: {
+          etabs: 'UCAD — SEG (Sciences Économiques et Gestion), UGB',
+          etapes: [
+            ['Licence', '3 ans', 'Économie, comptabilité, management, statistiques.'],
+            ['Master', '+2 ans', 'Finance, audit, contrôle de gestion, marketing.'],
+            ['Doctorat', '+3 ans', 'Enseignement et recherche.'],
+          ],
+        },
+        ecoles: [
+          ['ISG / ESG (UCAD)', '4-5 ans', 'Gestion, finance, sur concours/dossier'],
+          ['CESAG, ISM, IAM (privés)', '3-5 ans', 'Réputés — frais à prévoir, bourses possibles'],
+          ['BTS comptabilité/gestion', '2 ans', 'Emploi rapide en cabinet ou banque'],
+        ],
+        metiers: [
+          ['Expert-comptable', '350 000 – 900 000 F/mois'],
+          ['Analyste financier', '300 000 – 700 000 F/mois'],
+          ['Banquier', '200 000 – 500 000 F/mois'],
+        ],
+        conseil: 'L’anglais + un tableur maîtrisé te mettent au-dessus du lot dès la licence.',
       },
     ],
   },
   L2: {
-    bac: { label: 'BAC L2', img: '/metiers/lettres.jpg', sub: 'Lettres, langues & sciences humaines' },
+    bac: 'BAC L2',
+    img: '/metiers/lettres.jpg',
     filieres: [
       {
-        id: 'droit', label: 'Droit', img: '/metiers/juriste.jpg',
-        conditions: 'Bac L2 ; bonne expression écrite et esprit d’analyse.',
-        matieres: 'Droit civil, pénal, public, science politique.',
-        competences: 'Argumentation, rédaction, mémoire, éthique.',
-        debouches: 'Barreau, magistrature, notariat, juriste d’entreprise, administration.',
-        salaires: '≈ 150 000 – 300 000 F en début · avocats expérimentés bien au-delà.',
-        formations: 'FSJP UCAD (L1→Master) ; ENAM ; écoles de formation (avocat, magistrat).',
-        metiers: ['Avocat·e / Juriste', 'Diplomate'],
+        id: 'droit', label: 'Droit & Science politique', img: '/metiers/juriste.jpg',
+        resume: 'Défendre, réguler, représenter : la voix de la justice et de l’État.',
+        competences: ['Argumentation', 'Rédaction', 'Mémoire', 'Éthique'],
+        univ: {
+          etabs: 'UCAD — FSJP (Faculté des Sciences Juridiques et Politiques), UGB',
+          etapes: [
+            ['Licence', '3 ans', 'Droit civil, pénal, public, science politique (via Campusen).'],
+            ['Master', '+2 ans', 'Droit des affaires, droit international, CRFPA.'],
+            ['Écoles professionnelles', '+1-2 ans', 'Barreau (avocat), magistrature, notariat.'],
+          ],
+        },
+        ecoles: [
+          ['ENA / ENAM', '2-3 ans', 'Concours — administration publique, diplomatie'],
+          ['CFJ', 'variable', 'Formation judiciaire'],
+        ],
+        metiers: [
+          ['Avocat·e', 'très variable, croît avec la clientèle'],
+          ['Magistrat·e', '350 000 F et + /mois'],
+          ['Juriste d’entreprise', '250 000 – 600 000 F/mois'],
+          ['Diplomate', 'selon grille des affaires étrangères'],
+        ],
+        conseil: 'Les plaidoiries et concours d’éloquence en licence sont un excellent entraînement.',
       },
       {
-        id: 'lettres', label: 'Lettres & Langues', img: '/metiers/lettres.jpg',
-        conditions: 'Bac L2 ; amour de la lecture et de l’écriture.',
-        matieres: 'Littérature, grammaire, langues (anglais, arabe, espagnol…).',
-        competences: 'Expression, traduction, culture générale, créativité.',
-        debouches: 'Enseignement, édition, traduction, communication, métiers du livre.',
-        salaires: '≈ 120 000 – 250 000 F en début · traduction/communication payantes.',
-        formations: 'FLASH UCAD, FASTEF (enseignement), masters métiers du livre, interprétariat.',
-        metiers: ['Écrivain·e / Éditeur·rice', 'Traducteur·rice / Interprète', 'Enseignant·e', 'Bibliothécaire / Archiviste'],
+        id: 'lettres', label: 'Lettres, Langues & Enseignement', img: '/metiers/parcours.jpg',
+        resume: 'Transmettre et raconter : former les générations, publier, traduire.',
+        competences: ['Expression écrite', 'Lecture', 'Pédagogie', 'Langues'],
+        univ: {
+          etabs: 'UCAD — FLASH (lettres, langues, arts), UGB',
+          etapes: [
+            ['Licence', '3 ans', 'Littérature, grammaire, anglais/arabe/espagnol, linguistique.'],
+            ['Master', '+2 ans', 'Métiers du livre, traduction, didactique.'],
+            ['Doctorat', '+3 ans', 'Recherche et enseignement supérieur.'],
+          ],
+        },
+        ecoles: [
+          ['FASTEF / CRFPE', '1-3 ans', 'Concours — professeurs de collège/lycée'],
+          ['EBAD (UCAD)', '2-3 ans', 'Bibliothécaires, archivistes, documentalistes'],
+        ],
+        metiers: [
+          ['Enseignant·e', 'grille fonction publique + heures sup'],
+          ['Traducteur·rice', '200 000 – 500 000 F/mois'],
+          ['Écrivain·e / Éditeur·rice', 'variable selon projets'],
+        ],
+        conseil: 'Le concours d’enseignement se prépare dès la licence : vise la mention.',
       },
       {
-        id: 'shs', label: 'Sciences humaines', img: '/metiers/campus.jpg',
-        conditions: 'Bac L2 ; curiosité pour la société et les gens.',
-        matieres: 'Sociologie, anthropologie, géographie, psychologie.',
-        competences: 'Enquête, écoute, analyse, rédaction de rapports.',
-        debouches: 'ONG, collectivités, études, action sociale, urbanisme.',
-        salaires: '≈ 150 000 – 300 000 F/mois selon le secteur.',
-        formations: 'Licence-master sociologie/géo/psychologie (UCAD), FASTEF.',
-        metiers: ['Psychologue', 'Historien·ne / Archéologue'],
+        id: 'shs', label: 'Sciences humaines & Social', img: '/metiers/campus.jpg',
+        resume: 'Comprendre l’humain et la société, accompagner les plus fragiles.',
+        competences: ['Écoute', 'Enquête', 'Analyse', 'Rédaction de rapports'],
+        univ: {
+          etabs: 'UCAD — FLASH sociologie/anthropologie/géographie, psychologie',
+          etapes: [
+            ['Licence', '3 ans', 'Théories, méthodes d’enquête, terrains.'],
+            ['Master', '+2 ans', 'Psychologie clinique, développement, urbanisme.'],
+            ['Doctorat', '+3 ans', 'Recherche et expertise.'],
+          ],
+        },
+        ecoles: [
+          ['ENTSS', '2-3 ans', 'Concours — travailleurs sociaux spécialisés'],
+        ],
+        metiers: [
+          ['Psychologue', '200 000 – 500 000 F/mois'],
+          ['Assistant·e social·e', '150 000 – 300 000 F/mois'],
+          ['Chargé·e d’études', '250 000 – 500 000 F/mois'],
+        ],
+        conseil: 'Les ONG et bureaux d’études recrutent beaucoup d’enquêteurs : multiplie les stages.',
       },
       {
-        id: 'media', label: 'Journalisme & Com', img: '/metiers/media.jpg',
-        conditions: 'Bac L2 ; aisance à l’oral et à l’écrit.',
-        matieres: 'Techniques rédactionnelles, médias, communication, PAO.',
-        competences: 'Synthèse, rapidité, créativité, réseaux sociaux.',
-        debouches: 'Rédactions, agences, community management, audiovisuel.',
-        salaires: '≈ 150 000 – 350 000 F en début · freelance et pub très variables.',
-        formations: 'CESTI Dakar (concours), licences info-com, écoles de design.',
-        metiers: ['Journaliste / Communicant', 'Photographe / Réalisateur', 'Community manager / Designer graphique'],
+        id: 'media', label: 'Journalisme, Com & Arts', img: '/metiers/media.jpg',
+        resume: 'Informer, créer, faire vibrer : médias, publicité, design, audiovisuel.',
+        competences: ['Curiosité', 'Aisance orale', 'Créativité', 'Réseaux sociaux'],
+        univ: {
+          etabs: 'UCAD — licences info-com ; UGB',
+          etapes: [
+            ['Licence', '3 ans', 'Communication, journalisme, sémiologie, PAO.'],
+            ['Master', '+2 ans', 'Stratégies de communication, médias numériques.'],
+          ],
+        },
+        ecoles: [
+          ['CESTI (UCAD)', '3 ans', 'Concours — la référence du journalisme'],
+          ['École nationale des Arts / ISAD', '3-5 ans', 'Arts, design, musique'],
+          ['Sup’Imax, ISIC (privés)', '2-3 ans', 'Audiovisuel & multimédia'],
+        ],
+        metiers: [
+          ['Journaliste', '150 000 – 400 000 F/mois'],
+          ['Community manager', '150 000 – 350 000 F/mois'],
+          ['Designer graphique', '200 000 – 600 000 F/mois'],
+        ],
+        conseil: 'Constitue un book (articles, visuels, vidéos) dès la première année.',
+      },
+      {
+        id: 'tour', label: 'Tourisme, Hôtellerie & Commerce', img: '/metiers/tourisme.jpg',
+        resume: 'Accueillir le monde : hôtels, agences, événementiel, import-export.',
+        competences: ['Langues', 'Sens du contact', 'Organisation', 'Sourire'],
+        univ: {
+          etabs: 'UCAD (licence tourisme, géographie), ILEA (langues appliquées)',
+          etapes: [
+            ['Licence', '3 ans', 'Tourisme, langues, économie du secteur.'],
+            ['Master', '+2 ans', 'Management hôtelier, marketing touristique.'],
+          ],
+        },
+        ecoles: [
+          ['ENFHT', '2-3 ans', 'Concours — hôtellerie, tourisme, restauration'],
+          ['BTS tourisme / commerce', '2 ans', 'Insertion rapide'],
+        ],
+        metiers: [
+          ['Guide touristique', '150 000 – 300 000 F + pourboires'],
+          ['Responsable hôtel', '300 000 – 700 000 F/mois'],
+          ['Agent de voyage', '150 000 – 350 000 F/mois'],
+        ],
+        conseil: 'Deux langues vivantes solides (anglais + une autre) doublent tes chances.',
       },
     ],
   },
 };
 
-const NIVEAUX = ['L1', 'L2', 'L3', 'Master'];
-
 function Tilt({ children, className = '', onClick }) {
   const ref = useRef(null);
   function move(e) {
     const el = ref.current;
-    if (!el) return;
+    if (!el || e.pointerType === 'touch') return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(700px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateY(-3px)`;
+    el.style.transform = `perspective(700px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-3px)`;
   }
   function leave() {
     if (ref.current) ref.current.style.transform = '';
@@ -131,118 +301,128 @@ function Tilt({ children, className = '', onClick }) {
   );
 }
 
-export default function Arbre({ filiere, metiers, onOpenMetier }) {
+export default function Arbre({ filiere, onOpenMetier }) {
   const arbre = DATA[filiere] || DATA.S2;
   const [sel, setSel] = useState(null);
-  const [detail, setDetail] = useState(null);
-
-  const norm = (s) =>
-    String(s || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  const findMetier = (nom) =>
-    metiers.find((x) => norm(x.titre).includes(norm(nom).split(' ')[0]) || norm(nom).includes(norm(x.titre).split(' ')[0]));
 
   return (
-    <div className="vue-anim">
-      {/* Racine BAC */}
-      <div className="arb-racine">
-        <img src={arbre.bac.img} alt="" />
-        <span className="arb-racine-txt">
-          <strong>{arbre.bac.label}</strong>
-          <small>{arbre.bac.sub}</small>
-        </span>
-      </div>
-      <div className="arb-fil" />
-
-      {/* Voies */}
-      <div className="arb-voies">
-        <span className="arb-voie">Université</span>
-        <span className="arb-voie alt">Écoles & formations</span>
-      </div>
-      <div className="arb-fil" />
-
-      {/* Filières (cartes 3D) */}
-      <div className="arb-row">
-        {arbre.filieres.map((f) => (
-          <Tilt key={f.id} onClick={() => setSel(f)}>
-            <img src={f.img} alt="" />
-            <strong>{f.label}</strong>
-            <small>{sel?.id === f.id ? 'Parcours ci-dessous' : 'Toucher pour dérouler'}</small>
-          </Tilt>
-        ))}
-      </div>
-
-      {/* Déroulé années → métier */}
-      {sel && (
-        <div className="arb-niveaux vue-anim">
-          <div className="arb-fil" />
-          {NIVEAUX.map((n, i) => (
-            <div className="arb-niv" key={n}>
-              <span className="arb-niv-dot">{n}</span>
-              <div>
-                <strong>
-                  {n} — {sel.label}
-                </strong>
-                <small>{i === 0 ? 'Entrée à l’université après le Bac' : i === 3 ? 'Spécialisation et recherche' : 'Approfondissement du cursus'}</small>
-              </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setDetail(sel)}>
-                Détails
-              </button>
+    <div>
+      {!sel ? (
+        <div className="vue-anim">
+          <div className="arb2-hero">
+            <img src={arbre.img} alt="" />
+            <div className="arb2-hero-txt">
+              <small>Après le</small>
+              <strong>{arbre.bac}</strong>
+              <p>Deux routes s'ouvrent à toi : l'université (système LMD) ou les écoles & formations professionnelles. Touche une filière pour dérouler tout ton chemin.</p>
             </div>
-          ))}
-          <div className="arb-fil" />
-          <div className="arb-niv metier">
-            <span className="arb-niv-dot pro">
-              <Icon name="briefcase" size={14} />
+          </div>
+          <div className="arb2-voies">
+            <span className="arb-voie">
+              <Icon name="cap" size={13} /> Université — Licence 3 ans · Master +2 · Doctorat +3
             </span>
-            <div>
-              <strong>MÉTIER</strong>
-              <small>Touche un métier pour ouvrir sa fiche complète</small>
-            </div>
+            <span className="arb-voie alt">
+              <Icon name="briefcase" size={13} /> Écoles & BTS/DUT — 2 à 5 ans, sur concours
+            </span>
           </div>
-          <div className="arb-metiers">
-            {sel.metiers.map((nom) => {
-              const hit = findMetier(nom);
-              return (
-                <button key={nom} className={hit ? 'tag-chip link' : 'tag-chip'} onClick={() => hit && onOpenMetier(hit)}>
-                  {nom}
-                  {hit && <Icon name="right" size={12} />}
-                </button>
-              );
-            })}
-            <button className="btn btn-outline btn-sm" onClick={() => setDetail(sel)}>
-              Conditions · salaires · formations
-            </button>
-          </div>
-        </div>
-      )}
-
-      {detail && (
-        <Modal title={detail.label} onClose={() => setDetail(null)} wide>
-          <div className="det3">
-            <img src={detail.img} alt="" />
-            {[
-              ['Conditions d’accès', detail.conditions, 'check'],
-              ['Matières principales', detail.matieres, 'book'],
-              ['Compétences à développer', detail.competences, 'spark'],
-              ['Débouchés', detail.debouches, 'briefcase'],
-              ['Salaires indicatifs', detail.salaires, 'chart'],
-              ['Formations & écoles', detail.formations, 'cap'],
-            ].map(([t, v, ic]) => (
-              <div className="det3-ligne" key={t}>
-                <span className="det3-ico">
-                  <Icon name={ic} size={15} />
+          <div className="arb2-grid">
+            {arbre.filieres.map((f, i) => (
+              <Tilt key={f.id} className="arb2-card" onClick={() => setSel(f)}>
+                <img src={f.img} alt="" />
+                <strong>{f.label}</strong>
+                <small>{f.resume}</small>
+                <span className="arb2-cta">
+                  Découvrir mon chemin <Icon name="right" size={12} />
                 </span>
-                <div>
-                  <strong>{t}</strong>
-                  <p>{v}</p>
-                </div>
-              </div>
+              </Tilt>
             ))}
           </div>
-        </Modal>
+        </div>
+      ) : (
+        <div className="vue-anim">
+          <div className="arb2-crumb">
+            <button className="btn btn-ghost btn-sm" onClick={() => setSel(null)}>
+              <Icon name="left" size={14} /> {arbre.bac}
+            </button>
+            <span className="arb2-crumb-sep">›</span>
+            <strong>{sel.label}</strong>
+          </div>
+
+          <header className="arb2-cover">
+            <img src={sel.img} alt="" />
+            <div className="arb2-cover-txt">
+              <strong>{sel.label}</strong>
+              <p>{sel.resume}</p>
+              <div className="tags-wrap">
+                {sel.competences.map((c) => (
+                  <span key={c} className="tag-chip">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </header>
+
+          <div className="arb2-voies2">
+            <section className="card s3card">
+              <h2>
+                <Icon name="cap" size={16} /> Voie universitaire (LMD)
+              </h2>
+              <p className="muted small">{sel.univ.etabs}</p>
+              <p className="muted small">Inscription publique via <strong>Campusen</strong> (notes du Bac + mention).</p>
+              <div className="path-timeline">
+                {sel.univ.etapes.map(([t, d, det], i) => (
+                  <div className="pstep" key={t}>
+                    <span className="pstep-dot arb2-num">{i + 1}</span>
+                    <div>
+                      <strong>
+                        {t} · {d}
+                      </strong>
+                      <p className="muted small">{det}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="card s3card">
+              <h2>
+                <Icon name="briefcase" size={16} /> Écoles & formations pro
+              </h2>
+              <p className="muted small">Accès surtout par <strong>concours</strong> après le Bac.</p>
+              <div className="path-timeline">
+                {sel.ecoles.map(([nom, d, det], i) => (
+                  <div className="pstep" key={nom}>
+                    <span className="pstep-dot arb2-num alt">{i + 1}</span>
+                    <div>
+                      <strong>
+                        {nom} · {d}
+                      </strong>
+                      <p className="muted small">{det}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <section className="card s3card">
+            <h2>
+              <Icon name="target" size={16} /> Métiers visés & salaires indicatifs
+            </h2>
+            <div className="arb2-metiers">
+              {sel.metiers.map(([nom, sal]) => (
+                <button key={nom} className="arb2-met" onClick={() => onOpenMetier(nom)}>
+                  <strong>{nom}</strong>
+                  <small>{sal}</small>
+                </button>
+              ))}
+            </div>
+            <div className="arb2-conseil">
+              <Icon name="spark" size={15} /> {sel.conseil}
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

@@ -1478,3 +1478,55 @@ h1, h2, h3, h4, .btn, .pill { letter-spacing: -0.015em; }
 [data-theme='dark'] .tilt3 strong { color: #e6eaf3; }
 [data-theme='dark'] .arb-niv-dot { background: #1a2440; }
 [data-theme='dark'] .det3-ligne p { color: #c6cfdd; }
+
+/* ================================================================
+   KAY DIANG v13 : « Mon parcours » immersif
+   ================================================================ */
+.arb2-hero {
+  position: relative; border-radius: 22px; overflow: hidden; display: flex; align-items: stretch;
+  background: #0f2557; color: #fff; margin-bottom: 12px; min-height: 150px;
+}
+.arb2-hero img { width: 42%; object-fit: cover; }
+.arb2-hero-txt { padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.arb2-hero-txt small { color: #9db8e8; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.64rem; }
+.arb2-hero-txt strong { font-size: 1.5rem; letter-spacing: -0.02em; }
+.arb2-hero-txt p { color: #c6d4f2; font-size: 0.8rem; }
+.arb2-voies { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.arb2-voies .arb-voie { display: inline-flex; align-items: center; gap: 7px; width: fit-content; }
+.arb2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .arb2-grid { grid-template-columns: 1fr 1fr; } .arb2-card small { display: none; } }
+.arb2-card { flex: none; width: 100%; }
+.arb2-card img { height: 84px; }
+.arb2-cta { display: inline-flex; align-items: center; gap: 5px; color: #1d4ed8; font-size: 0.7rem; font-weight: 800; }
+.arb2-crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.arb2-crumb-sep { color: #94a3b8; font-weight: 800; }
+.arb2-crumb strong { font-size: 1rem; letter-spacing: -0.01em; }
+.arb2-cover { position: relative; border-radius: 22px; overflow: hidden; margin-bottom: 12px; }
+.arb2-cover img { width: 100%; height: 150px; object-fit: cover; display: block; }
+.arb2-cover-txt {
+  position: absolute; inset: auto 0 0 0; padding: 44px 16px 14px; color: #fff;
+  background: linear-gradient(0deg, rgba(8, 15, 35, 0.92), transparent);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.arb2-cover-txt strong { font-size: 1.25rem; letter-spacing: -0.02em; }
+.arb2-cover-txt p { font-size: 0.82rem; color: #dbe7ff; }
+.arb2-voies2 { display: grid; gap: 12px; }
+@media (min-width: 760px) { .arb2-voies2 { grid-template-columns: 1fr 1fr; } }
+.arb2-num { font-size: 0.9rem; }
+.arb2-num.alt { background: #e0f2f1; color: #0e7490; border-color: #0e7490; }
+.arb2-metiers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+@media (max-width: 480px) { .arb2-metiers { grid-template-columns: 1fr; } }
+.arb2-met {
+  border: 1px solid #e3eaf6; background: #f8fafc; border-radius: 14px; padding: 10px 12px; text-align: left;
+  cursor: pointer; display: flex; flex-direction: column; gap: 2px; transition: transform 0.12s, box-shadow 0.2s;
+}
+.arb2-met:active { transform: scale(0.97); }
+.arb2-met strong { font-size: 0.88rem; }
+.arb2-met small { color: #0e7490; font-weight: 700; font-size: 0.7rem; }
+.arb2-conseil {
+  margin-top: 12px; display: flex; gap: 8px; align-items: center; background: #e8eefb; color: #0f2557;
+  border-radius: 14px; padding: 10px 12px; font-size: 0.82rem; font-weight: 600;
+}
+[data-theme='dark'] .arb2-met { background: #121a2e; border-color: #1c2740; }
+[data-theme='dark'] .arb2-met strong { color: #e6eaf3; }
+[data-theme='dark'] .arb2-conseil { background: #16203a; color: #c6cfdd; }
