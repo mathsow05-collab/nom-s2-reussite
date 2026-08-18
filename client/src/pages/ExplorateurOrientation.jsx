@@ -15,13 +15,13 @@ import { NODES, SECTEURS } from '../orientation/graphData.js';
    5. BONUS : le parcours visualisé en petit réseau 2D dans le tiroir. */
 
 const TYPES = [
-  { id: 'universite', label: 'Université', types: ['licence'] },
-  { id: 'ecoles', label: 'Écoles supérieures', types: ['ecole'] },
-  { id: 'pro', label: 'Pro & BTS/DUT', types: ['pro'] },
-  { id: 'concours', label: 'Concours', types: ['concours'] },
-  { id: 'alternance', label: 'Alternance', types: ['alternance'] },
-  { id: 'etranger', label: 'Étranger', types: ['etranger'] },
-  { id: 'emploi', label: 'Emploi direct', types: ['travail'] },
+  { id: 'universite', label: 'Université', types: ['licence'], hex: '#4f46e5' },
+  { id: 'ecoles', label: 'Écoles supérieures', types: ['ecole'], hex: '#0d9488' },
+  { id: 'pro', label: 'Pro & BTS/DUT', types: ['pro'], hex: '#d97706' },
+  { id: 'concours', label: 'Concours', types: ['concours'], hex: '#db2777' },
+  { id: 'alternance', label: 'Alternance', types: ['alternance'], hex: '#b45309' },
+  { id: 'etranger', label: 'Étranger', types: ['etranger'], hex: '#0891b2' },
+  { id: 'emploi', label: 'Emploi direct', types: ['travail'], hex: '#dc2626' },
 ];
 
 const SAVED_KEY = 'kd_orient_parcours';
@@ -45,6 +45,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
         (!secteur || (n.secteurs || []).includes('all') || (n.secteurs || []).includes(secteur))
     );
   }, [type, secteur]);
+  const accent = TYPES.find((t) => t.id === type)?.hex || '#4f46e5';
 
   const searchResults = useMemo(() => searchNodes(q), [q]);
   const sel = selected ? nodesById.get(selected) : null;
@@ -120,7 +121,12 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
         <span className="xo2-label">Type de parcours</span>
         <div className="xo2-types">
           {TYPES.map((t) => (
-            <button key={t.id} className={`chip${type === t.id ? ' on' : ''}`} onClick={() => setType(t.id)}>
+            <button
+              key={t.id}
+              className={`chip${type === t.id ? ' on' : ''}`}
+              style={type === t.id ? { background: t.hex, borderColor: t.hex, color: '#fff' } : undefined}
+              onClick={() => setType(t.id)}
+            >
               {t.label}
             </button>
           ))}
@@ -144,22 +150,39 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
 
       {/* ------------------------------ résultats lisibles ------------------------------ */}
       <div className="xo2-count muted small">
-        {results.length} possibilité{results.length > 1 ? 's' : ''}
+        <span className="xo2-count-dot" style={{ background: accent }} />
+        {results.length} possibilité{results.length > 1 ? 's' : ''} ·{' '}
+        <strong style={{ color: accent }}>{TYPES.find((t) => t.id === type)?.label}</strong>
         {secteur ? ` · ${SECTEURS.find((s) => s.id === secteur)?.label}` : ''} — touche une carte pour le détail.
       </div>
-      <div className="xo2-grille">
-        {results.map((n) => (
-          <button className={`xo2-carte${selected === n.id ? ' sel' : ''}`} key={n.id} onClick={() => setSelected(n.id)}>
-            <span className="xo2-carte-ico" style={{ color: TYPE_META[n.type]?.color }}>
+      <div className="xo2-grille" key={`${type}-${secteur || 'tous'}`}>
+        {results.map((n, i) => (
+          <button
+            className={`xo2-carte${selected === n.id ? ' sel' : ''}`}
+            key={n.id}
+            style={{
+              borderLeft: `4px solid ${accent}`,
+              animationDelay: `${Math.min(i, 10) * 40}ms`,
+              ...(selected === n.id ? { borderColor: accent, background: `${accent}14` } : {}),
+            }}
+            onClick={() => setSelected(n.id)}
+          >
+            <span className="xo2-carte-ico" style={{ background: `${accent}1f`, color: accent }}>
               <Icon name={n.icon || 'star'} size={18} />
             </span>
             <span className="xo2-carte-txt">
               <strong>{n.label}</strong>
               <small>{n.sub}</small>
             </span>
-            <span className="xo2-carte-chev">
-              <Icon name="right" size={16} />
-            </span>
+            {selected === n.id ? (
+              <span className="xo2-ouvert" style={{ background: accent }}>
+                <Icon name="check" size={12} /> Ouvert
+              </span>
+            ) : (
+              <span className="xo2-carte-chev">
+                <Icon name="right" size={16} />
+              </span>
+            )}
           </button>
         ))}
         {results.length === 0 && (

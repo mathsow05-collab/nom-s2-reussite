@@ -1996,3 +1996,8 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 .xo2-reseau-svg { width: 100%; height: auto; background: var(--bg); border-radius: 12px; }
 .xo2-net-edge { stroke: var(--line); stroke-width: 1.5; }
 .xo2-net-txt { font-size: 11px; fill: var(--muted); font-weight: 600; }
+
+/* v25b : couleurs par type + carte ouverte bien marquée */
+.xo2-carte { animation: odeploy 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+.xo2-count-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+.xo2-ouvert { display: inline-flex; align-items: center; gap: 4px; color: #fff; font-size: 0.66rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; flex-shrink: 0; }
