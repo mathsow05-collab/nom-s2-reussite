@@ -522,4 +522,259 @@ router.get('/echeances', requireEleve(db), (req, res) => {
   res.json(db.prepare('SELECT * FROM echeances ORDER BY date_debut').all());
 });
 
+/* ------------------------------------------------------------------ */
+/* CHAT & BINÔMES : espace de discussion privé entre élèves.           */
+/* - On devient ami/binôme par invitation (lien personnel ou           */
+/*   découverte), acceptée par l'autre.                                */
+/* - Messages texte, notes vocales et images ; les fichiers restent    */
+/*   sur le serveur et ne sont servis qu'aux deux membres de la paire. */
+/* ------------------------------------------------------------------ */
+const CHAT_DIR = path.join(UPLOADS, 'chat');
+fs.mkdirSync(CHAT_DIR, { recursive: true });
+
+const chatUpload = multer({
+  storage: multer.diskStorage({
+    destination: CHAT_DIR,
+    filename: (req, file, cb) =>
+      cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const ok = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.webm', '.mp4', '.m4a', '.ogg', '.oga', '.mp3', '.wav'];
+    if (!ok.includes(ext)) return cb(new Error('Type de fichier non autorisé.'));
+    return cb(null, true);
+  },
+}).single('fichier');
+
+const IMG_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const chatInfoEleve = (id) =>
+  db.prepare('SELECT id, eleve_id, prenom, nom, classe, filiere, avatar FROM eleves WHERE id = ?').get(id);
+const chatPublic = (e) => (e ? { id: e.id, prenom: e.prenom, nom: e.nom, classe: e.classe, filiere: e.filiere, avatar: e.avatar || null } : null);
+
+function chatLien(eleveDbId) {
+  const row = db.prepare('SELECT code FROM chat_liens WHERE eleve_id = ?').get(eleveDbId);
+  if (row) return row.code;
+  const code = crypto.randomBytes(5).toString('hex').toUpperCase();
+  db.prepare('INSERT OR IGNORE INTO chat_liens (eleve_id, code) VALUES (?, ?)').run(eleveDbId, code);
+  return code;
+}
+
+function chatRelation(moi, autre) {
+  return db
+    .prepare(
+      "SELECT * FROM chat_amis WHERE ((eleve_a = ? AND eleve_b = ?) OR (eleve_a = ? AND eleve_b = ?)) AND statut IN ('en_attente','actif')"
+    )
+    .get(moi, autre, autre, moi);
+}
+
+function chatInviter(moi, autreId, type) {
+  const autre = db.prepare('SELECT * FROM eleves WHERE id = ?').get(autreId);
+  if (!autre || !autre.actif || autre.revoked_at) return { error: 'Élève introuvable.', status: 404 };
+  if (autre.id === moi) return { error: 'Tu ne peux pas t’envoyer une invitation à toi-même.', status: 400 };
+  if (chatRelation(moi, autre.id)) return { error: 'Vous êtes déjà en lien (invitation en cours ou déjà amis/binômes).', status: 409 };
+  const t = type === 'binome' ? 'binome' : 'ami';
+  const r = db
+    .prepare("INSERT INTO chat_amis (eleve_a, eleve_b, type, statut) VALUES (?, ?, ?, 'en_attente')")
+    .run(moi, autre.id, t);
+  sse.send(autre.id, 'chat', { t: 'invitation', de: moi });
+  return { id: r.lastInsertRowid, type: t };
+}
+
+router.get('/chat/home', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const filiere = req.eleve.filiere || 'S2';
+  const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif' AND (eleve_a = ? OR eleve_b = ?)").all(moi, moi);
+  const nonLus = new Map(
+    db.prepare('SELECT de_id, COUNT(*) AS n FROM chat_messages WHERE vers_id = ? AND lu = 0 GROUP BY de_id').all(moi).map((r) => [r.de_id, r.n])
+  );
+  const amis = liens
+    .map((l) => {
+      const amiId = l.eleve_a === moi ? l.eleve_b : l.eleve_a;
+      const ami = chatInfoEleve(amiId);
+      if (!ami) return null;
+      const dernier = db
+        .prepare(
+          'SELECT * FROM chat_messages WHERE (de_id = ? AND vers_id = ?) OR (de_id = ? AND vers_id = ?) ORDER BY id DESC LIMIT 1'
+        )
+        .get(moi, amiId, amiId, moi);
+      return {
+        id: l.id,
+        type: l.type,
+        ami: chatPublic(ami),
+        non_lus: nonLus.get(amiId) || 0,
+        dernier: dernier
+          ? { id: dernier.id, de_id: dernier.de_id, type: dernier.type, texte: dernier.texte, created_at: dernier.created_at }
+          : null,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.dernier?.id || 0) - (a.dernier?.id || 0));
+
+  const invitations = db
+    .prepare("SELECT * FROM chat_amis WHERE statut = 'en_attente' AND eleve_b = ? ORDER BY id DESC")
+    .all(moi)
+    .map((l) => ({ id: l.id, type: l.type, created_at: l.created_at, de: chatPublic(chatInfoEleve(l.eleve_a)) }))
+    .filter((l) => l.de);
+  const envoyees = db
+    .prepare("SELECT * FROM chat_amis WHERE statut = 'en_attente' AND eleve_a = ? ORDER BY id DESC")
+    .all(moi)
+    .map((l) => ({ id: l.id, type: l.type, vers: chatPublic(chatInfoEleve(l.eleve_b)) }))
+    .filter((l) => l.vers);
+
+  const decouvrir = db
+    .prepare(
+      `SELECT id, prenom, nom, classe, filiere, avatar FROM eleves
+       WHERE actif = 1 AND revoked_at IS NULL AND id != ?
+         AND id NOT IN (SELECT eleve_a FROM chat_amis WHERE eleve_b = ? AND statut IN ('en_attente','actif'))
+         AND id NOT IN (SELECT eleve_b FROM chat_amis WHERE eleve_a = ? AND statut IN ('en_attente','actif'))
+       ORDER BY (filiere = ?) DESC, id DESC LIMIT 12`
+    )
+    .all(moi, moi, moi, filiere)
+    .map((e) => ({ ...chatPublic(e), meme_filiere: e.filiere === filiere }));
+
+  res.json({
+    moi: { ...chatPublic(req.eleve), code: chatLien(moi) },
+    amis,
+    invitations,
+    envoyees,
+    decouvrir,
+  });
+});
+
+router.get('/chat/badge', requireEleve(db), (req, res) => {
+  const n = db.prepare('SELECT COUNT(*) AS n FROM chat_messages WHERE vers_id = ? AND lu = 0').get(req.eleve.id).n;
+  res.json({ n });
+});
+
+router.get('/chat/code/:code', requireEleve(db), (req, res) => {
+  const lien = db.prepare('SELECT eleve_id FROM chat_liens WHERE code = ?').get(String(req.params.code || '').toUpperCase());
+  if (!lien) return res.status(404).json({ error: 'Lien d’invitation introuvable.' });
+  const e = chatInfoEleve(lien.eleve_id);
+  if (!e || !e.actif) return res.status(404).json({ error: 'Cet élève n’est plus disponible.' });
+  const rel = chatRelation(req.eleve.id, e.id);
+  res.json({
+    eleve: chatPublic(e),
+    moi: e.id === req.eleve.id,
+    relation: rel ? { statut: rel.statut, sens: rel.eleve_a === req.eleve.id ? 'envoyee' : 'recue', type: rel.type } : null,
+  });
+});
+
+router.post('/chat/code/:code/ajouter', requireEleve(db), (req, res) => {
+  const lien = db.prepare('SELECT eleve_id FROM chat_liens WHERE code = ?').get(String(req.params.code || '').toUpperCase());
+  if (!lien) return res.status(404).json({ error: 'Lien d’invitation introuvable.' });
+  const r = chatInviter(req.eleve.id, lien.eleve_id, String(req.body?.type || 'ami'));
+  if (r.error) return res.status(r.status).json({ error: r.error });
+  addLog('chat_invitation', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: `vers ${lien.eleve_id} (lien)` });
+  res.json({ ok: true, type: r.type });
+});
+
+router.post('/chat/inviter', requireEleve(db), (req, res) => {
+  const r = chatInviter(req.eleve.id, Number(req.body?.vers_id), String(req.body?.type || 'ami'));
+  if (r.error) return res.status(r.status).json({ error: r.error });
+  addLog('chat_invitation', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: `vers ${req.body.vers_id}` });
+  res.json({ ok: true, type: r.type });
+});
+
+router.post('/chat/invitation/:id/accepter', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const l = db.prepare("SELECT * FROM chat_amis WHERE id = ? AND statut = 'en_attente' AND eleve_b = ?").get(req.params.id, moi);
+  if (!l) return res.status(404).json({ error: 'Invitation introuvable.' });
+  const type = String(req.body?.type || l.type) === 'binome' ? 'binome' : 'ami';
+  db.prepare("UPDATE chat_amis SET statut = 'actif', type = ?, accepted_at = ? WHERE id = ?").run(
+    type,
+    new Date().toISOString(),
+    l.id
+  );
+  sse.send(l.eleve_a, 'chat', { t: 'ami', type });
+  addLog('chat_invitation_acceptee', { eleveDbId: moi, eleveRef: req.eleve.eleve_id, req, details: `type ${type}` });
+  res.json({ ok: true, type });
+});
+
+router.post('/chat/invitation/:id/refuser', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const l = db.prepare("SELECT * FROM chat_amis WHERE id = ? AND statut = 'en_attente' AND eleve_b = ?").get(req.params.id, moi);
+  if (!l) return res.status(404).json({ error: 'Invitation introuvable.' });
+  db.prepare("UPDATE chat_amis SET statut = 'refuse' WHERE id = ?").run(l.id);
+  sse.send(l.eleve_a, 'chat', { t: 'refus' });
+  res.json({ ok: true });
+});
+
+router.post('/chat/retirer/:id', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const l = db.prepare("SELECT * FROM chat_amis WHERE id = ? AND statut = 'actif' AND (eleve_a = ? OR eleve_b = ?)").get(req.params.id, moi, moi);
+  if (!l) return res.status(404).json({ error: 'Lien introuvable.' });
+  db.prepare('DELETE FROM chat_amis WHERE id = ?').run(l.id);
+  res.json({ ok: true });
+});
+
+router.get('/chat/messages/:amiId', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const amiId = Number(req.params.amiId);
+  if (!chatRelation(moi, amiId)) return res.status(403).json({ error: 'Vous n’êtes pas en lien avec cet élève.' });
+  const since = Number(req.query.since) || 0;
+  const rows = db
+    .prepare(
+      'SELECT * FROM chat_messages WHERE ((de_id = ? AND vers_id = ?) OR (de_id = ? AND vers_id = ?)) AND id > ? ORDER BY id LIMIT 200'
+    )
+    .all(moi, amiId, amiId, moi, since);
+  db.prepare('UPDATE chat_messages SET lu = 1 WHERE de_id = ? AND vers_id = ? AND lu = 0').run(amiId, moi);
+  res.json(
+    rows.map((m) => ({
+      id: m.id,
+      de_id: m.de_id,
+      type: m.type,
+      texte: m.texte,
+      fichier: m.fichier ? true : undefined,
+      created_at: m.created_at,
+    }))
+  );
+});
+
+router.post('/chat/messages', requireEleve(db), (req, res) => {
+  const estForm = !!req.headers['content-type']?.startsWith('multipart/form-data');
+  if (!estForm) return envoyer();
+  return chatUpload(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message || 'Fichier refusé.' });
+    return envoyer();
+  });
+
+  function envoyer() {
+    const moi = req.eleve.id;
+    const vers = Number(req.body?.vers_id);
+    if (!vers || !chatRelation(moi, vers)) return res.status(403).json({ error: 'Vous n’êtes pas en lien avec cet élève.' });
+
+    let type = 'texte';
+    let texte = null;
+    let fichier = null;
+    let mime = null;
+
+    if (req.file) {
+      const ext = path.extname(req.file.filename).toLowerCase();
+      type = IMG_EXT.includes(ext) ? 'image' : 'audio';
+      fichier = `chat/${req.file.filename}`;
+      mime = req.file.mimetype;
+    } else {
+      texte = String(req.body?.texte || '').trim().slice(0, 2000);
+      if (!texte) return res.status(400).json({ error: 'Message vide.' });
+    }
+
+    const r = db
+      .prepare('INSERT INTO chat_messages (de_id, vers_id, type, texte, fichier, mime) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(moi, vers, type, texte, fichier, mime);
+    sse.send(vers, 'chat', { t: 'msg', de: moi, id: r.lastInsertRowid });
+    res.json({ ok: true, id: r.lastInsertRowid });
+  }
+});
+
+router.get('/chat/fichier/:id', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const moi = req.eleve.id;
+  const m = db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(req.params.id);
+  if (!m || !m.fichier || (m.de_id !== moi && m.vers_id !== moi)) return res.status(404).json({ error: 'Fichier introuvable.' });
+  const file = path.join(UPLOADS, m.fichier);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Fichier introuvable.' });
+  res.setHeader('Content-Type', m.mime || 'application/octet-stream');
+  return res.sendFile(file);
+});
+
 module.exports = router;

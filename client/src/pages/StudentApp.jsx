@@ -19,6 +19,7 @@ import Suivi from './Suivi.jsx';
 import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Examens from './Examens.jsx';
+import Chat from './Chat.jsx';
 import Flashcards from './Flashcards.jsx';
 import Illu from '../components/Illustrations.jsx';
 import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
@@ -129,6 +130,10 @@ export default function StudentApp() {
         /* ignore */
       }
     });
+    // Chat & binômes : nouveau message ou invitation poussés par le serveur.
+    es.addEventListener('chat', () => {
+      window.dispatchEvent(new Event('kd-chat'));
+    });
     return () => es.close();
   }, [me]);
 
@@ -141,6 +146,34 @@ export default function StudentApp() {
       });
     }, 45000);
     return () => clearInterval(t);
+  }, [me]);
+
+  // Chat & binômes : lien d'invitation reçu dans l'URL (?inviter=CODE) + badge.
+  const [chatCode, setChatCode] = useState(null);
+  const [chatBadge, setChatBadge] = useState(0);
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    const code = p.get('inviter');
+    if (code) {
+      p.delete('inviter');
+      const qs = p.toString();
+      history.replaceState(null, '', location.pathname + (qs ? `?${qs}` : ''));
+      setTab('chat');
+      setChatCode(code);
+    }
+  }, []);
+  useEffect(() => {
+    if (!me) return undefined;
+    const maj = () => api('/eleve/chat/badge').then((d) => setChatBadge(d.n)).catch(() => {});
+    maj();
+    const t = setInterval(maj, 25000);
+    window.addEventListener('kd-chat', maj);
+    window.addEventListener('kd-chat-lu', maj);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('kd-chat', maj);
+      window.removeEventListener('kd-chat-lu', maj);
+    };
   }, [me]);
 
   const [sheet, setSheet] = useState(false);
@@ -302,6 +335,7 @@ export default function StudentApp() {
       {tab === 'agenda' && <Agenda />}
       {tab === 'outils' && <Outils />}
       {tab === 'echanges' && <Echanges />}
+      {tab === 'chat' && <Chat me={me} codeInvite={chatCode} onCodeTraite={() => setChatCode(null)} />}
 
       {tab === 'cours' && (
         <main className="container">
@@ -435,6 +469,7 @@ export default function StudentApp() {
                     <Icon name={t.icon} size={18} />
                   </span>
                   {t.titre}
+                  {t.id === 'chat' && chatBadge > 0 && <span className="tile-badge">{chatBadge}</span>}
                 </button>
               ))}
             </div>
@@ -454,6 +489,7 @@ const TUILES = [
   { id: 'flash', icon: 'layers', img: '/metiers/lettres.jpg', titre: 'Flashcards', sub: 'Mémo façon Anki', cls: 't-teal' },
   { id: 'agenda', icon: 'calendar', img: '/metiers/campus.jpg', titre: 'Agenda', sub: 'Échéances & planning', cls: 't-sky' },
   { id: 'echanges', icon: 'chat', img: '/metiers/diplomate.jpg', titre: 'Échanges', sub: 'Administration & communauté', cls: 't-green' },
+  { id: 'chat', icon: 'users', img: '/metiers/campus.jpg', titre: 'Chat & binômes', sub: 'Discute avec tes amis', cls: 't-violet' },
   { id: 'outils', icon: 'chart', img: '/metiers/finance.jpg', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
   { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
   { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
@@ -462,7 +498,7 @@ const TUILES = [
 ];
 const ICO_TAB = {
   cours: 'book', annales: 'file', examens: 'clock', quiz: 'target', flash: 'layers', agenda: 'calendar', echanges: 'chat',
-  outils: 'chart', orientation: 'compass', ia: 'spark', parcours: 'book', culture: 'glob', suivi: 'chart', accueil: 'home',
+  outils: 'chart', orientation: 'compass', ia: 'spark', parcours: 'book', culture: 'glob', suivi: 'chart', accueil: 'home', chat: 'users',
 };
 
 const PROG_VIDE = { cours: {}, quiz: [], minutes: 0, jours: {} };

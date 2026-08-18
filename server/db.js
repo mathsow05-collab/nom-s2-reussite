@@ -224,4 +224,36 @@ CREATE TABLE IF NOT EXISTS flash_cards (
 );
 `);
 
+/* ------------------------------ Chat & binômes ----------------------------
+   Espace de discussion entre élèves : invitations (par lien ou découverte),
+   relations « ami » ou « binôme de travail », messages texte / audio / image. */
+db.exec(`
+CREATE TABLE IF NOT EXISTS chat_amis (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eleve_a INTEGER NOT NULL,
+  eleve_b INTEGER NOT NULL,
+  type TEXT NOT NULL DEFAULT 'ami',
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  accepted_at TEXT
+);
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  de_id INTEGER NOT NULL,
+  vers_id INTEGER NOT NULL,
+  type TEXT NOT NULL DEFAULT 'texte',
+  texte TEXT,
+  fichier TEXT,
+  mime TEXT,
+  lu INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS chat_liens (
+  eleve_id INTEGER PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_msg_pair ON chat_messages (de_id, vers_id, id);
+CREATE INDEX IF NOT EXISTS idx_chat_msg_lu ON chat_messages (vers_id, lu);
+`);
+
 module.exports = db;
