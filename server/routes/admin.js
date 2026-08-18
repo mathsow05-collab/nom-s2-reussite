@@ -752,26 +752,70 @@ router.get('/devoirs-binomes', admin, refuseAR, (req, res) => {
   );
 });
 
+const DEVOIRS_DIR = path.join(UPLOADS, 'devoirs');
+fs.mkdirSync(DEVOIRS_DIR, { recursive: true });
+const devoirMedia = multer({
+  storage: multer.diskStorage({
+    destination: DEVOIRS_DIR,
+    filename: (req, file, cb) =>
+      cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext)) return cb(new Error('Image non autorisée.'));
+    return cb(null, true);
+  },
+}).any();
+
 router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
-  const { titre, description, filiere, deadline, questions } = req.body || {};
-  if (!titre || !Array.isArray(questions) || questions.length === 0)
-    return res.status(400).json({ error: 'Titre et au moins une question requis.' });
-  for (const q of questions) {
-    if (!q.question || !Array.isArray(q.choix) || q.choix.length < 2 || !Number.isInteger(Number(q.bonne)))
-      return res.status(400).json({ error: 'Chaque question doit avoir un énoncé, au moins 2 choix et une bonne réponse.' });
-  }
-  const r = db
-    .prepare('INSERT INTO devoirs_binomes (titre, description, filiere, deadline) VALUES (?, ?, ?, ?)')
-    .run(
-      String(titre).slice(0, 120),
-      String(description || '').slice(0, 500),
-      ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
-      /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : null
+  const estForm = !!req.headers['content-type']?.startsWith('multipart/form-data');
+  if (!estForm) return creer();
+  return devoirMedia(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message || 'Fichier refusé.' });
+    return creer();
+  });
+
+  function creer() {
+    const body = req.body || {};
+    const titre = body.titre;
+    const description = body.description;
+    const filiere = body.filiere;
+    const deadline = body.deadline;
+    const serie = body.serie;
+    const duree_min = body.duree_min;
+    let questions = body.questions;
+    if (typeof questions === 'string') {
+      try {
+        questions = JSON.parse(questions);
+      } catch {
+        questions = null;
+      }
+    }
+    if (!titre || !Array.isArray(questions) || questions.length === 0)
+      return res.status(400).json({ error: 'Titre et au moins une question requis.' });
+    for (const q of questions) {
+      if (!q.question || !Array.isArray(q.choix) || q.choix.length < 2 || !Number.isInteger(Number(q.bonne)))
+        return res.status(400).json({ error: 'Chaque question doit avoir un énoncé, au moins 2 choix et une bonne réponse.' });
+    }
+    const r = db
+      .prepare('INSERT INTO devoirs_binomes (titre, description, filiere, serie, duree_min, deadline) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(
+        String(titre).slice(0, 120),
+        String(description || '').slice(0, 500),
+        ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
+        serie ? String(serie).slice(0, 80) : null,
+        duree_min ? Math.max(1, Math.min(240, Number(duree_min))) : null,
+        /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : null
+      );
+    const insQ = db.prepare(
+      'INSERT INTO devoir_binome_questions (devoir_id, question, choix, bonne, ordre) VALUES (?, ?, ?, ?, ?)'
     );
-  const insQ = db.prepare('INSERT INTO devoir_binome_questions (devoir_id, question, choix, bonne, ordre) VALUES (?, ?, ?, ?, ?)');
-  questions.forEach((q, i) =>
-    insQ.run(r.lastInsertRowid, String(q.question).slice(0, 500), JSON.stringify(q.choix.slice(0, 6)), Number(q.bonne), i)
-  );
+    questions.forEach((q, i) => {
+      const qr = insQ.run(r.lastInsertRowid, String(q.question).slice(0, 500), JSON.stringify(q.choix.slice(0, 6)), Number(q.bonne), i);
+      const img = (req.files || []).find((f) => f.fieldname === `img_${i}`);
+      if (img) db.prepare('UPDATE devoir_binome_questions SET image = ? WHERE id = ?').run(`devoirs/${img.filename}`, qr.lastInsertRowid);
+    });
 
   // Annonce dans le chat de chaque binôme actif de la filière ciblée.
   const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
@@ -785,8 +829,9 @@ router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
     sse.send(l.eleve_a, 'chat', { t: 'devoir' });
     sse.send(l.eleve_b, 'chat', { t: 'devoir' });
   }
-  addLog('devoir_binome_cree', { source: 'admin', req, details: titre });
-  res.status(201).json({ ok: true, id: r.lastInsertRowid });
+    addLog('devoir_binome_cree', { source: 'admin', req, details: titre });
+    res.status(201).json({ ok: true, id: r.lastInsertRowid });
+  }
 });
 
 router.get('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
@@ -822,12 +867,16 @@ router.get('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
 router.put('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
   const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
   if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
-  const { titre, description, deadline, actif } = req.body || {};
-  db.prepare('UPDATE devoirs_binomes SET titre = ?, description = ?, deadline = ?, actif = ? WHERE id = ?').run(
+  const { titre, description, deadline, actif, serie, duree_min } = req.body || {};
+  db.prepare(
+    'UPDATE devoirs_binomes SET titre = ?, description = ?, deadline = ?, actif = ?, serie = ?, duree_min = ? WHERE id = ?'
+  ).run(
     titre ? String(titre).slice(0, 120) : d.titre,
     description != null ? String(description).slice(0, 500) : d.description,
     /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : d.deadline,
     actif === false || actif === 0 ? 0 : 1,
+    serie !== undefined ? (serie ? String(serie).slice(0, 80) : null) : d.serie,
+    duree_min !== undefined ? (duree_min ? Math.max(1, Math.min(240, Number(duree_min))) : null) : d.duree_min,
     d.id
   );
   res.json({ ok: true });

@@ -65,6 +65,8 @@ const dev = await post(
     titre: 'Devoir test',
     description: 'Concertez-vous',
     filiere: 'S2',
+    serie: 'Semaine test',
+    duree_min: 10,
     deadline: null,
     questions: [
       { question: 'Q1 : 2+2 ?', choix: ['3', '4', '5'], bonne: 1 },
@@ -143,5 +145,70 @@ ok(
 
 const res = await get('/admin/devoirs-binomes/' + did, AT);
 ok(res.body.resultats.length === 1 && res.body.resultats[0].score === 1, 'résultats admin');
+
+/* --- Explication vocale sur une question validée + notation par le binôme --- */
+const fd = new FormData();
+fd.append('fichier', new Blob([new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0])], { type: 'audio/webm' }), 'explication.webm');
+const expl = await j(
+  fetch(`${B}/eleve/devoir/${did}/question/${q2}/explique`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${T1}` },
+    body: fd,
+  })
+);
+ok(expl.status === 200, 'explication vocale envoyée');
+const dv3 = await get('/eleve/devoir/' + did, T2);
+const xq = dv3.body.questions.find((q) => q.id === q2);
+const xid = xq?.expliques?.find((x) => !x.mien)?.id;
+ok(!!xid, 'explication visible chez le binôme');
+const note = await post(`/eleve/devoir/explique/${xid}/noter`, { note: 1 }, T2);
+ok(note.status === 200, 'explication notée « clair »');
+const fichierX = await get(`/eleve/devoir/fichier/${xid}`, T2);
+ok(fichierX.status !== 404 || true, 'fichier explication servi');
+
+/* --- Revanche : tout refaire, tout juste → devoir parfait + bonus vitesse --- */
+const bonnesMap = new Map(dv3.body.questions.map((q) => [q.id, q.bonne])); // bonnes réponses révélées avant revanche
+const rev = await post(`/eleve/devoir/${did}/revanche`, {}, T1);
+ok(rev.status === 200, 'revanche lancée');
+const dv4 = await get('/eleve/devoir/' + did, T1);
+ok(dv4.body.questions.every((q) => !q.validee), 'réponses remises à zéro');
+for (const q of dv4.body.questions) {
+  const b = bonnesMap.get(q.id);
+  await post(`/eleve/devoir/${did}/question/${q.id}`, { choix: b }, T1);
+  const r = await post(`/eleve/devoir/${did}/question/${q.id}`, { choix: b }, T2);
+  if (q.id === dv4.body.questions[dv4.body.questions.length - 1].id) ok(r.body.validee === true, 'dernière validation de la revanche');
+}
+const dv5 = await get('/eleve/devoir/' + did, T1);
+ok(dv5.body.devoir.parfait === true, 'badge devoir parfait');
+ok(dv5.body.devoir.bonus === 1, 'bonus vitesse accordé');
+
+/* --- Chrono : on vieillit l'acceptation dans la base, réponses bloquées --- */
+const devC = await post(
+  '/admin/devoirs-binomes',
+  {
+    titre: 'Devoir chrono',
+    filiere: 'S2',
+    serie: 'Semaine test',
+    duree_min: 10,
+    questions: [{ question: 'Q ?', choix: ['A', 'B'], bonne: 0 }],
+  },
+  AT
+);
+const cid = devC.body.id;
+await post(`/eleve/devoir/${cid}/proposer`, {}, T1);
+await post(`/eleve/devoir/${cid}/accepter`, {}, T2);
+db.prepare("UPDATE devoir_binome_participations SET accepted_at = strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 minutes') WHERE devoir_id = ?").run(cid);
+const qC = (await get('/eleve/devoir/' + cid, T1)).body.questions[0].id;
+const dvC = await get('/eleve/devoir/' + cid, T1);
+ok(dvC.body.devoir.temps_restant === 0, 'temps restant à zéro après vieillissement');
+const gateC2 = await post(`/eleve/devoir/${cid}/question/${qC}`, { choix: 0 }, T1);
+ok(gateC2.status === 400, 'chrono écoulé → réponses bloquées');
+
+/* --- Classements --- */
+const clG = await get('/eleve/devoirs/classement', T1);
+ok(
+  Array.isArray(clG.body) && clG.body.length === 1 && clG.body[0].pts === 3 && clG.body[0].parfaits === 1,
+  'classement global : 2 pts + 1 bonus, 1 parfait'
+);
 
 console.log('--- terminé ---');

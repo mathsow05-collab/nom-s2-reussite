@@ -735,6 +735,10 @@ function seed(db, log = console.log) {
     ['Figure de style par exagération ?', ['Une hyperbole', 'Une métonymie', 'Une litote'], 0],
   ]);
   log('[seed] Devoirs communs : devoirs de démonstration prêts pour les tests.');
+  // Chrono (10 min) + série de démo pour tester bonus vitesse et classement.
+  db.prepare(
+    "UPDATE devoirs_binomes SET serie = 'Semaine de démonstration', duree_min = 10 WHERE titre LIKE 'Devoir commun%' OR titre LIKE 'Devoir démo%'"
+  );
   /* Devoirs binômes de démonstration : toujours présents après un
      redémarrage, pour tester sans les recréer. */
   if (db.prepare("SELECT COUNT(*) c FROM devoirs_binomes WHERE titre LIKE 'Devoir démo%'").get().c === 0) {

@@ -7,7 +7,7 @@ import { Modal, Spinner } from '../ui.jsx';
    concerter dans son chat — une réponse n'est validée que si les deux
    membres choisissent la même option. Classement des binômes inclus. */
 
-const QUESTION_VIDE = () => ({ question: '', choix: ['', '', '', ''], bonne: 0 });
+const QUESTION_VIDE = () => ({ question: '', choix: ['', '', '', ''], bonne: 0, img: null });
 
 export default function DevoirsBinomes() {
   const [list, setList] = useState(null);
@@ -48,16 +48,37 @@ export default function DevoirsBinomes() {
       if (q.bonne >= q.choix.length) return setErr('La bonne réponse doit pointer vers un choix rempli.');
     }
     try {
-      await api('/admin/devoirs-binomes', {
-        method: 'POST',
-        body: {
-          titre: form.titre,
-          description: form.description,
-          filiere: form.filiere,
-          deadline: form.deadline,
-          questions,
-        },
-      });
+      const avecImage = questions.some((q) => q.img);
+      if (avecImage) {
+        const fd = new FormData();
+        fd.append('titre', form.titre);
+        fd.append('description', form.description || '');
+        fd.append('filiere', form.filiere);
+        fd.append('deadline', form.deadline || '');
+        fd.append('serie', form.serie || '');
+        fd.append('duree_min', form.duree || '');
+        fd.append(
+          'questions',
+          JSON.stringify(questions.map((q) => ({ question: q.question, choix: q.choix, bonne: q.bonne })))
+        );
+        questions.forEach((q, i) => {
+          if (q.img) fd.append(`img_${i}`, q.img);
+        });
+        await api('/admin/devoirs-binomes', { method: 'POST', form: true, body: fd });
+      } else {
+        await api('/admin/devoirs-binomes', {
+          method: 'POST',
+          body: {
+            titre: form.titre,
+            description: form.description,
+            filiere: form.filiere,
+            deadline: form.deadline,
+            serie: form.serie,
+            duree_min: form.duree ? Number(form.duree) : null,
+            questions: questions.map((q) => ({ question: q.question, choix: q.choix, bonne: q.bonne })),
+          },
+        });
+      }
       setForm(null);
       load();
     } catch (e2) {
@@ -77,6 +98,8 @@ export default function DevoirsBinomes() {
               description: '',
               filiere: 'S2',
               deadline: '',
+              serie: '',
+              duree: '',
               questions: [QUESTION_VIDE()],
             })
           }
@@ -157,6 +180,33 @@ export default function DevoirsBinomes() {
                 />
               </div>
             </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label className="label">Série (ex. « Semaine du 18 août »)</label>
+                <input
+                  className="input"
+                  value={form.serie}
+                  onChange={(e) => setForm({ ...form, serie: e.target.value })}
+                  placeholder="Optionnel — regroupe les devoirs de la semaine"
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 140 }}>
+                <label className="label">Chrono binôme (minutes)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  max="240"
+                  value={form.duree}
+                  onChange={(e) => setForm({ ...form, duree: e.target.value })}
+                  placeholder="Vide = sans chrono"
+                />
+              </div>
+            </div>
+            <p className="muted small">
+              Avec un chrono : le binôme dispose de ce temps après acceptation ; tout finir à temps rapporte +1 point
+              bonus vitesse.
+            </p>
 
             {form.questions.map((q, i) => (
               <div className="card" key={i} style={{ marginTop: 12 }}>
@@ -206,6 +256,20 @@ export default function DevoirsBinomes() {
                     />
                   </div>
                 ))}
+                <label className="label" style={{ marginTop: 8 }}>
+                  Image de la question (figure, document scanné — optionnel)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      questions: form.questions.map((x, j) => (j === i ? { ...x, img: e.target.files?.[0] || null } : x)),
+                    })
+                  }
+                />
+                {q.img && <small className="ok-text">{q.img.name}</small>}
                 <small className="muted">Cochez la bonne réponse.</small>
               </div>
             ))}

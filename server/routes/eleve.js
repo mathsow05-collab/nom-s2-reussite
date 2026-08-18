@@ -975,6 +975,35 @@ function devoirEstFini(d) {
   return new Date(d.deadline).getTime() < Date.now();
 }
 
+/* Stats d'un binôme sur un devoir : réponses validées, score, bonus vitesse
+   (tout fini dans le chrono), badge « devoir parfait », temps restant. */
+function devoirStats(d, lien, part) {
+  const questions = db.prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
+  let validees = 0;
+  let score = 0;
+  let dernieres = [];
+  for (const q of questions) {
+    const reps = db.prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?').all(q.id, lien.id);
+    if (reps.length === 2 && reps[0].choix === reps[1].choix) {
+      validees++;
+      dernieres.push(...reps.map((r) => r.created_at));
+      if (q.bonne === reps[0].choix) score++;
+    }
+  }
+  const parfait = questions.length > 0 && validees === questions.length && score === questions.length;
+  const depart = part?.accepted_at || null; // quand le binôme a accepté CE devoir
+  let bonus = 0;
+  if (d.duree_min && depart && validees === questions.length && questions.length > 0) {
+    const duree = (new Date(dernieres.sort().pop()).getTime() - new Date(depart).getTime()) / 60000;
+    if (duree <= d.duree_min) bonus = 1;
+  }
+  let temps_restant = null;
+  if (d.duree_min && depart) {
+    temps_restant = Math.max(0, Math.round(d.duree_min * 60 - (Date.now() - new Date(depart).getTime()) / 1000));
+  }
+  return { validees, score, parfait, bonus, total: questions.length, temps_restant, chrono_ecoule: temps_restant === 0 };
+}
+
 router.get('/devoirs', requireEleve(db), (req, res) => {
   const moi = req.eleve.id;
   const filiere = req.eleve.filiere || 'S2';
@@ -984,40 +1013,73 @@ router.get('/devoirs', requireEleve(db), (req, res) => {
   const lien = monLienActif(moi);
   res.json(
     rows.map((d) => {
-      const questions = db.prepare('SELECT id FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
-      let validees = 0;
-      let score = 0;
+      const total = db.prepare('SELECT COUNT(*) AS n FROM devoir_binome_questions WHERE devoir_id = ?').get(d.id).n;
       let participation = null;
+      let stats = { validees: 0, score: 0, parfait: false, bonus: 0, total, temps_restant: null, chrono_ecoule: false };
       if (lien) {
         const part = db
-          .prepare('SELECT statut, propose_par FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+          .prepare('SELECT * FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
           .get(d.id, lien.id);
         participation = part ? { statut: part.statut, par: part.propose_par } : null;
-        for (const q of questions) {
-          const reps = db
-            .prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?')
-            .all(q.id, lien.id);
-          if (reps.length === 2 && reps[0].choix === reps[1].choix) {
-            validees++;
-            const qq = db.prepare('SELECT bonne FROM devoir_binome_questions WHERE id = ?').get(q.id);
-            if (qq && qq.bonne === reps[0].choix) score++;
-          }
-        }
+        stats = devoirStats(d, lien, part);
       }
       return {
         id: d.id,
         titre: d.titre,
         description: d.description,
+        serie: d.serie,
+        duree_min: d.duree_min,
         deadline: d.deadline,
         fini: devoirEstFini(d),
-        total: questions.length,
-        validees,
-        score,
+        total,
+        validees: stats.validees,
+        score: stats.score,
+        bonus: stats.bonus,
+        parfait: stats.parfait,
+        temps_restant: stats.temps_restant,
         binome: !!lien,
         participation,
       };
     })
   );
+});
+
+/* Classement GLOBAL des binômes (toutes séries confondues) avec médailles. */
+router.get('/devoirs/classement', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const devoirs = db.prepare("SELECT * FROM devoirs_binomes WHERE actif = 1").all();
+  const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
+  const rows = [];
+  for (const l of liens) {
+    let pts = 0;
+    let validees = 0;
+    let parfaits = 0;
+    let devoirsJoues = 0;
+    for (const d of devoirs) {
+      const part = db.prepare('SELECT * FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?').get(d.id, l.id);
+      if (!part || part.statut !== 'accepte') continue;
+      const s = devoirStats(d, l, part);
+      if (s.validees > 0) devoirsJoues++;
+      pts += s.score + s.bonus;
+      validees += s.validees;
+      if (s.parfait) parfaits++;
+    }
+    if (devoirsJoues === 0) continue;
+    const ea = chatInfoEleve(l.eleve_a);
+    const eb = chatInfoEleve(l.eleve_b);
+    rows.push({
+      lien_id: l.id,
+      mon_binome: l.eleve_a === moi || l.eleve_b === moi,
+      eleve_a: chatPublic(ea),
+      eleve_b: chatPublic(eb),
+      pts,
+      validees,
+      parfaits,
+      devoirs: devoirsJoues,
+    });
+  }
+  rows.sort((a, b) => b.pts - a.pts || b.parfaits - a.parfaits || b.validees - a.validees);
+  res.json(rows);
 });
 
 router.get('/devoir/:id', requireEleve(db), (req, res) => {
@@ -1028,7 +1090,7 @@ router.get('/devoir/:id', requireEleve(db), (req, res) => {
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme (Chat & binômes) pour participer.' });
   const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
   const participation = db
-    .prepare('SELECT statut, propose_par FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+    .prepare('SELECT * FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
     .get(d.id, lien.id) || null;
   const questions = db
     .prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id')
@@ -1046,25 +1108,37 @@ router.get('/devoir/:id', requireEleve(db), (req, res) => {
       const moiRep = reps.find((r) => r.eleve_id === moi);
       const luiRep = reps.find((r) => r.eleve_id === partenaire);
       const validee = reps.length === 2 && reps[0].choix === reps[1].choix;
+      const expliques = db
+        .prepare('SELECT id, eleve_id, note FROM devoir_binome_expliques WHERE question_id = ? AND lien_id = ?')
+        .all(q.id, lien.id)
+        .map((x) => ({ id: x.id, mien: x.eleve_id === moi, note: x.note }));
       return {
         id: q.id,
         num: i + 1,
         question: q.question,
         choix,
+        image: q.image ? true : undefined,
         mon_choix: moiRep ? moiRep.choix : null,
         son_choix: luiRep ? luiRep.choix : null,
         validee,
+        expliques,
         // La bonne réponse n'est révélée qu'une fois la réponse validée ou le délai passé.
         bonne: validee || devoirEstFini(d) ? q.bonne : null,
       };
     });
+  const stats = devoirStats(d, lien, participation);
   res.json({
     devoir: {
       id: d.id,
       titre: d.titre,
       description: d.description,
+      serie: d.serie,
+      duree_min: d.duree_min,
       deadline: d.deadline,
       fini: devoirEstFini(d),
+      temps_restant: stats.temps_restant,
+      bonus: stats.bonus,
+      parfait: stats.parfait,
     },
     partenaire: chatPublic(chatInfoEleve(partenaire)),
     participation: participation ? { statut: participation.statut, par: participation.propose_par } : null,
@@ -1095,8 +1169,9 @@ router.post('/devoir/:id/accepter', requireEleve(db), (req, res) => {
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
   const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
   db.prepare(
-    'INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par) VALUES (?, ?, ?, ?) ON CONFLICT (devoir_id, lien_id) DO UPDATE SET statut = ?, propose_par = propose_par'
-  ).run(d.id, lien.id, 'accepte', moi, 'accepte');
+    `INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par, accepted_at) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (devoir_id, lien_id) DO UPDATE SET statut = ?, accepted_at = ?`
+  ).run(d.id, lien.id, 'accepte', moi, new Date().toISOString(), 'accepte', new Date().toISOString());
   chatMsgSysteme(partenaire, 'devoir', { action: 'devoir-accepte', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
   chatMsgSysteme(moi, 'devoir', { action: 'devoir-accepte', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) });
   sse.send(partenaire, 'chat', { t: 'devoir' });
@@ -1127,12 +1202,16 @@ router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
   const lien = monLienActif(moi);
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
   const part = db
-    .prepare('SELECT statut FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
+    .prepare('SELECT * FROM devoir_binome_participations WHERE devoir_id = ? AND lien_id = ?')
     .get(d.id, lien.id);
   if (!part || part.statut !== 'accepte')
     return res.status(400).json({ error: 'Le devoir doit être accepté par les deux membres du binôme avant de répondre.' });
+  if (devoirStats(d, lien, part).chrono_ecoule)
+    return res.status(400).json({ error: 'Le chrono du binôme est écoulé : lancez une revanche pour recommencer.' });
   const q = db.prepare('SELECT * FROM devoir_binome_questions WHERE id = ? AND devoir_id = ?').get(req.params.qid, d.id);
   if (!q) return res.status(404).json({ error: 'Question introuvable.' });
+  const avantValidees = devoirStats(d, lien, part).validees;
+  const totalQ = db.prepare('SELECT COUNT(*) AS n FROM devoir_binome_questions WHERE devoir_id = ?').get(d.id).n;
   let choix;
   try {
     choix = JSON.parse(q.choix);
@@ -1159,6 +1238,13 @@ router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
     const obj = { action: 'validee', devoir_id: d.id, num, bonne, titre: d.titre };
     chatMsgSysteme(moi, 'devoir', obj);
     chatMsgSysteme(partenaire, 'devoir', obj);
+    // Badge « devoir parfait » : tout validé et tout juste.
+    const apres = devoirStats(d, lien, part);
+    if (apres.parfait && avantValidees === totalQ - 1) {
+      const pObj = { action: 'parfait', devoir_id: d.id, titre: d.titre, bonus: apres.bonus };
+      chatMsgSysteme(moi, 'devoir', pObj);
+      chatMsgSysteme(partenaire, 'devoir', pObj);
+    }
     return res.json({ ok: true, validee: true, bonne });
   }
 
@@ -1166,6 +1252,95 @@ router.post('/devoir/:id/question/:qid', requireEleve(db), (req, res) => {
   sse.send(partenaire, 'chat', { t: 'devoir', devoir_id: d.id });
   void s2rnum;
   res.json({ ok: true, validee: false });
+});
+
+/* Revanche : le binôme refait le même devoir pour améliorer son score. */
+router.post('/devoir/:id/revanche', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  db.prepare('DELETE FROM devoir_binome_reponses WHERE devoir_id = ? AND lien_id = ?').run(d.id, lien.id);
+  db.prepare('DELETE FROM devoir_binome_expliques WHERE devoir_id = ? AND lien_id = ?').run(d.id, lien.id);
+  db.prepare('UPDATE devoir_binome_participations SET accepted_at = ? WHERE devoir_id = ? AND lien_id = ?').run(
+    new Date().toISOString(),
+    d.id,
+    lien.id
+  );
+  const obj = { action: 'revanche', devoir_id: d.id, titre: d.titre, de: eleveCourt(moi) };
+  chatMsgSysteme(moi, 'devoir', obj);
+  chatMsgSysteme(partenaire, 'devoir', obj);
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
+});
+
+/* « Explique ta réponse » : note vocale sur une question validée ; le
+   binôme l'écoute puis la note « clair / pas clair ». */
+router.post('/devoir/:id/question/:qid/explique', requireEleve(db), chatUpload, (req, res) => {
+  const moi = req.eleve.id;
+  const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ? AND actif = 1').get(req.params.id);
+  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  const lien = monLienActif(moi);
+  if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
+  const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  const q = db.prepare('SELECT * FROM devoir_binome_questions WHERE id = ? AND devoir_id = ?').get(req.params.qid, d.id);
+  if (!q) return res.status(404).json({ error: 'Question introuvable.' });
+  if (!req.file) return res.status(400).json({ error: 'Note vocale manquante.' });
+  const reps = db.prepare('SELECT * FROM devoir_binome_reponses WHERE question_id = ? AND lien_id = ?').all(q.id, lien.id);
+  if (!(reps.length === 2 && reps[0].choix === reps[1].choix))
+    return res.status(400).json({ error: 'Validez d’abord une réponse commune sur cette question.' });
+  db.prepare(
+    `INSERT INTO devoir_binome_expliques (devoir_id, question_id, lien_id, eleve_id, fichier, mime) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT (question_id, lien_id, eleve_id) DO UPDATE SET fichier = excluded.fichier, mime = excluded.mime, note = NULL`
+  ).run(d.id, q.id, lien.id, moi, `chat/${req.file.filename}`, req.file.mimetype);
+  const num =
+    db.prepare('SELECT id FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id).findIndex((x) => x.id === q.id) + 1;
+  const obj = { action: 'explique', devoir_id: d.id, num, titre: d.titre, de: eleveCourt(moi) };
+  chatMsgSysteme(partenaire, 'devoir', obj);
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
+});
+
+router.post('/devoir/explique/:xid/noter', requireEleve(db), (req, res) => {
+  const moi = req.eleve.id;
+  const x = db.prepare('SELECT * FROM devoir_binome_expliques WHERE id = ?').get(req.params.xid);
+  if (!x || x.eleve_id === moi) return res.status(400).json({ error: 'Note impossible.' });
+  const l = db.prepare('SELECT * FROM chat_amis WHERE id = ? AND (eleve_a = ? OR eleve_b = ?)').get(x.lien_id, moi, moi);
+  if (!l) return res.status(403).json({ error: 'Réservé au binôme.' });
+  const note = Number(req.body?.note) ? 1 : 0;
+  db.prepare('UPDATE devoir_binome_expliques SET note = ? WHERE id = ?').run(note, x.id);
+  const partenaire = x.eleve_id;
+  const obj = { action: 'explique-note', devoir_id: x.devoir_id, note, de: eleveCourt(moi) };
+  chatMsgSysteme(partenaire, 'devoir', obj);
+  chatMsgSysteme(moi, 'devoir', obj);
+  sse.send(partenaire, 'chat', { t: 'devoir' });
+  res.json({ ok: true });
+});
+
+router.get('/devoir/fichier/:xid', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const moi = req.eleve.id;
+  const x = db.prepare('SELECT * FROM devoir_binome_expliques WHERE id = ?').get(req.params.xid);
+  if (!x) return res.status(404).json({ error: 'Fichier introuvable.' });
+  const l = db.prepare('SELECT * FROM chat_amis WHERE id = ? AND (eleve_a = ? OR eleve_b = ?)').get(x.lien_id, moi, moi);
+  if (!l) return res.status(403).json({ error: 'Fichier réservé au binôme.' });
+  const file = path.join(UPLOADS, x.fichier);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Fichier introuvable.' });
+  res.setHeader('Content-Type', x.mime || 'audio/webm');
+  return res.sendFile(file);
+});
+
+router.get('/devoir/:id/image/:qid', requireEleve(db, { allowQuery: true }), (req, res) => {
+  const moi = req.eleve.id;
+  const q = db.prepare('SELECT * FROM devoir_binome_questions WHERE id = ? AND devoir_id = ?').get(req.params.qid, req.params.id);
+  if (!q || !q.image) return res.status(404).json({ error: 'Image introuvable.' });
+  const d = db.prepare('SELECT filiere FROM devoirs_binomes WHERE id = ?').get(req.params.id);
+  if (d && d.filiere !== 'all' && d.filiere !== (req.eleve.filiere || 'S2'))
+    return res.status(403).json({ error: 'Image réservée à la filière du devoir.' });
+  const file = path.join(UPLOADS, q.image);
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'Image introuvable.' });
+  return res.sendFile(file);
 });
 
 router.get('/devoir/:id/classement', requireEleve(db), (req, res) => {

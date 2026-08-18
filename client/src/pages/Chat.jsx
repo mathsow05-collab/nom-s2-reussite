@@ -4,6 +4,7 @@ import Icon from '../Icon.jsx';
 import { Spinner } from '../ui.jsx';
 import Duels, { DuelJeu } from './ChatDuels.jsx';
 import Devoirs, { DevoirPanneau } from './ChatDevoirs.jsx';
+import AudioBulle from '../components/AudioBulle.jsx';
 
 /* ------------------------------------------------------------------ */
 /* CHAT & BINÔMES : espace de discussion privé entre élèves.           */
@@ -747,7 +748,7 @@ function Convo({ lien, moiId, onRetour, onRetirer, onImage, devoirsActifs, onOuv
                     <img src={fichierUrl(m.id)} alt="Photo" loading="lazy" />
                   </button>
                 )}
-                {m.type === 'audio' && <AudioBulle id={m.id} />}
+                {m.type === 'audio' && <AudioBulle src={fichierUrl(m.id)} />}
                 <span className="bulle-heure">{heure(m.created_at)}</span>
               </div>
               )}
@@ -889,6 +890,43 @@ function CarteSpeciale({ m, onOuvrirDuel, onOuvrirDevoir, onOuvrirContenu }) {
           <Icon name="x" size={13} /> {p.de} a refusé le devoir « {p.titre} ».
         </div>
       );
+    if (p.action === 'parfait')
+      return (
+        <div className="carte-sys mini ok">
+          <Icon name="trophy" size={13} /> Devoir parfait sur « {p.titre} » !{p.bonus ? ' +1 point bonus vitesse.' : ''}
+        </div>
+      );
+    if (p.action === 'revanche')
+      return (
+        <div className="carte-sys mini">
+          <Icon name="refresh" size={13} /> {p.de} a lancé une revanche sur « {p.titre} » : on refait le devoir !
+          <button className="btn btn-outline" onClick={() => onOuvrirDevoir(p.devoir_id)}>
+            Ouvrir
+          </button>
+        </div>
+      );
+    if (p.action === 'explique')
+      return (
+        <div className="carte-sys">
+          <span className="carte-sys-ico devoirico">
+            <Icon name="mic" size={16} />
+          </span>
+          <div className="carte-sys-txt">
+            <strong>{p.de} explique la question {p.num}</strong>
+            <small>Écoute son explication et dis si c'est clair.</small>
+          </div>
+          <button className="btn btn-primary" onClick={() => onOuvrirDevoir(p.devoir_id)}>
+            Écouter
+          </button>
+        </div>
+      );
+    if (p.action === 'explique-note')
+      return (
+        <div className={`carte-sys mini ${p.note ? 'ok' : 'ko'}`}>
+          <Icon name={p.note ? 'check' : 'alert'} size={13} />
+          {p.note ? 'Ton explication a été jugée claire !' : 'Ton explication n’a pas été jugée claire — reformule au besoin.'}
+        </div>
+      );
     if (p.action === 'nouveau')
       return (
         <div className="carte-sys">
@@ -956,37 +994,7 @@ function PartageSheet({ data, onChoix, onFermer }) {
   );
 }
 
-function AudioBulle({ id }) {
-  const audioRef = useRef(null);
-  const [joue, setJoue] = useState(false);
-  const [prog, setProg] = useState(0);
-  const [duree, setDuree] = useState(0);
 
-  return (
-    <span className="audio-bulle">
-      <audio
-        ref={audioRef}
-        src={fichierUrl(id)}
-        preload="metadata"
-        onPlay={() => setJoue(true)}
-        onPause={() => setJoue(false)}
-        onEnded={() => {
-          setJoue(false);
-          setProg(0);
-        }}
-        onTimeUpdate={(e) => setProg(e.target.currentTime)}
-        onLoadedMetadata={(e) => setDuree(e.target.duration)}
-      />
-      <button type="button" className="audio-btn" onClick={() => (joue ? audioRef.current?.pause() : audioRef.current?.play())}>
-        <Icon name={joue ? 'pause' : 'play'} size={15} />
-      </button>
-      <span className="audio-bar">
-        <span style={{ width: duree ? `${Math.min(100, (prog / duree) * 100)}%` : '0%' }} />
-      </span>
-      <span className="audio-dur">{fmt(duree || 0)}</span>
-    </span>
-  );
-}
 
 /* Réduit les photos à max 1280 px en JPEG avant l'envoi (économie de data). */
 async function compresserImage(file) {

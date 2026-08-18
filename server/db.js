@@ -287,6 +287,8 @@ CREATE TABLE IF NOT EXISTS devoirs_binomes (
   titre TEXT NOT NULL,
   description TEXT,
   filiere TEXT NOT NULL DEFAULT 'all',
+  serie TEXT,
+  duree_min INTEGER,
   deadline TEXT,
   actif INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
@@ -297,6 +299,7 @@ CREATE TABLE IF NOT EXISTS devoir_binome_questions (
   question TEXT NOT NULL,
   choix TEXT NOT NULL,
   bonne INTEGER NOT NULL,
+  image TEXT,
   ordre INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS devoir_binome_participations (
@@ -305,8 +308,21 @@ CREATE TABLE IF NOT EXISTS devoir_binome_participations (
   lien_id INTEGER NOT NULL,
   statut TEXT NOT NULL DEFAULT 'propose',
   propose_par INTEGER NOT NULL,
+  accepted_at TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   UNIQUE (devoir_id, lien_id)
+);
+CREATE TABLE IF NOT EXISTS devoir_binome_expliques (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  devoir_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  lien_id INTEGER NOT NULL,
+  eleve_id INTEGER NOT NULL,
+  fichier TEXT NOT NULL,
+  mime TEXT,
+  note INTEGER,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE (question_id, lien_id, eleve_id)
 );
 CREATE TABLE IF NOT EXISTS devoir_binome_reponses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
