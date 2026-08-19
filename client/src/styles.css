@@ -2001,3 +2001,29 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 .xo2-carte { animation: odeploy 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 .xo2-count-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
 .xo2-ouvert { display: inline-flex; align-items: center; gap: 4px; color: #fff; font-size: 0.66rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; flex-shrink: 0; }
+
+/* ================================================================
+   KAY DIANG v26 : navigation façon WhatsApp (onglets + swipe + listes)
+   ================================================================ */
+.onglets { display: flex; gap: 2px; padding: 0 12px; background: var(--bg); border-bottom: 1px solid var(--line); overflow-x: auto; position: sticky; top: 0; z-index: 35; }
+.onglets button { position: relative; border: none; background: none; padding: 12px 14px; font: inherit; font-weight: 700; font-size: 0.88rem; color: var(--muted); cursor: pointer; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.onglets button.on { color: var(--brand-dark); }
+.onglets button.on::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--brand-dark); }
+.swipe-zone { min-height: 62vh; touch-action: pan-y; }
+.swipe-anim { animation: swipe-in 0.25s ease both; }
+@keyframes swipe-in { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+@keyframes glisse-g { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes glisse-d { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.wa-list { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
+.wa-row { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); cursor: pointer; text-align: left; font: inherit; color: var(--ink); transition: box-shadow 0.15s; }
+.wa-row:active { transform: scale(0.99); }
+.wa-av { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-dark); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wa-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.wa-txt strong { font-size: 0.92rem; }
+.wa-txt small { color: var(--muted); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wa-side, .wa-chev { color: var(--muted); display: inline-flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.wa-intro { margin: 4px 2px; }
+.retour-bar { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+@media (prefers-reduced-motion: reduce) {
+  .swipe-anim { animation: none !important; }
+}

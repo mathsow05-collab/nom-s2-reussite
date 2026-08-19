@@ -150,16 +150,22 @@ export default function StudentApp() {
 
   // Contenu recommandé depuis le chat : ouvre directement le cours ou l'annale.
   const [annalesFocus, setAnnalesFocus] = useState(null);
+  // Navigation principale façon WhatsApp : onglets en haut + swipe horizontal.
+  const [onglet, setOnglet] = useState(0);
+  const [anim, setAnim] = useState('');
+  const touchRef = useRef(null);
   function ouvrirContenu(payload) {
     if (payload?.kind === 'cours') {
       const c = (cours || []).find((x) => x.id === payload.id);
       if (c) {
-        setTab('cours');
+        setTab(null);
+        setOnglet(0);
         setViewer(c);
       }
     } else if (payload?.kind === 'annale') {
       setAnnalesFocus({ id: payload.id });
-      setTab('annales');
+      setTab(null);
+      setOnglet(1);
     }
   }
 
@@ -271,6 +277,59 @@ export default function StudentApp() {
 
   const wm = encodeURIComponent(me.eleve_id);
 
+  // Onglets principaux (swipe horizontal) selon la filière.
+  const ongletsVisibles = [
+    { id: 'cours', label: 'Cours' },
+    { id: 'annales', label: 'Annales' },
+    { id: 'orientation', label: 'Orientation' },
+    ...(filiere !== 'AR' ? [{ id: 'quiz', label: 'Quiz' }] : []),
+    { id: 'chat', label: 'Chat' },
+    { id: 'menu', label: 'Menu' },
+  ];
+  const ongletSur = Math.min(onglet, ongletsVisibles.length - 1);
+  function allerA(id) {
+    const idx = ongletsVisibles.findIndex((o) => o.id === id);
+    if (idx >= 0) {
+      setTab(null);
+      setOnglet(idx);
+    } else if (id === 'accueil') {
+      setTab(null);
+      setOnglet(0);
+    } else {
+      setTab(id);
+    }
+  }
+  function goOnglet(i) {
+    const n = Math.max(0, Math.min(ongletsVisibles.length - 1, i));
+    if (n === ongletSur) return;
+    setAnim(n > ongletSur ? 'glisse-g' : 'glisse-d');
+    setOnglet(n);
+  }
+  function onTouchStart(e) {
+    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }
+  function onTouchEnd(e) {
+    if (!touchRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchRef.current.y;
+    touchRef.current = null;
+    if (Math.abs(dx) > 64 && Math.abs(dx) > Math.abs(dy) * 1.2) goOnglet(ongletSur + (dx < 0 ? 1 : -1));
+  }
+  const SECONDAIRES = ['suivi', 'profil', 'examens', 'flash', 'agenda', 'outils', 'echanges', 'ia', 'parcours', 'culture'];
+  const LIB_SEC = { suivi: 'Mon suivi', profil: 'Mon profil', examens: 'Examens', flash: 'Flashcards', agenda: 'Agenda', outils: 'Outils', echanges: 'Échanges', ia: 'Prof IA', parcours: 'Parcours arabe', culture: 'Culture' };
+  const menuRows = [
+    { id: 'suivi', label: 'Suivi & progression', icon: 'chart', sub: 'Niveau, badges, activité' },
+    { id: 'profil', label: 'Profil & réglages', icon: 'user', sub: 'Avatar, thème, téléchargements, déconnexion' },
+    { id: 'examens', label: 'Examens chronométrés', icon: 'clock', sub: 'Sujets type bac, conditions réelles' },
+    { id: 'flash', label: 'Flashcards', icon: 'layers', sub: 'Mémo façon Anki' },
+    { id: 'agenda', label: 'Agenda', icon: 'calendar', sub: 'Échéances & planning' },
+    { id: 'outils', label: 'Outils', icon: 'grid', sub: 'Notes, simulateur, planning' },
+    { id: 'echanges', label: 'Échanges', icon: 'chat', sub: 'Questions à l’administration, communauté' },
+    ...(filiere !== 'L2' ? [{ id: 'ia', label: 'Prof IA', icon: 'spark', sub: 'Pose tes questions' }] : []),
+    ...(filiere === 'AR' ? [{ id: 'parcours', label: 'Parcours arabe', icon: 'book', sub: 'Coran, audio & lexique' }] : []),
+    ...(filiere === 'L2' ? [{ id: 'culture', label: 'Culture du monde', icon: 'globe', sub: 'Découvertes & mini-jeux' }] : []),
+  ];
+
   return (
     <div className="student">
       {/* Filigrane discret anti-fuite : identifie l'élève sur toute capture */}
@@ -282,7 +341,7 @@ export default function StudentApp() {
         }}
       />
       <header className="topbar">
-        <button className="topbar-brand" onClick={() => setTab('accueil')} title="Accueil">
+        <button className="topbar-brand" onClick={() => { setTab(null); goOnglet(0); }} title="Accueil">
           <span className="logo-kd">KD</span> <span>KAY DIANG</span>
         </button>
         <div className="topbar-user">
@@ -310,116 +369,102 @@ export default function StudentApp() {
         </div>
       </header>
 
-      {tab === 'accueil' && (
-        <Home
-          me={me}
-          filiere={filiere}
-          prog={prog || PROG_VIDE}
-          cours={cours}
-          onOpen={setTab}
-          onGo={(t, m) => {
-            if (m) setMatiere(m);
-            setTab(t);
-          }}
-        />
-      )}
-      {tab === 'suivi' && <Suivi me={me} cours={cours} prog={prog || PROG_VIDE} onGo={(t) => setTab(t)} />}
-      {tab === 'profil' && (
-        <Profil
-          me={me}
-          cours={cours}
-          prog={prog || PROG_VIDE}
-          theme={theme}
-          onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-          onAvatar={(a) => {
-            api('/eleve/profil', { method: 'POST', body: { avatar: a } }).then(() => setMe((m) => ({ ...m, avatar: a })));
-          }}
-          onGo={(t) => setTab(t)}
-          logout={logout}
-        />
-      )}
-
-      {tab === 'ia' && filiere !== 'L2' && <Assistant />}
-      {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
-      {tab === 'culture' && filiere === 'L2' && <Culture />}
-      {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
-      {tab === 'examens' && <Examens />}
-      {tab === 'quiz' && <Quiz />}
-      {tab === 'flash' && <Flashcards meId={me.eleve_id} />}
-      {tab === 'orientation' && <Metiers />}
-      {tab === 'agenda' && <Agenda />}
-      {tab === 'outils' && <Outils />}
-      {tab === 'echanges' && <Echanges />}
-      {tab === 'chat' && (
-        <Chat me={me} codeInvite={chatCode} onCodeTraite={() => setChatCode(null)} onOuvrirContenu={ouvrirContenu} />
-      )}
-
-      {tab === 'cours' && (
-        <main className="container">
-          {filiere === 'AR' && <CoranEspace meId={me.eleve_id} />}
-          {filiere === 'AR' && <AudioCoran />}
-          {filiere === 'AR' && <QuizAyat />}
-          {filiere === 'AR' && <LexiqueArabe />}
-        <div className="search3">
-          <Icon name="search" size={16} />
-          <input placeholder="Rechercher un cours…" value={qCours} onChange={(e) => setQCours(e.target.value)} />
-        </div>
-          <div className="pills">
-            <button className={matiere === 'all' ? 'pill active' : 'pill'} onClick={() => setMatiere('all')}>
-              Toutes
+      {/* ---------------- pages secondaires (Menu) avec barre retour ---------------- */}
+      {tab && SECONDAIRES.includes(tab) && (
+        <>
+          <div className="retour-bar container">
+            <button className="btn btn-ghost" onClick={() => setTab(null)}>
+              <Icon name="left" size={16} /> Retour
             </button>
-            {matieres.map((m) => (
-              <button
-                key={m.id}
-                className={matiere === m.id ? 'pill active' : 'pill'}
-                style={{ '--mc': m.color }}
-                onClick={() => setMatiere(m.id)}
-              >
-                {m.label}
+            <strong>{LIB_SEC[tab]}</strong>
+          </div>
+          {tab === 'suivi' && <Suivi me={me} cours={cours} prog={prog || PROG_VIDE} onGo={(t) => setTab(t)} />}
+          {tab === 'profil' && (
+            <Profil
+              me={me}
+              cours={cours}
+              prog={prog || PROG_VIDE}
+              theme={theme}
+              onTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+              onAvatar={(a) => {
+                api('/eleve/profil', { method: 'POST', body: { avatar: a } }).then(() => setMe((m) => ({ ...m, avatar: a })));
+              }}
+              onGo={(t) => setTab(t)}
+              logout={logout}
+            />
+          )}
+          {tab === 'examens' && <Examens />}
+          {tab === 'flash' && <Flashcards meId={me.eleve_id} />}
+          {tab === 'agenda' && <Agenda />}
+          {tab === 'outils' && <Outils />}
+          {tab === 'echanges' && <Echanges />}
+          {tab === 'ia' && filiere !== 'L2' && <Assistant />}
+          {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
+          {tab === 'culture' && filiere === 'L2' && <Culture />}
+        </>
+      )}
+
+      {/* --------- écran principal : onglets en haut + swipe + listes verticales --------- */}
+      {!tab && (
+        <>
+          <div className="onglets" role="tablist">
+            {ongletsVisibles.map((o, i) => (
+              <button key={o.id} className={i === ongletSur ? 'on' : ''} onClick={() => goOnglet(i)}>
+                {o.label}
+                {o.id === 'chat' && chatBadge > 0 && <span className="chat-badge">{chatBadge}</span>}
               </button>
             ))}
           </div>
-          {visible.length === 0 ? (
-            <div className="empty">Aucun cours dans cette matière pour l'instant.</div>
-          ) : (
-            <div className="grid-cards" key={`${matiere}-${qCours}`}>
-              {visible.map((c, i) => (
-                <CoursCard
-                  key={c.id}
-                  c={c}
-                  i={i}
-                  vu={!!(prog && prog.cours[c.id])}
-                  onOpen={() => {
-                    setViewer(c);
-                    if (me) setProg(markCours(me.eleve_id, c));
-                  }}
-                />
-              ))}
+          <div className="swipe-zone" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            <div className="swipe-anim" key={ongletsVisibles[ongletSur].id} style={{ animationName: anim || 'swipe-in' }}>
+              {ongletsVisibles[ongletSur].id === 'cours' && (
+                <main className="container wa-list">
+                  {filiere === 'AR' && <CoranEspace meId={me.eleve_id} />}
+                  {filiere === 'AR' && <AudioCoran />}
+                  {filiere === 'AR' && <QuizAyat />}
+                  {filiere === 'AR' && <LexiqueArabe />}
+                  <CoursListe
+                    filiere={filiere}
+                    cours={cours}
+                    prog={prog}
+                    me={me}
+                    onOpenViewer={(c) => {
+                      setViewer(c);
+                      setProg(markCours(me.eleve_id, c));
+                    }}
+                  />
+                </main>
+              )}
+              {ongletsVisibles[ongletSur].id === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
+              {ongletsVisibles[ongletSur].id === 'orientation' && <Metiers />}
+              {ongletsVisibles[ongletSur].id === 'quiz' && <Quiz />}
+              {ongletsVisibles[ongletSur].id === 'chat' && (
+                <Chat me={me} codeInvite={chatCode} onCodeTraite={() => setChatCode(null)} onOuvrirContenu={ouvrirContenu} />
+              )}
+              {ongletsVisibles[ongletSur].id === 'menu' && (
+                <main className="container wa-list">
+                  {menuRows.map((r) => (
+                    <button className="wa-row" key={r.id} onClick={() => setTab(r.id)}>
+                      <span className="wa-av">
+                        <Icon name={r.icon} size={19} />
+                      </span>
+                      <span className="wa-txt">
+                        <strong>{r.label}</strong>
+                        <small>{r.sub}</small>
+                      </span>
+                      <span className="wa-chev">
+                        <Icon name="right" size={16} />
+                      </span>
+                    </button>
+                  ))}
+                </main>
+              )}
             </div>
-          )}
-        </main>
+          </div>
+        </>
       )}
 
       {viewer && <Viewer c={viewer} onClose={() => setViewer(null)} />}
-
-      {/* Barre de navigation fixe en bas (application mobile) */}
-      <nav className="bnav">
-        <button className={tab === 'accueil' ? 'on' : ''} onClick={() => setTab('accueil')}>
-          <Icon name="home" size={19} /> Accueil
-        </button>
-        <button className={tab === 'cours' ? 'on' : ''} onClick={() => setTab('cours')}>
-          <Icon name="book" size={19} /> Cours
-        </button>
-        <button className={tab === 'suivi' ? 'on' : ''} onClick={() => setTab('suivi')}>
-          <Icon name="chart" size={19} /> Suivi
-        </button>
-        <button className={sheet ? 'on' : ''} onClick={() => setSheet(true)}>
-          <Icon name="grid" size={19} /> Plus
-        </button>
-        <button className={tab === 'profil' ? 'on' : ''} onClick={() => setTab('profil')}>
-          <Icon name="user" size={19} /> Profil
-        </button>
-      </nav>
 
       {notifsOpen && (
         <div className="sheet3" onClick={() => setNotifsOpen(false)}>
@@ -433,7 +478,7 @@ export default function StudentApp() {
                 className="reco3"
                 onClick={() => {
                   setNotifsOpen(false);
-                  setTab(n.tab);
+                  allerA(n.tab);
                 }}
               >
                 <span className="reco3-ico">
@@ -453,8 +498,7 @@ export default function StudentApp() {
           onClose={() => setSearchOpen(false)}
           onPick={(t, payload) => {
             setSearchOpen(false);
-            if (payload?.matiere) setMatiere(payload.matiere);
-            setTab(t);
+            allerA(t);
             if (payload?.cours) {
               setViewer(payload.cours);
               setProg(markCours(me.eleve_id, payload.cours));
@@ -463,37 +507,76 @@ export default function StudentApp() {
         />
       )}
 
-      {sheet && (
-        <div className="sheet3" onClick={() => setSheet(false)}>
-          <div className="sheet3-card" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet3-handle" />
-            <div className="sheet3-grid">
-              {TUILES.filter(
-                (t) =>
-                  t.id !== 'cours' &&
-                  (!t.arSeul || filiere === 'AR') &&
-                  (!t.l2Seul || filiere === 'L2') &&
-                  (!t.pasL2 || filiere !== 'L2')
-              ).map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => {
-                    setSheet(false);
-                    setTab(t.id);
-                  }}
-                >
-                  <span className="bico2">
-                    <Icon name={t.icon} size={18} />
-                  </span>
-                  {t.titre}
-                  {t.id === 'chat' && chatBadge > 0 && <span className="tile-badge">{chatBadge}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+  );
+}
+
+/* Liste verticale façon WhatsApp : matières empilées, puis cours de la matière. */
+function CoursListe({ filiere, cours, prog, onOpenViewer }) {
+  const [mat, setMat] = useState(null);
+  const [q, setQ] = useState('');
+  const matieres = (FILIERES[filiere] || FILIERES.S2).matieres;
+  if (mat) {
+    const M = matieres.find((m) => m.id === mat);
+    const nq = norm3(q);
+    const liste = cours.filter((c) => c.matiere === mat && (!nq || norm3(`${c.titre} ${c.description}`).includes(nq)));
+    return (
+      <>
+        <div className="retour-bar">
+          <button className="btn btn-ghost" onClick={() => setMat(null)}>
+            <Icon name="left" size={16} /> Matières
+          </button>
+          <strong style={{ color: M?.color }}>{M?.label}</strong>
+        </div>
+        <div className="search3">
+          <Icon name="search" size={16} />
+          <input placeholder="Rechercher dans la matière…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        {liste.length === 0 && <div className="empty">Aucun cours pour l'instant.</div>}
+        {liste.map((c) => (
+          <button className="wa-row" key={c.id} onClick={() => onOpenViewer(c)}>
+            <span className="wa-av" style={{ background: `${M?.color}22`, color: M?.color }}>
+              <Icon name={c.youtube_id ? 'video' : 'file'} size={18} />
+            </span>
+            <span className="wa-txt">
+              <strong>{c.titre}</strong>
+              <small>
+                {c.youtube_id && c.has_pdf ? 'Vidéo + PDF' : c.youtube_id ? 'Vidéo' : c.has_pdf ? 'PDF' : 'Cours'}
+                {c.duree_min ? ` · ${c.duree_min} min` : ''}
+              </small>
+            </span>
+            <span className="wa-side">
+              {prog?.cours?.[c.id] && <Icon name="check" size={14} />}
+              <Icon name="right" size={16} />
+            </span>
+          </button>
+        ))}
+      </>
+    );
+  }
+  return (
+    <>
+      <p className="wa-intro muted small">Touche une matière pour entrer dans ses cours.</p>
+      {matieres.map((m) => {
+        const n = cours.filter((c) => c.matiere === m.id).length;
+        return (
+          <button className="wa-row" key={m.id} onClick={() => setMat(m.id)}>
+            <span className="wa-av" style={{ background: `${m.color}22`, color: m.color }}>
+              <Icon name="book" size={18} />
+            </span>
+            <span className="wa-txt">
+              <strong>{m.label}</strong>
+              <small>
+                {n} cours disponible{n > 1 ? 's' : ''}
+              </small>
+            </span>
+            <span className="wa-side">
+              <Icon name="right" size={16} />
+            </span>
+          </button>
+        );
+      })}
+    </>
   );
 }
 
