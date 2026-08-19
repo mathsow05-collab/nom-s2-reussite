@@ -22,7 +22,7 @@ import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Flashcards from './Flashcards.jsx';
 import Illu from '../components/Illustrations.jsx';
-import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin } from '../progress.js';
+import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin, streak, xpOf } from '../progress.js';
 
 export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','️','🎯','','🕌','','🎨','🎧','🐱','🦅','🌍'];
 
@@ -166,6 +166,40 @@ export default function StudentApp() {
   // Chat & binômes : lien d'invitation reçu dans l'URL (?inviter=CODE) + badge.
   const [chatCode, setChatCode] = useState(null);
   const [chatBadge, setChatBadge] = useState(0);
+
+  // Ligue : envoie la progression locale au serveur (classement hebdo).
+  useEffect(() => {
+    if (!me) return undefined;
+    const send = () => {
+      const p = getProg(me.eleve_id);
+      api('/eleve/prog/sync', { method: 'POST', body: { xp: xpOf(p), minutes: p.minutes, streak: streak(p) } }).catch(() => {});
+    };
+    send();
+    const t = setInterval(send, 60000);
+    return () => clearInterval(t);
+  }, [me, prog]);
+
+  // Rappels locaux (PWA) : flamme en danger / binôme qui attend.
+  useEffect(() => {
+    if (!me || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const auj = new Date().toISOString().slice(0, 10);
+    const cle = `kd_notif_${auj}`;
+    if (sessionStorage.getItem(cle)) return;
+    const p = getProg(me.eleve_id);
+    const st = streak(p);
+    const actif = (p.jours[auj] || 0) > 0;
+    const msgs = [];
+    if (st > 0 && !actif) msgs.push(`Ta série de ${st} jour(s) est en danger — 5 min de quiz pour la garder.`);
+    if (chatBadge > 0) msgs.push('Ton binôme t’attend sur le chat.');
+    if (msgs.length) {
+      try {
+        new Notification('KAY DIANG', { body: msgs.join(' ') });
+        sessionStorage.setItem(cle, '1');
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [me, chatBadge]);
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const code = p.get('inviter');
@@ -612,6 +646,12 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
         </div>
       )}
 
+      <StreakBanner prog={prog} onGo={onGo} />
+      <div className="bac-ligue-row">
+        <ContratBac me={me} />
+        <LigueCard meId={me.id} />
+      </div>
+
       {conseils.length > 0 && (
         <div className="recos3">
           <div className="recos3-title">Recommandé pour toi aujourd'hui</div>
@@ -647,6 +687,211 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
         ))}
       </div>
     </main>
+  );
+}
+
+/* ------------------- Streak, rappels, contrat Bac, ligue ------------------- */
+const semKey = (d = new Date()) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x.toISOString().slice(0, 10);
+};
+const BAC_DATE = new Date('2027-06-15');
+
+function StreakBanner({ prog, onGo }) {
+  const [perm, setPerm] = useState('Notification' in window ? Notification.permission : 'unsupported');
+  const auj = new Date().toISOString().slice(0, 10);
+  const actif = (prog.jours[auj] || 0) > 0;
+  const st = streak(prog);
+  return (
+    <>
+      {perm === 'default' && (
+        <button
+          className="streak-banneau optin"
+          onClick={() =>
+            Notification.requestPermission().then((p) => setPerm(p))
+          }
+        >
+          <Icon name="bell" size={16} />
+          <span>Active les rappels : « flamme en danger », « ton binôme t'attend »…</span>
+          <strong>Activer</strong>
+        </button>
+      )}
+      {st > 0 && !actif && (
+        <button className="streak-banneau danger" onClick={() => onGo('quiz')}>
+          <span className="streak-flamme">
+            <Icon name="flame" size={18} />
+          </span>
+          <span>
+            Ta série de <strong>{st} jour(s)</strong> est en danger — 5 min de quiz pour la sauver.
+          </span>
+          <strong className="streak-cta">Sauver</strong>
+        </button>
+      )}
+      {actif && (
+        <div className="streak-banneau ok">
+          <span className="streak-flamme">
+            <Icon name="flame" size={18} />
+          </span>
+          <span>
+            Série entretenue aujourd'hui : <strong>{st} jour(s)</strong> d'affilée. Continue demain !
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ContratBac({ me }) {
+  const [contrat, setContrat] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(`kd_contrat_${me.eleve_id}`) || 'null');
+    } catch {
+      return null;
+    }
+  });
+  const [modal, setModal] = useState(false);
+  const [check, setCheck] = useState(false);
+  const [form, setForm] = useState({ objectif: 'Bien', heures: 5, nom: '' });
+  const jours = Math.max(0, Math.ceil((BAC_DATE - Date.now()) / 86400000));
+  const sem = semKey();
+  const aCheck = contrat && contrat.checks?.[sem] === undefined;
+
+  function signer(e) {
+    e.preventDefault();
+    const c = { objectif: form.objectif, heures: Number(form.heures), nom: form.nom || `${me.prenom} ${me.nom}`, checks: {}, depuis: sem };
+    localStorage.setItem(`kd_contrat_${me.eleve_id}`, JSON.stringify(c));
+    setContrat(c);
+    setModal(false);
+  }
+  function checkIn(ok) {
+    const c = { ...contrat, checks: { ...contrat.checks, [sem]: ok } };
+    localStorage.setItem(`kd_contrat_${me.eleve_id}`, JSON.stringify(c));
+    setContrat(c);
+    setCheck(false);
+  }
+  const tenues = contrat ? Object.values(contrat.checks || {}).filter(Boolean).length : 0;
+
+  const C = 2 * Math.PI * 30;
+  return (
+    <section className="card bac-card">
+      <div className="bac-ring" style={{ '--p': Math.min(1, jours / 300) }}>
+        <svg viewBox="0 0 72 72">
+          <defs>
+            <linearGradient id="bacg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#0ea5e9" />
+            </linearGradient>
+          </defs>
+          <circle cx="36" cy="36" r="30" className="bac-ring-fond" />
+          <circle cx="36" cy="36" r="30" className="bac-ring-trait" strokeDasharray={C} strokeDashoffset={C * (1 - Math.min(1, jours / 300))} />
+        </svg>
+        <div className="bac-ring-txt">
+          <strong>J-{jours}</strong>
+          <small>Bac 2027</small>
+        </div>
+      </div>
+      {!contrat ? (
+        <div className="bac-txt">
+          <strong>Signe ton contrat d'objectif</strong>
+          <p className="muted small">Objectif de mention + heures par semaine : l'app te le rappelle chaque semaine.</p>
+          <button className="btn btn-primary" onClick={() => setModal(true)}>
+            <Icon name="edit" size={14} /> Signer mon contrat
+          </button>
+        </div>
+      ) : (
+        <div className="bac-txt">
+          <strong>
+            Objectif : {contrat.objectif} · {contrat.heures} h/sem.
+          </strong>
+          <p className="muted small">
+            Signé par {contrat.nom} · {tenues} semaine(s) tenue(s).
+          </p>
+          {aCheck && (
+            <button className="btn btn-outline" onClick={() => setCheck(true)}>
+              <Icon name="check" size={14} /> Check-in de la semaine
+            </button>
+          )}
+        </div>
+      )}
+
+      {modal && (
+        <Modal title="Mon contrat d'objectif Bac" onClose={() => setModal(false)}>
+          <form onSubmit={signer}>
+            <label className="label">Mon objectif</label>
+            <select className="input" value={form.objectif} onChange={(e) => setForm({ ...form, objectif: e.target.value })}>
+              <option>Admis·e</option>
+              <option>Assez Bien</option>
+              <option>Bien</option>
+              <option>Très Bien</option>
+            </select>
+            <label className="label">Heures de travail par semaine</label>
+            <select className="input" value={form.heures} onChange={(e) => setForm({ ...form, heures: e.target.value })}>
+              <option value="3">3 h</option>
+              <option value="5">5 h</option>
+              <option value="7">7 h</option>
+              <option value="10">10 h et +</option>
+            </select>
+            <label className="label">Signature (ton nom)</label>
+            <input className="input" value={form.nom} placeholder={`${me.prenom} ${me.nom}`} onChange={(e) => setForm({ ...form, nom: e.target.value })} />
+            <button className="btn btn-primary" style={{ marginTop: 12 }} type="submit">
+              Je m'engage
+            </button>
+          </form>
+        </Modal>
+      )}
+      {check && (
+        <Modal title="Check-in hebdomadaire" onClose={() => setCheck(false)}>
+          <p>
+            Cette semaine, as-tu tenu ton engagement (~{contrat.heures} h) ?
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" onClick={() => checkIn(true)}>
+              Oui, contrat tenu
+            </button>
+            <button className="btn btn-ghost" onClick={() => checkIn(false)}>
+              Pas tout à fait
+            </button>
+          </div>
+          <p className="muted small" style={{ marginTop: 10 }}>
+            Si non : pas grave — les recommandations « rattrapage » ci-dessous s'adaptent automatiquement.
+          </p>
+        </Modal>
+      )}
+    </section>
+  );
+}
+
+function LigueCard({ meId }) {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    const charger = () => api('/eleve/ligue').then(setData).catch(() => {});
+    charger();
+    const t = setInterval(charger, 60000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <section className="card ligue-card">
+      <strong className="ligue-titre">
+        <Icon name="trophy" size={15} /> Ligue de la semaine
+      </strong>
+      {!data && <p className="muted small">Chargement…</p>}
+      {data && data.top.length === 0 && <p className="muted small">Sois la première personne à marquer des points cette semaine !</p>}
+      {data &&
+        data.top.map((r, i) => (
+          <div className={`ligue-row${r.moi ? ' moi' : ''}`} key={r.id}>
+            <span className={`rang${i < 3 ? ` medal-${i + 1}` : ''}`}>{i + 1}</span>
+            <span className="ligue-nom">
+              {r.prenom} {r.nom?.[0]}.
+            </span>
+            <span className="ligue-flamme">
+              <Icon name="flame" size={12} /> {r.streak_j}
+            </span>
+            <span className="ligue-xp">{r.xp} XP</span>
+          </div>
+        ))}
+      {data && <p className="muted small ligue-moi">Ta place actuelle : {data.rang} · {data.xp} XP</p>}
+    </section>
   );
 }
 

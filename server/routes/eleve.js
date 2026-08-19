@@ -642,6 +642,29 @@ router.get('/chat/home', requireEleve(db), (req, res) => {
   });
 });
 
+/* Synchronisation de la progression (ligue hebdomadaire). */
+router.post('/prog/sync', requireEleve(db), (req, res) => {
+  const { xp, minutes, streak } = req.body || {};
+  db.prepare('UPDATE eleves SET xp = ?, minutes_tot = ?, streak_j = ? WHERE id = ?').run(
+    Math.max(0, Number(xp) || 0),
+    Math.max(0, Number(minutes) || 0),
+    Math.max(0, Number(streak) || 0),
+    req.eleve.id
+  );
+  res.json({ ok: true });
+});
+
+router.get('/ligue', requireEleve(db), (req, res) => {
+  const f = req.eleve.filiere || 'S2';
+  const top = db
+    .prepare('SELECT id, prenom, nom, xp, streak_j FROM eleves WHERE filiere = ? AND actif = 1 AND xp > 0 ORDER BY xp DESC LIMIT 10')
+    .all(f)
+    .map((r) => ({ ...r, moi: r.id === req.eleve.id }));
+  const moi = db.prepare('SELECT xp FROM eleves WHERE id = ?').get(req.eleve.id);
+  const rang = db.prepare('SELECT COUNT(*) + 1 AS r FROM eleves WHERE filiere = ? AND xp > ?').get(f, moi?.xp || 0).r;
+  res.json({ top, rang, xp: moi?.xp || 0 });
+});
+
 router.get('/chat/badge', requireEleve(db), (req, res) => {
   const n = db.prepare('SELECT COUNT(*) AS n FROM chat_messages WHERE vers_id = ? AND lu = 0').get(req.eleve.id).n;
   res.json({ n });

@@ -171,6 +171,9 @@ ensureColumn('cours', 'duree_min', 'INTEGER');
 ensureColumn('cours', 'difficulte', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('cours', 'acquis', 'TEXT');
 ensureColumn('eleves', 'avatar', 'TEXT');
+ensureColumn('eleves', 'xp', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('eleves', 'minutes_tot', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('eleves', 'streak_j', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('questions_eleves', 'public', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('questions_eleves', 'likes', "TEXT NOT NULL DEFAULT '[]'");
 
