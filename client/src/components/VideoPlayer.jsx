@@ -179,9 +179,9 @@ export default function VideoPlayer({ id, titre }) {
           {/* bandeau titre de marque */}
           <div className="vp-shield">
             <span className="vp-shield-titre">{titre}</span>
-            <span className="vp-shield-badge">KAY DIANG</span>
+            <span className="vp-shield-badge">SCHOOBY</span>
           </div>
-          <div className="vp-shield-br">KAY DIANG</div>
+          <div className="vp-shield-br">SCHOOBY</div>
 
           {etat === 'buffering' && <div className="vp-load" />}
           {etat === 'paused' && (

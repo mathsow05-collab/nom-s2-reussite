@@ -446,7 +446,7 @@ input[type='file'].input { padding: 8px; }
 @media print {
   body * { display: none !important; }
   body::after {
-    content: '🖨️ Impression désactivée – KAY DIANG'; display: block !important;
+    content: '🖨️ Impression désactivée – SCHOOBY'; display: block !important;
     padding: 40px; text-align: center; font-weight: 800; font-size: 1.1rem;
   }
 }

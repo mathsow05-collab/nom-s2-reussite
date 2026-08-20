@@ -193,7 +193,7 @@ export default function StudentApp() {
     if (chatBadge > 0) msgs.push('Ton binôme t’attend sur le chat.');
     if (msgs.length) {
       try {
-        new Notification('KAY DIANG', { body: msgs.join(' ') });
+        new Notification('SCHOOBY', { body: msgs.join(' ') });
         sessionStorage.setItem(cle, '1');
       } catch {
         /* ignore */
@@ -341,7 +341,7 @@ export default function StudentApp() {
       />
       <header className="topbar">
         <button className="topbar-brand" onClick={() => setTab('accueil')} title="Accueil">
-          <span className="logo-kd">KD</span> <span>KAY DIANG</span>
+          <span className="logo-kd">S</span> <span>SCHOOBY</span>
         </button>
         <div className="topbar-user">
           <button className="icon3" onClick={() => setSearchOpen(true)} title="Recherche globale">
@@ -553,7 +553,7 @@ export default function StudentApp() {
         </div>
       )}
       {confirmQuit && (
-        <Modal title="Quitter KAY DIANG ?" onClose={() => setConfirmQuit(false)}>
+        <Modal title="Quitter SCHOOBY ?" onClose={() => setConfirmQuit(false)}>
           <p>Voulez-vous vraiment vous déconnecter ?</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
             <button className="btn btn-primary" onClick={logout}>

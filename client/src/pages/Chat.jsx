@@ -120,7 +120,7 @@ export default function Chat({ me, codeInvite, onCodeTraite, onOuvrirContenu }) 
   async function partager() {
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'KAY DIANG', text: 'Rejoins-moi sur KAY DIANG pour réviser ensemble :', url: lienPerso });
+        await navigator.share({ title: 'SCHOOBY', text: 'Rejoins-moi sur SCHOOBY pour réviser ensemble :', url: lienPerso });
       } catch {
         /* annulé */
       }

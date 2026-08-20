@@ -28,7 +28,7 @@ export default function StudentLogin() {
       <div className="auth-glow g2" aria-hidden="true" />
       <main className="auth-card3">
         <div className="logo3"><Icon name="cap" size={28} /></div>
-        <h1>KAY DIANG</h1>
+        <h1>SCHOOBY</h1>
         <p className="tag3">
           Ton lycée, ta réussite — <span className="grad3">une seule plateforme.</span>
         </p>
