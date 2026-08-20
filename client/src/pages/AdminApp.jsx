@@ -81,6 +81,7 @@ export default function AdminApp() {
 
   // Périmètres : Arabe = essentiel seulement ; S2 = pas de Culture (contenu L2).
   const visibleTabs = TABS.filter((t) => {
+    if (t.directionSeul && me.filiere !== 'all') return false;
     if (me.filiere === 'AR' && ['annales', 'quiz', 'agenda', 'metiers', 'culture', 'devoirs'].includes(t.id)) return false;
     return true;
   });

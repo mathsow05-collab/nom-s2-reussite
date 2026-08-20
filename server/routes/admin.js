@@ -25,7 +25,7 @@ function refuseAR(req, res, next) {
 }
 // La « Culture du monde » est un contenu L2 : fermée aux périmètres AR et S2.
 function refuseCulture(req, res, next) {
-  if (req.scope === 'AR' || req.scope === 'S2')
+  if (req.scope === 'AR')
     return res.status(403).json({ error: 'Module réservé au périmètre L2.' });
   return next();
 }
@@ -128,11 +128,17 @@ router.get('/stats', admin, (req, res) => {
       }
       return jours;
     })(),
-    derniersLogs: db.prepare('SELECT * FROM logs ORDER BY id DESC LIMIT 25').all(),
+    derniersLogs:
+      req.scope === 'all'
+        ? db.prepare('SELECT * FROM logs ORDER BY id DESC LIMIT 25').all()
+        : db
+            .prepare('SELECT l.* FROM logs l JOIN eleves e ON e.id = l.eleve_db_id WHERE e.filiere = ? ORDER BY l.id DESC LIMIT 25')
+            .all(req.scope),
   });
 });
 
 router.get('/logs', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
   res.json(db.prepare('SELECT * FROM logs ORDER BY id DESC LIMIT 200').all());
 });
 
@@ -742,7 +748,13 @@ router.delete('/echeances/:id', admin, refuseAR, (req, res) => {
 /* commune (validée uniquement si les deux choisissent pareil).        */
 /* ------------------------------------------------------------------ */
 router.get('/devoirs-binomes', admin, refuseAR, (req, res) => {
-  const rows = db.prepare('SELECT * FROM devoirs_binomes ORDER BY id DESC').all();
+  const rows = db
+    .prepare(
+      req.scope === 'all'
+        ? 'SELECT * FROM devoirs_binomes ORDER BY id DESC'
+        : "SELECT * FROM devoirs_binomes WHERE filiere = ? OR filiere = 'all' ORDER BY id DESC"
+    )
+    .all(...(req.scope === 'all' ? [] : [req.scope]));
   res.json(
     rows.map((d) => {
       const nbQ = db.prepare('SELECT COUNT(*) AS n FROM devoir_binome_questions WHERE devoir_id = ?').get(d.id).n;
@@ -803,7 +815,7 @@ router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
       .run(
         String(titre).slice(0, 120),
         String(description || '').slice(0, 500),
-        ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
+        req.scope !== 'all' ? req.scope : ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
         serie ? String(serie).slice(0, 80) : null,
         duree_min ? Math.max(1, Math.min(240, Number(duree_min))) : null,
         /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : null
@@ -834,9 +846,10 @@ router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
   }
 });
 
+const devoirDansScope = (req, d) => !!d && (req.scope === 'all' || d.filiere === req.scope || d.filiere === 'all');
 router.get('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
   const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
-  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  if (!devoirDansScope(req, d)) return res.status(403).json({ error: 'Hors de votre périmètre.' });
   const questions = db.prepare('SELECT * FROM devoir_binome_questions WHERE devoir_id = ? ORDER BY ordre, id').all(d.id);
   const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
   const resultats = [];
@@ -866,7 +879,7 @@ router.get('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
 
 router.put('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
   const d = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
-  if (!d) return res.status(404).json({ error: 'Devoir introuvable.' });
+  if (!devoirDansScope(req, d)) return res.status(403).json({ error: 'Hors de votre périmètre.' });
   const { titre, description, deadline, actif, serie, duree_min } = req.body || {};
   db.prepare(
     'UPDATE devoirs_binomes SET titre = ?, description = ?, deadline = ?, actif = ?, serie = ?, duree_min = ? WHERE id = ?'
@@ -883,6 +896,8 @@ router.put('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
 });
 
 router.delete('/devoirs-binomes/:id', admin, refuseAR, (req, res) => {
+  const dv = db.prepare('SELECT * FROM devoirs_binomes WHERE id = ?').get(req.params.id);
+  if (!devoirDansScope(req, dv)) return res.status(403).json({ error: 'Hors de votre périmètre.' });
   db.prepare('DELETE FROM devoir_binome_reponses WHERE devoir_id = ?').run(req.params.id);
   db.prepare('DELETE FROM devoir_binome_questions WHERE devoir_id = ?').run(req.params.id);
   db.prepare('DELETE FROM devoirs_binomes WHERE id = ?').run(req.params.id);

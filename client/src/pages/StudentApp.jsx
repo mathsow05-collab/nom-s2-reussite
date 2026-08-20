@@ -289,6 +289,30 @@ export default function StudentApp() {
     };
   }, []);
 
+  // Bouton retour Android : navigue dans l'app ; sur l'accueil → confirmation.
+  const [confirmQuit, setConfirmQuit] = useState(false);
+  const coucheRef = useRef(() => null);
+  coucheRef.current = () => {
+    if (viewer) return () => setViewer(null);
+    if (notifsOpen) return () => setNotifsOpen(false);
+    if (searchOpen) return () => setSearchOpen(false);
+    if (sheet) return () => setSheet(false);
+    if (tab && tab !== 'accueil') return () => setTab('accueil');
+    return null;
+  };
+  useEffect(() => {
+    window.history.replaceState({ kd: 1 }, '');
+    window.history.pushState({ kd: 1 }, '');
+    const onPop = () => {
+      const fermer = coucheRef.current();
+      if (fermer) fermer();
+      else setConfirmQuit(true);
+      window.history.pushState({ kd: 1 }, '');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
   if (lost) return <SessionLost reason={lost} />;
   if (!me || !cours)
     return (
@@ -527,6 +551,19 @@ export default function StudentApp() {
             </div>
           </div>
         </div>
+      )}
+      {confirmQuit && (
+        <Modal title="Quitter KAY DIANG ?" onClose={() => setConfirmQuit(false)}>
+          <p>Voulez-vous vraiment vous déconnecter ?</p>
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <button className="btn btn-primary" onClick={logout}>
+              Oui, déconnexion
+            </button>
+            <button className="btn btn-ghost" onClick={() => setConfirmQuit(false)}>
+              Non, rester
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

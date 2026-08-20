@@ -233,6 +233,13 @@ export default function Icon({ name, size = 18, className = '' }) {
         <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M12 21v-3" />
       </>
     ),
+    chart: (
+      <>
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </>
+    ),
     image: (
       <>
         <rect x="3" y="3" width="18" height="18" rx="2" />
