@@ -2044,3 +2044,35 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
   .hello3::before { animation: none !important; }
   .bac-ring-trait { transition: none !important; }
 }
+
+/* ================================================================
+   KAY DIANG v28 : mode sombre corrigé de bout en bout
+   (les variables passent en sombre → TOUTES les surfaces suivent)
+   ================================================================ */
+[data-theme='dark'] {
+  --bg: #0b1220;
+  --card: #111a2f;
+  --ink: #e6eaf3;
+  --muted: #94a3b8;
+  --line: #223052;
+  --brand-soft: #1d2647;
+  --ok-soft: #0c2b1e;
+  --warn-soft: #3a2408;
+  --danger-soft: #3b0f0f;
+}
+[data-theme='dark'] .topbar-brand { color: #a5b4fc; }
+[data-theme='dark'] .wa-av { color: #a5b4fc; }
+[data-theme='dark'] .icon3 { background: #16203a; color: #c6cfdd; }
+[data-theme='dark'] .hello3 { background: var(--card); }
+[data-theme='dark'] .streak-banneau { color: var(--ink); }
+[data-theme='dark'] .onglets { background: var(--bg); }
+[data-theme='dark'] .xo-search input { color: var(--ink); }
+[data-theme='dark'] .search3 { background: var(--card); border-color: var(--line); }
+[data-theme='dark'] .search3 input { color: var(--ink); }
+[data-theme='dark'] .empty { color: var(--muted); }
+[data-theme='dark'] .resume3 { background: var(--card); border-color: var(--line); color: var(--ink); }
+[data-theme='dark'] .reco3 { background: var(--card); border-color: var(--line); color: var(--ink); }
+[data-theme='dark'] .ptile { background: var(--card); border-color: var(--line); color: var(--ink); }
+[data-theme='dark'] .sheet3-card { background: #101a2e; }
+[data-theme='dark'] .auth-card { background: var(--card); }
+[data-theme='dark'] .modal, [data-theme='dark'] .ui-modal { background: var(--card); }
