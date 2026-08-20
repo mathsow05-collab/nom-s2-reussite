@@ -177,7 +177,7 @@ export default function StudentApp() {
     send();
     const t = setInterval(send, 60000);
     return () => clearInterval(t);
-  }, [me, prog]);
+  }, [me]);
 
   // Rappels locaux (PWA) : flamme en danger / binôme qui attend.
   useEffect(() => {
