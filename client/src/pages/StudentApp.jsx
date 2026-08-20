@@ -29,7 +29,7 @@ export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','
 const TABS = [
   { id: 'ia', label: 'Prof IA', icon: 'chat' },
   { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
-  { id: 'culture', label: 'Culture', icon: 'bulb', l2Seul: true },
+  { id: 'culture', label: 'Culture', icon: 'bulb', pasAR: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
@@ -233,7 +233,7 @@ export default function StudentApp() {
   const [notifList, setNotifList] = useState([]);
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem('s2r_theme') || 'light';
+      return localStorage.getItem('s2r_theme') || 'dark';
     } catch {
       return 'light';
     }
@@ -375,7 +375,7 @@ export default function StudentApp() {
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
-      {tab === 'culture' && filiere === 'L2' && <Culture />}
+      {tab === 'culture' && filiere !== 'AR' && <Culture />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
@@ -507,7 +507,8 @@ export default function StudentApp() {
                   t.id !== 'cours' &&
                   (!t.arSeul || filiere === 'AR') &&
                   (!t.l2Seul || filiere === 'L2') &&
-                  (!t.pasL2 || filiere !== 'L2')
+                  (!t.pasL2 || filiere !== 'L2') &&
+                  (!t.pasAR || filiere !== 'AR')
               ).map((t) => (
                 <button
                   key={t.id}
@@ -545,7 +546,7 @@ const TUILES = [
   { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
   { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
   { id: 'parcours', icon: 'book', img: '/metiers/parcours.jpg', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
-  { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', l2Seul: true },
+  { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', pasAR: true },
 ];
 const ICO_TAB = {
   cours: 'book', annales: 'file', examens: 'clock', quiz: 'target', flash: 'layers', agenda: 'calendar', echanges: 'chat',
