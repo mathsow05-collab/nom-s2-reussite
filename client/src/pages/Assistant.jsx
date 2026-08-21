@@ -10,6 +10,15 @@ const SUGGESTIONS = [
   'Aide-moi à faire un planning de révision pour le Bac',
 ];
 
+function nettoie(t) {
+  return String(t || '')
+    .replace(/\*\*/g, '')
+    .replace(/\$/g, '')
+    .replace(/^\s*\*\s*/gm, '– ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export default function Assistant() {
   const [msgs, setMsgs] = useState([
     { role: 'ia', text: 'Salut ! Je suis ton Prof IA. Pose-moi tes questions sur tes cours, tes révisions, ou demande-moi une explication simple. Je suis là pour toi !' },
@@ -33,7 +42,7 @@ export default function Assistant() {
     try {
       const historique = msgs.slice(-8).map((m) => ({ role: m.role === 'ia' ? 'ia' : 'eleve', text: m.text }));
       const r = await api('/eleve/ia', { method: 'POST', body: { message: t, historique } });
-      setMsgs((m) => [...m, { role: 'ia', text: r.texte }]);
+      setMsgs((m) => [...m, { role: 'ia', text: nettoie(r.texte) }]);
     } catch (e) {
       setErreur(e.message || 'Assistant indisponible.');
       setMsgs((m) => m.slice(0, -1)); // retire la question non traitée
