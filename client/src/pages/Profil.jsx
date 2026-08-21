@@ -4,7 +4,7 @@ import Icon from '../Icon.jsx';
 import { Modal } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
-import Onboarding from './Onboarding.jsx';
+import Onboarding, { THEMES } from './Onboarding.jsx';
 import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
@@ -37,45 +37,67 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
 
   return (
     <main className="container profil3">
-      <section className="card prof3-head">
-        <div className="profil-avatar big">{me.avatar?.startsWith('an:') ? <span className={`anime-av grand i${me.avatar.slice(3)}`} /> : me.avatar || '🧑‍'}</div>
-        <div className="prof3-id">
-          <strong>
-            {me.prenom} {me.nom}
-          </strong>
-          <span className={`filiere-badge fil-${me.filiere}`}>{me.filiere}</span>
-          <div className="muted small">
-            {me.classe} · <span className="mono">{me.eleve_id}</span>
-          </div>
-        </div>
-        <button className="btn btn-ghost" onClick={logout} title="Déconnexion">
+      <section className="pf-hero">
+        <button className="pf-quit" onClick={logout} title="Déconnexion">
           ⎋
         </button>
+        <div className="pf-avatar">
+          {me.avatar?.startsWith('an:') ? (
+            <span className={`anime-av grand i${me.avatar.slice(3)}`} />
+          ) : (
+            me.avatar || '🧑‍'
+          )}
+        </div>
+        <h1 className="pf-nom">
+          {me.prenom} {me.nom}
+        </h1>
+        <div className="pf-ligne">
+          <span className="pf-filiere">{me.filiere}</span>
+          <span>{me.classe}</span>
+          <span className="mono">{me.eleve_id}</span>
+        </div>
+        <div className="pf-stats">
+          <div className="pf-stat">
+            <span className="pf-stat-ico">
+              <Icon name="flame" size={12} /> Série
+            </span>
+            <strong>{streak(prog)} jour(s)</strong>
+          </div>
+          <div className="pf-stat">
+            <span className="pf-stat-ico">
+              <Icon name="clock" size={12} /> Étude
+            </span>
+            <strong>{fmtMin(prog.minutes)}</strong>
+          </div>
+          <div className="pf-stat">
+            <span className="pf-stat-ico">
+              <Icon name="book" size={12} /> Cours
+            </span>
+            <strong>
+              {stats.vues}/{stats.total} vus
+            </strong>
+          </div>
+          <div className="pf-stat">
+            <span className="pf-stat-ico">
+              <Icon name="target" size={12} /> Quiz
+            </span>
+            <strong>{stats.pctMoy} % de moyenne</strong>
+          </div>
+        </div>
       </section>
 
       <section className="card s3card">
-        <h2>
-          Niveau {lvl.i + 1} — {lvl.nom}
-        </h2>
-        <div className="bar3">
+        <div className="pf-level-top">
+          <h2>
+            Niveau {lvl.i + 1} — {lvl.nom}
+          </h2>
+          <span className="pf-xp">{xp} XP</span>
+        </div>
+        <div className="bar3" style={{ marginTop: 10 }}>
           <div style={{ width: `${Math.min(100, Math.round((xp % 250) / 2.5))}%` }} />
         </div>
         <div className="muted small" style={{ marginTop: 6 }}>
-          {xp} points d'expérience · encore {lvl.reste} XP pour le niveau suivant.
-        </div>
-        <div className="chips3" style={{ marginTop: 12 }}>
-          <span>
-            <Icon name="flame" size={13} /> Série : {streak(prog)} jour(s)
-          </span>
-          <span>
-            <Icon name="clock" size={13} /> {fmtMin(prog.minutes)}
-          </span>
-          <span>
-            <Icon name="book" size={13} /> {stats.vues}/{stats.total} cours
-          </span>
-          <span>
-            <Icon name="target" size={13} /> {stats.pctMoy} % en quiz
-          </span>
+          Encore {lvl.reste} XP pour passer au niveau suivant. Continue comme ça !
         </div>
       </section>
 
@@ -96,13 +118,28 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
       </section>
 
       <section className="card s3card">
-        <h2>Apparence</h2>
+        <h2>Ma personnalisation</h2>
+        <p className="muted small" style={{ marginTop: -4 }}>
+          Choisis une apparence — textes et couleurs s'adaptent pour rester toujours lisibles.
+        </p>
+        <div className="pf-themes">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={theme === t.id ? 'pf-theme on' : 'pf-theme'}
+              onClick={() => onSetTheme?.(t.id)}
+            >
+              <span className="dot" style={{ background: t.sw[2] }} />
+              {t.nom}
+            </button>
+          ))}
+        </div>
         <button className="theme3" onClick={onTheme}>
-          <span>Mode sombre (confort le soir, économie de batterie)</span>
+          <span>Mode sombre rapide (confort le soir)</span>
           <span className={theme === 'dark' ? 'switch3 on' : 'switch3'} />
         </button>
-        <button className="btn btn-outline" style={{ marginTop: 10 }} onClick={() => setPerso(true)}>
-          <Icon name="spark" size={15} /> Revoir ma personnalisation
+        <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setPerso(true)}>
+          <Icon name="spark" size={15} /> Revoir ma personnalisation complète
         </button>
       </section>
 
