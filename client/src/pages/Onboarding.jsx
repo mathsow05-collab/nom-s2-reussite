@@ -10,6 +10,8 @@ export const THEMES = [
   { id: 'dark', nom: 'Sombre', desc: 'Nuit confortable', sw: ['#0b1220', '#111a2f', '#6366f1'] },
   { id: 'sakura', nom: 'Sakura', desc: 'Rose animé, doux & stylé', sw: ['#fdf2f6', '#ffffff', '#db2777'] },
   { id: 'ocean', nom: 'Océan', desc: 'Bleu profond immersif', sw: ['#04121f', '#0a1c2c', '#0ea5e9'] },
+  { id: 'neon', nom: 'Néon animé', desc: 'Violet nuit + éclats roses', sw: ['#0d0716', '#170b26', '#a855f7'] },
+  { id: 'sunset', nom: 'Couchant', desc: 'Ambre chaud, esprit shōnen', sw: ['#1a0f0a', '#241209', '#f97316'] },
 ];
 
 export const PASSETIMES = [
@@ -44,10 +46,10 @@ export default function Onboarding({ prenom, theme, onTheme, onFin }) {
             <div className="ob-themes">
               {THEMES.map((t) => (
                 <button key={t.id} className={`ob-theme${theme === t.id ? ' on' : ''}`} onClick={() => onTheme(t.id)}>
-                  <span className="ob-sw">
-                    {t.sw.map((c, i) => (
-                      <i key={i} style={{ background: c }} />
-                    ))}
+                  <span className="ob-apercu" style={{ background: t.sw[0] }}>
+                    <i className="a1" style={{ background: t.sw[2] }} />
+                    <i className="a2" style={{ background: t.sw[1] }} />
+                    <i className="a3" style={{ background: t.sw[1] }} />
                   </span>
                   <strong>{t.nom}</strong>
                   <small>{t.desc}</small>

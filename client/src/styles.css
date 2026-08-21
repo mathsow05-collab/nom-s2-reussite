@@ -2130,3 +2130,29 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 .particules span { position: absolute; top: -30px; opacity: 0; animation: part-fall linear infinite; }
 @keyframes part-fall { 0% { transform: translateY(-4vh) rotate(0deg); opacity: 0; } 12% { opacity: .35; } 90% { opacity: .25; } 100% { transform: translateY(105vh) rotate(320deg); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .particules { display: none; } }
+
+/* ================================================================
+   KAY DIANG v30 : avatars carrés propres, thèmes néon/couchant,
+   fonds décorés par thème, re-personnalisation
+   ================================================================ */
+.avatar-pick { aspect-ratio: 1; padding: 4px; display: flex; align-items: center; justify-content: center; background: var(--card); }
+.avatar-pick .anime-av { width: 100%; height: 100%; border-radius: 9px; }
+[data-theme='neon'] {
+  --bg: #0d0716; --card: #170b26; --ink: #f2eaff; --muted: #a793c4; --line: #2d1b4e;
+  --brand: #a855f7; --brand-dark: #7c3aed; --brand-soft: #2b1650;
+  --ok-soft: #0c2b1e; --warn-soft: #3a2408; --danger-soft: #3b0f0f;
+}
+[data-theme='sunset'] {
+  --bg: #1a0f0a; --card: #241209; --ink: #ffeadd; --muted: #c9a18c; --line: #4a2a17;
+  --brand: #f97316; --brand-dark: #ea580c; --brand-soft: #3b1c0d;
+  --ok-soft: #0c2b1e; --warn-soft: #3a2408; --danger-soft: #3b0f0f;
+}
+[data-theme='sakura'] body { background: radial-gradient(620px 300px at 92% -60px, #ffd7e8 0%, transparent 62%), var(--bg); }
+[data-theme='ocean'] body { background: radial-gradient(700px 340px at 8% -70px, rgba(14, 165, 233, 0.20), transparent 62%), var(--bg); }
+[data-theme='neon'] body { background: radial-gradient(720px 340px at 88% -70px, rgba(168, 85, 247, 0.28), transparent 62%), radial-gradient(520px 260px at 6% 104%, rgba(236, 72, 153, 0.14), transparent 60%), var(--bg); }
+[data-theme='sunset'] body { background: radial-gradient(720px 340px at 88% -70px, rgba(249, 115, 22, 0.22), transparent 62%), radial-gradient(480px 240px at 8% 104%, rgba(220, 38, 38, 0.12), transparent 60%), var(--bg); }
+.ob-apercu { border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.ob-apercu i { display: block; border-radius: 6px; }
+.ob-apercu .a1 { height: 10px; width: 55%; }
+.ob-apercu .a2 { height: 22px; width: 100%; opacity: .85; }
+.ob-apercu .a3 { height: 10px; width: 78%; opacity: .6; }

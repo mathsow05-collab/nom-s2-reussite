@@ -4,11 +4,13 @@ import Icon from '../Icon.jsx';
 import { Modal } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
+import Onboarding from './Onboarding.jsx';
 import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
-export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme }) {
+export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme, onSetTheme, onPersoChange }) {
+  const [perso, setPerso] = useState(false);
   const stats = computeStats(prog, cours);
   const xp = xpOf(prog);
   const lvl = levelOf(xp);
@@ -99,7 +101,29 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
           <span>Mode sombre (confort le soir, économie de batterie)</span>
           <span className={theme === 'dark' ? 'switch3 on' : 'switch3'} />
         </button>
+        <button className="btn btn-outline" style={{ marginTop: 10 }} onClick={() => setPerso(true)}>
+          <Icon name="spark" size={15} /> Revoir ma personnalisation
+        </button>
       </section>
+
+      {perso && (
+        <Onboarding
+          prenom={me.prenom}
+          theme={theme}
+          onTheme={(t) => onSetTheme?.(t)}
+          onFin={(hobs, av) => {
+            try {
+              localStorage.setItem('kd_onboarded', '1');
+              localStorage.setItem('kd_hobbies', JSON.stringify(hobs));
+            } catch {
+              /* ignore */
+            }
+            if (av) onAvatar(av);
+            onPersoChange?.();
+            setPerso(false);
+          }}
+        />
+      )}
 
       <section className="card s3card">
         <h2>

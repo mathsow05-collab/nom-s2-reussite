@@ -432,6 +432,14 @@ export default function StudentApp() {
           }}
           onGo={(t) => setTab(t)}
           logout={logout}
+          onSetTheme={setTheme}
+          onPersoChange={() => {
+            try {
+              setHobbies(JSON.parse(localStorage.getItem('kd_hobbies') || '[]'));
+            } catch {
+              /* ignore */
+            }
+          }}
         />
       )}
 
