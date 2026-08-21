@@ -36,7 +36,7 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
   return (
     <main className="container profil3">
       <section className="card prof3-head">
-        <div className="profil-avatar big">{me.avatar || '🧑🏾‍🎓'}</div>
+        <div className="profil-avatar big">{me.avatar?.startsWith('an:') ? <span className={`anime-av grand i${me.avatar.slice(3)}`} /> : me.avatar || '🧑‍'}</div>
         <div className="prof3-id">
           <strong>
             {me.prenom} {me.nom}
@@ -163,6 +163,14 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
           {AVATARS.map((a) => (
             <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} onClick={() => onAvatar(a)}>
               {a}
+            </button>
+          ))}
+        </div>
+        <h2 style={{ marginTop: 12 }}>Style animé</h2>
+        <div className="avatar-grid">
+          {Array.from({ length: 8 }, (_, i) => `an:${i}`).map((a) => (
+            <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} onClick={() => onAvatar(a)}>
+              <span className={`anime-av i${a.slice(3)}`} />
             </button>
           ))}
         </div>

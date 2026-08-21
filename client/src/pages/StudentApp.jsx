@@ -20,6 +20,7 @@ import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
+import Onboarding from './Onboarding.jsx';
 import Flashcards from './Flashcards.jsx';
 import Illu from '../components/Illustrations.jsx';
 import { computeStats, getProg, markCours, recos, tickMinutes, fmtMin, streak, xpOf } from '../progress.js';
@@ -240,7 +241,7 @@ export default function StudentApp() {
   });
 
   useEffect(() => {
-    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    if (theme && theme !== 'light') document.documentElement.setAttribute('data-theme', theme);
     else document.documentElement.removeAttribute('data-theme');
     try {
       localStorage.setItem('s2r_theme', theme);
@@ -291,6 +292,20 @@ export default function StudentApp() {
 
   // Bouton retour Android : navigue dans l'app ; sur l'accueil → confirmation.
   const [confirmQuit, setConfirmQuit] = useState(false);
+  const [onboard, setOnboard] = useState(() => {
+    try {
+      return !localStorage.getItem('kd_onboarded');
+    } catch {
+      return false;
+    }
+  });
+  const [hobbies, setHobbies] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('kd_hobbies') || '[]');
+    } catch {
+      return [];
+    }
+  });
   const coucheRef = useRef(() => null);
   coucheRef.current = () => {
     if (viewer) return () => setViewer(null);
@@ -352,7 +367,7 @@ export default function StudentApp() {
             {notifList.length > 0 && <span className="dot3">{notifList.length}</span>}
           </button>
           <button className="avatar-btn" onClick={() => setTab('profil')} title="Mon profil">
-            {me.avatar || '🧑🏾‍'}
+            {me.avatar?.startsWith('an:') ? <span className={`anime-av i${me.avatar.slice(3)}`} /> : me.avatar || '🧑‍'}
           </button>
           <div className="topbar-id">
             <strong>
@@ -367,6 +382,29 @@ export default function StudentApp() {
           </div>
         </div>
       </header>
+
+      {tab === 'accueil' && <Particules hobbies={hobbies} />}
+
+      {onboard && (
+        <Onboarding
+          prenom={me.prenom}
+          theme={theme}
+          onTheme={setTheme}
+          onFin={(hobs, av) => {
+            try {
+              localStorage.setItem('kd_onboarded', '1');
+              localStorage.setItem('kd_hobbies', JSON.stringify(hobs));
+            } catch {
+              /* ignore */
+            }
+            setHobbies(hobs);
+            if (av) {
+              api('/eleve/profil', { method: 'POST', body: { avatar: av } }).then(() => setMe((m) => ({ ...m, avatar: av })));
+            }
+            setOnboard(false);
+          }}
+        />
+      )}
 
       {tab === 'accueil' && (
         <Home
@@ -565,6 +603,39 @@ export default function StudentApp() {
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+
+/* Particules décoratives selon les passe-temps (coupées si reduced-motion). */
+const PART_EMOJI = { anime: '🌸', foot: '⚽', musique: '🎵', gaming: '✨', lecture: '📖', dessin: '🎨' };
+function Particules({ hobbies }) {
+  const emos = (hobbies || []).slice(0, 2).map((h) => PART_EMOJI[h]).filter(Boolean);
+  const parts = useMemo(
+    () =>
+      emos.length
+        ? Array.from({ length: 12 }, (_, i) => ({
+            e: emos[i % emos.length],
+            left: (i * 83) % 100,
+            delay: (i * 1.7) % 12,
+            dur: 11 + ((i * 3) % 7),
+            size: 12 + ((i * 5) % 10),
+          }))
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hobbies.join(',')]
+  );
+  if (!parts.length) return null;
+  return (
+    <div className="particules" aria-hidden="true">
+      {parts.map((p, i) => (
+        <span
+          key={i}
+          style={{ left: `${p.left}%`, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s`, fontSize: p.size }}
+        >
+          {p.e}
+        </span>
+      ))}
     </div>
   );
 }

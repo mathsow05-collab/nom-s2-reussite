@@ -2076,3 +2076,57 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 [data-theme='dark'] .sheet3-card { background: #101a2e; }
 [data-theme='dark'] .auth-card { background: var(--card); }
 [data-theme='dark'] .modal, [data-theme='dark'] .ui-modal { background: var(--card); }
+
+/* ================================================================
+   KAY DIANG v29 : onboarding, thèmes sakura/océan, avatars animé, particules
+   ================================================================ */
+[data-theme='sakura'] {
+  --bg: #fdf2f7; --card: #ffffff; --ink: #40243a; --muted: #97708a; --line: #f6d9e7;
+  --brand: #db2777; --brand-dark: #be185d; --brand-soft: #fce7f3;
+  --ok-soft: #dcfce7; --warn-soft: #fef3c7; --danger-soft: #fee2e2;
+}
+[data-theme='ocean'] {
+  --bg: #04121f; --card: #0a1c2c; --ink: #e2f2ff; --muted: #8fb3c9; --line: #12364a;
+  --brand: #0ea5e9; --brand-dark: #0284c7; --brand-soft: #0c2b3f;
+  --ok-soft: #0c2b1e; --warn-soft: #3a2408; --danger-soft: #3b0f0f;
+}
+[data-theme='ocean'] body, [data-theme='sakura'] body { background: var(--bg); color: var(--ink); }
+/* onboarding */
+.ob-wrap { position: fixed; inset: 0; z-index: 80; background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+@supports not (color-mix(in srgb, red 50%, blue)) { .ob-wrap { background: rgba(10, 14, 26, 0.6); } }
+.ob-card { width: min(560px, 96vw); max-height: 92dvh; overflow: auto; background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 20px; box-shadow: var(--shadow); }
+.ob-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+.ob-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.ob-dots span.on { background: var(--brand-dark); width: 22px; border-radius: 6px; }
+.ob-themes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+@media (max-width: 480px) { .ob-themes { grid-template-columns: 1fr; } }
+.ob-theme { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 12px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); cursor: pointer; font: inherit; color: var(--ink); transition: border-color .15s, transform .15s; }
+.ob-theme.on { border-color: var(--brand-dark); transform: scale(1.02); }
+.ob-sw { display: flex; gap: 4px; }
+.ob-sw i { width: 22px; height: 22px; border-radius: 7px; display: block; border: 1px solid rgba(0,0,0,.08); }
+.ob-hobbies { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ob-hobby { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--bg); cursor: pointer; font: inherit; font-size: .85rem; font-weight: 600; color: var(--ink); }
+.ob-hobby.on { border-color: var(--brand-dark); background: var(--brand-soft); }
+.ob-hobby-emoji { font-size: 1rem; }
+.ob-av-preview { display: flex; justify-content: center; margin: 10px 0; }
+.ob-av-emoji { font-size: 44px; }
+.ob-av-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 8px; }
+@media (max-width: 480px) { .ob-av-grid { grid-template-columns: repeat(4, 1fr); } }
+.ob-av-grid button { border: 2px solid var(--line); background: var(--bg); border-radius: 12px; cursor: pointer; font-size: 20px; padding: 4px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+.ob-av-grid button.on { border-color: var(--brand-dark); }
+.ob-av-grid .anime-av { width: 100%; height: 100%; border-radius: 9px; }
+.ob-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; }
+/* avatars animé (sprite 4x2) */
+.anime-av { display: inline-block; background-image: url('/avatars/anime.png'); background-size: 400% 200%; background-repeat: no-repeat; }
+.anime-av.i0 { background-position: 0% 0%; } .anime-av.i1 { background-position: 33.333% 0%; } .anime-av.i2 { background-position: 66.666% 0%; } .anime-av.i3 { background-position: 100% 0%; }
+.anime-av.i4 { background-position: 0% 100%; } .anime-av.i5 { background-position: 33.333% 100%; } .anime-av.i6 { background-position: 66.666% 100%; } .anime-av.i7 { background-position: 100% 100%; }
+.anime-av.grand { width: 84px; height: 84px; border-radius: 18px; }
+.avatar-btn { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+.avatar-btn .anime-av { width: 100%; height: 100%; }
+.avatar-pick .anime-av { width: 100%; height: 100%; border-radius: 10px; }
+.profil-avatar .anime-av { width: 100%; height: 100%; border-radius: 50%; }
+/* particules */
+.particules { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+.particules span { position: absolute; top: -30px; opacity: 0; animation: part-fall linear infinite; }
+@keyframes part-fall { 0% { transform: translateY(-4vh) rotate(0deg); opacity: 0; } 12% { opacity: .35; } 90% { opacity: .25; } 100% { transform: translateY(105vh) rotate(320deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .particules { display: none; } }
