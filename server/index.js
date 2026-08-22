@@ -28,8 +28,8 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; img-src 'self' data: https://i.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://www.youtube.com; " +
-      "connect-src 'self'; media-src 'self' https://cdn.islamic.network; object-src 'none'; base-uri 'self'; form-action 'self'; " +
+    "default-src 'self'; img-src 'self' data: https://i.ytimg.com https://upload.wikimedia.org https://flagcdn.com https://images.metmuseum.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://www.youtube.com; " +
+      "connect-src 'self'; media-src 'self' https://cdn.islamic.network https://api.dictionaryapi.dev; object-src 'none'; base-uri 'self'; form-action 'self'; " +
       "worker-src 'self'; frame-src https://www.youtube-nocookie.com https://www.youtube.com"
   );
   next();
@@ -47,6 +47,7 @@ app.get('/api/version', (req, res) =>
 
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/eleve', require('./routes/eleve'));
+app.use('/api/decouverte', require('./routes/decouverte'));
 
 /* Images du catalogue métiers uploadées par les admins (contenu public). */
 app.use('/media/metiers', express.static(path.join(UPLOADS, 'metiers')));

@@ -51,6 +51,14 @@ export function clearErreur(id, matiere, lecon) {
   return p;
 }
 
+export function addBonus(id, n) {
+  const p = getProg(id);
+  p.bonus = (p.bonus || 0) + n;
+  p.jours[new Date().toISOString().slice(0, 10)] = true;
+  save(id, p);
+  return p;
+}
+
 export function tickMinutes(id, n = 1) {
   const p = getProg(id);
   p.minutes += n;
@@ -144,7 +152,7 @@ export function fmtMin(min) {
 export function xpOf(prog) {
   const vues = Object.keys(prog.cours).length;
   const quizPts = (prog.quiz || []).reduce((s, q) => s + q.score, 0);
-  return vues * 10 + quizPts * 5 + (prog.minutes || 0);
+  return vues * 10 + quizPts * 5 + (prog.minutes || 0) + (prog.bonus || 0);
 }
 const NIVEAUX = ['Graine', 'Pousse', 'Arbre', 'Étoile', 'Champion', 'Légende'];
 const PAS_XP = 250;

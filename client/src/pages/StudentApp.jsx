@@ -20,6 +20,7 @@ import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
+import Decouverte from './Decouverte.jsx';
 import Onboarding from './Onboarding.jsx';
 import Flashcards from './Flashcards.jsx';
 import Illu from '../components/Illustrations.jsx';
@@ -782,6 +783,8 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
           ))}
         </div>
       )}
+
+      <Decouverte meId={me.id} />
 
       <h2 className="home3-title">Tous tes espaces</h2>
       <div className="bento">

@@ -2186,3 +2186,30 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 .pf-theme { display: inline-flex; align-items: center; gap: 7px; border: 2px solid var(--line); background: var(--card2); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 0.8rem; font-weight: 700; color: var(--ink); cursor: pointer; }
 .pf-theme .dot { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.12); }
 .pf-theme.on { border-color: var(--brand); background: var(--brand-soft); }
+
+/* ================================================================
+   KAY DIANG v33 : section Découverte du jour (NASA, pays, mot, wiki)
+   ================================================================ */
+.dec { margin: 18px 0 4px; display: grid; gap: 10px; }
+.dec-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dec-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 520px) { .dec-grid { grid-template-columns: 1fr; } }
+.dec-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
+.dec-card.wide { grid-column: 1 / -1; }
+.dec-img { width: 100%; max-height: 170px; object-fit: cover; border-radius: 12px; }
+.dec-titre { font-size: 0.9rem; font-weight: 800; margin: 0; color: var(--ink); }
+.dec-txt { font-size: 0.78rem; color: var(--muted); margin: 0; }
+.dec-src { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; opacity: 0.8; }
+.dec-cit { font-size: 0.98rem; font-style: italic; margin: 2px 0 0; color: var(--ink); line-height: 1.5; }
+.dec-cit-a { font-size: 0.75rem; color: var(--muted); font-weight: 700; }
+.dec-pays { display: flex; gap: 10px; align-items: center; }
+.dec-flag-emoji { font-size: 40px; line-height: 1; flex: 0 0 auto; }
+.dec-mot-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dec-audio { border: none; background: var(--brand); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: 0 0 auto; }
+.dec-quiz { padding: 14px; }
+.dec-quiz-q { font-size: 0.95rem; font-weight: 700; margin: 10px 0; color: var(--ink); }
+.dec-quiz-choix { display: grid; gap: 8px; }
+.dec-choice { text-align: left; border: 1.5px solid var(--line); background: var(--card2); color: var(--ink); border-radius: 12px; padding: 10px 12px; font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; }
+.dec-choice:disabled { cursor: default; opacity: 0.75; }
+.dec-choice.ok { border-color: var(--ok); background: var(--ok-soft); opacity: 1; }
+.dec-choice.ko { border-color: var(--danger); background: var(--danger-soft); opacity: 1; }
