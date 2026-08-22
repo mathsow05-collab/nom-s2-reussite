@@ -17,3 +17,6 @@ client/dist/
 demo-accounts.txt
 *.log
 .DS_Store
+
+# Vocabulaire anglais (code source, PAS les données utilisateur)
+!client/src/data/
