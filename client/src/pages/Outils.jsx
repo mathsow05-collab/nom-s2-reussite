@@ -18,6 +18,7 @@ function mention(m) {
 }
 
 export default function Outils() {
+  const [vue, setVue] = useState('simu');
   const [me, setMe] = useState(null);
   useEffect(() => {
     api('/eleve/me').then(setMe);
@@ -34,11 +35,24 @@ export default function Outils() {
       <section className="banner">
         <h2>Boîte à outils de réussite</h2>
         <p>
-          {me.prenom}, calcule ta moyenne générale en direct et construis ton planning de révision jusqu'au jour J.
+          {me.prenom}, trois outils pour réussir : simulateur de moyenne, planning jusqu'au jour J et emploi du temps
+          de révision personnalisé.
         </p>
       </section>
-      <Simulateur filiere={filiere} />
-      <Planning filiere={filiere} />
+      <div className="pills">
+        <button className={vue === 'simu' ? 'pill active' : 'pill'} onClick={() => setVue('simu')}>
+          📊 Simulateur de moyenne
+        </button>
+        <button className={vue === 'plan' ? 'pill active' : 'pill'} onClick={() => setVue('plan')}>
+          🎯 Planning jusqu'au jour J
+        </button>
+        <button className={vue === 'emploi' ? 'pill active' : 'pill'} onClick={() => setVue('emploi')}>
+          🗓 Emploi du temps de révision
+        </button>
+      </div>
+      {vue === 'simu' && <Simulateur filiere={filiere} />}
+      {vue === 'plan' && <Planning filiere={filiere} />}
+      {vue === 'emploi' && <EmploiRevision filiere={filiere} matieres={FILIERES[filiere].matieres} />}
     </main>
   );
 }

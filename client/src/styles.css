@@ -2273,3 +2273,31 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .en-fb.ko2 { background: var(--danger-soft); color: var(--danger); }
 .en-win { text-align: center; padding: 26px 18px; animation: qc-pop 0.5s ease; }
 .en-win-trophy { width: 84px; height: 84px; margin: 0 auto 10px; border-radius: 50%; background: var(--warn-soft); color: var(--warn); display: flex; align-items: center; justify-content: center; }
+
+/* ================================================================
+   KAY DIANG v36 : emploi du temps de révision hebdomadaire
+   ================================================================ */
+.er-jours { display: grid; gap: 10px; margin-top: 12px; }
+.er-jour { border: 1px solid var(--line); background: var(--card2); border-radius: 14px; padding: 10px 12px; display: grid; gap: 8px; }
+.er-jour-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.er-jour-top strong { color: var(--ink); font-size: 0.92rem; }
+.er-switch { border: 1.5px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.74rem; font-weight: 800; cursor: pointer; }
+.er-switch.on { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.er-champs { display: flex; gap: 10px; }
+.er-champs label { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.er-champs small { color: var(--muted); font-size: 0.68rem; font-weight: 700; }
+.er-champs select.input { padding: 7px 8px; font-size: 0.85rem; }
+.er-mats small { display: block; margin-bottom: 5px; font-size: 0.7rem; }
+.er-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.er-chip { border: 1.5px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+.er-chip.on { background: var(--brand-soft); }
+.er-table-wrap { overflow-x: auto; margin-top: 14px; border-radius: 12px; border: 1px solid var(--line); }
+.er-table { border-collapse: collapse; width: 100%; min-width: 560px; background: var(--card); }
+.er-table th { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 8px 4px; border-bottom: 1px solid var(--line); background: var(--card2); }
+.er-table td { border: 1px solid var(--line); padding: 2px; text-align: center; height: 34px; }
+.er-h { font-size: 0.7rem; font-weight: 800; color: var(--muted); background: var(--card2); white-space: nowrap; padding: 0 8px; }
+.er-cours { background: var(--card2); color: var(--muted); font-size: 0.8rem; }
+.er-vide { color: var(--line); }
+.er-cell { width: 100%; border: 1.5px solid; border-radius: 8px; font: inherit; font-size: 0.62rem; font-weight: 800; padding: 5px 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.er-cell.diff { box-shadow: 0 0 0 2px var(--danger-soft); }
+.er-diffs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
