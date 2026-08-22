@@ -446,7 +446,7 @@ export default function StudentApp() {
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'anglais' && <Anglais meId={me.id} />}
-      {tab === 'culture' && filiere !== 'AR' && <Culture meId={me.id} />}
+      {tab === 'culture' && filiere !== 'AR' && <Culture />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
