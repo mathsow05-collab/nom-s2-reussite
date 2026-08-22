@@ -52,21 +52,61 @@ const MOTS = [
   'believe', 'effort', 'progress', 'challenge', 'curious', 'brilliant', 'grateful', 'peaceful',
 ];
 
-async function oeuvre() {
-  /* Image du jour : tire des résumés Wikipédia au hasard jusqu'à un article illustré. */
-  for (let i = 0; i < 5; i++) {
-    try {
-      const r = await fetch('https://fr.wikipedia.org/api/rest_v1/page/random/summary');
-      const a = await r.json();
-      const img = a?.originalimage?.source || a?.thumbnail?.source;
-      if (a?.title && a?.extract && img)
-        return { titre: a.title, artiste: '', date: '', img, texte: String(a.extract).slice(0, 220) };
-    } catch {
-      /* silencieux */
-    }
+async function histo() {
+  /* Un jour comme aujourd'hui : événements historiques (<= 1980) de Wikipédia FR. */
+  try {
+    const n = new Date();
+    const mm = String(n.getMonth() + 1).padStart(2, '0');
+    const dd = String(n.getDate()).padStart(2, '0');
+    const r = await fetch(`https://fr.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`);
+    const d = await r.json();
+    const evs = (d?.events || []).filter((e) => e?.year && e.year <= 1980 && e?.text);
+    if (!evs.length) return null;
+    const e = evs[jourAnnee() % evs.length];
+    return { annee: e.year, texte: e.text };
+  } catch {
+    return null;
   }
-  return null;
 }
+
+const SAVIEZVOUS = [
+  'Le miel ne périme jamais : on a retrouvé dans des tombeaux égyptiens du miel vieux de 3 000 ans, encore comestible.',
+  'La pieuvre a trois cœurs et son sang est bleu.',
+  'En été, la tour Eiffel grandit d’environ 15 cm à cause de la dilatation du métal.',
+  'Un éclair est environ cinq fois plus chaud que la surface du Soleil.',
+  'Le Sahara était vert et fertile il y a environ 6 000 ans.',
+  'Une cuillère à café d’étoile à neutrons pèserait plusieurs milliards de tonnes.',
+  'La guerre la plus courte de l’histoire a duré 38 minutes : entre le Royaume-Uni et Zanzibar, en 1896.',
+  'L’université d’Oxford est plus ancienne que l’Empire aztèque.',
+  'Il y a plus d’arbres sur Terre que d’étoiles dans la Voie lactée.',
+  'Sur Vénus, une journée dure plus longtemps qu’une année.',
+  'Les requins existaient déjà avant les arbres.',
+  'Cléopâtre a vécu plus près de l’invention du smartphone que de la construction de la grande pyramide de Gizeh.',
+  'Le tyrannosaure est plus proche de nous dans le temps que du stégosaure.',
+  'Les kangourous ne peuvent pas sauter à reculons.',
+  'Les flamants roses sont roses à cause des crevettes et algues qu’ils mangent.',
+  'Une journée sur la Lune dure environ un mois terrestre.',
+  'Il y a plus de parties d’échecs possibles que d’atomes dans l’univers observable.',
+  'La première programmeuse de l’histoire était une femme : Ada Lovelace, en 1843.',
+  'En 1783, les frères Montgolfier ont envoyé dans le ciel un mouton, un canard et un coq.',
+  'L’Australie est plus large que la Lune.',
+  'Les empreintes digitales du koala sont si proches de celles de l’humain qu’elles ont déjà trompé des enquêtes.',
+  'Le cœur humain pompe environ 7 500 litres de sang par jour.',
+  'Le cerveau utilise environ 20 % de l’énergie du corps.',
+  'La vitesse de la lumière est exactement de 299 792 458 mètres par seconde.',
+  'Le son voyage environ quatre fois plus vite dans l’eau que dans l’air.',
+  'Le bambou peut pousser de près d’un mètre en une seule journée.',
+  'La langue de la girafe est bleue-violet et mesure environ 50 cm.',
+  'Le lac Rose du Sénégal doit sa couleur à un micro-organisme qui vit dans ses eaux très salées.',
+  'Le baobab peut stocker des dizaines de milliers de litres d’eau dans son tronc.',
+  'Tombouctou fut, au XVIe siècle, un grand centre intellectuel avec des centaines de milliers de manuscrits.',
+  'L’Everest grandit d’environ 4 millimètres par an.',
+  'Le premier message envoyé sur Internet en 1969 fut « LO » : l’ordinateur a planté avant la fin de « LOGIN ».',
+  'Tim Berners-Lee, inventeur du Web, a offert son invention gratuitement au monde entier.',
+  'Une fourmi peut porter environ 50 fois son propre poids.',
+  'La Grande Muraille de Chine s’est construite sur plus de 2 000 ans.',
+  'L’Islande chauffe la quasi-totalité de ses maisons grâce à la géothermie.',
+];
 
 async function pays() {
   const p = PAYS[jourAnnee() % PAYS.length];
@@ -153,23 +193,17 @@ async function mot() {
   }
 }
 
-async function article() {
-  try {
-    const r = await fetch('https://fr.wikipedia.org/api/rest_v1/page/random/summary');
-    const a = await r.json();
-    if (a?.title && a?.extract)
-      return { titre: a.title, texte: String(a.extract).slice(0, 350), img: a?.originalimage?.source || a?.thumbnail?.source || '' };
-  } catch {
-    /* silencieux */
-  }
-  return null;
-}
-
 router.get('/jour', requireEleve(db), async (req, res) => {
   const today = auj();
   if (cacheJour.date === today && cacheJour.data) return res.json(cacheJour.data);
-  const [oe, pa, mo, ar] = await Promise.all([oeuvre(), pays(), mot(), article()]);
-  const data = { oeuvre: oe, pays: pa, mot: mo, article: ar, citation: CITATIONS[jourAnnee() % CITATIONS.length] };
+  const [hi, pa, mo] = await Promise.all([histo(), pays(), mot()]);
+  const data = {
+    histo: hi,
+    pays: pa,
+    mot: mo,
+    saviezvous: SAVIEZVOUS[jourAnnee() % SAVIEZVOUS.length],
+    citation: CITATIONS[jourAnnee() % CITATIONS.length],
+  };
   cacheJour = { date: today, data };
   res.json(data);
 });

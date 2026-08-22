@@ -131,12 +131,19 @@ export default function Decouverte({ meId }) {
             </div>
           )}
 
-          {d.oeuvre?.img && (
-            <div className="dec-card wide">
-              <img className="dec-img" src={d.oeuvre.img} alt={d.oeuvre.titre} loading="lazy" />
-              <p className="dec-titre">🖼 {d.oeuvre.titre}</p>
-              {d.oeuvre.texte && <p className="dec-txt">{d.oeuvre.texte}…</p>}
-              <span className="dec-src">Image du jour — Wikipédia</span>
+          {d.histo && (
+            <div className="dec-card">
+              <p className="dec-titre">📜 En {d.histo.annee}, un jour comme aujourd'hui</p>
+              <p className="dec-txt">{d.histo.texte}</p>
+              <span className="dec-src">Histoire — Wikipédia</span>
+            </div>
+          )}
+
+          {d.saviezvous && (
+            <div className="dec-card">
+              <p className="dec-titre">❓ Le saviez-vous ?</p>
+              <p className="dec-txt">{d.saviezvous}</p>
+              <span className="dec-src">Culture générale</span>
             </div>
           )}
 
@@ -173,12 +180,19 @@ export default function Decouverte({ meId }) {
             </div>
           )}
 
-          {d.article && (
-            <div className="dec-card wide">
-              {d.article.img && <img className="dec-img" src={d.article.img} alt={d.article.titre} loading="lazy" />}
-              <p className="dec-titre">❓ Le saviez-vous ? {d.article.titre}</p>
-              <p className="dec-txt">{d.article.texte}…</p>
-              <span className="dec-src">Article du jour — Wikipédia</span>
+          {d.histo && (
+            <div className="dec-card">
+              <p className="dec-titre">📜 En {d.histo.annee}, un jour comme aujourd'hui</p>
+              <p className="dec-txt">{d.histo.texte}</p>
+              <span className="dec-src">Histoire — Wikipédia</span>
+            </div>
+          )}
+
+          {d.saviezvous && (
+            <div className="dec-card">
+              <p className="dec-titre">❓ Le saviez-vous ?</p>
+              <p className="dec-txt">{d.saviezvous}</p>
+              <span className="dec-src">Culture générale</span>
             </div>
           )}
         </div>
