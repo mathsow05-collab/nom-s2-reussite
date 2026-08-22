@@ -2242,3 +2242,34 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 [data-theme='sakura'] body { background: radial-gradient(620px 300px at 92% -60px, #ffd7e8 0%, transparent 62%), radial-gradient(9px 9px at 12% 24%, #fbcfe8 45%, transparent 52%), radial-gradient(7px 7px at 80% 38%, #f9a8d4 45%, transparent 52%), radial-gradient(8px 8px at 38% 72%, #fbcfe8 45%, transparent 52%), radial-gradient(6px 6px at 64% 14%, #f9a8d4 45%, transparent 52%), var(--bg); }
 [data-theme='ocean'] body { background: radial-gradient(700px 340px at 8% -70px, rgba(14, 165, 233, 0.20), transparent 62%), radial-gradient(10px 10px at 86% 30%, rgba(56, 189, 248, 0.14) 45%, transparent 52%), radial-gradient(8px 8px at 20% 64%, rgba(56, 189, 248, 0.10) 45%, transparent 52%), var(--bg); }
 body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0.10), transparent 62%), radial-gradient(520px 260px at 4% 104%, rgba(14, 165, 233, 0.08), transparent 60%), var(--bg); }
+
+/* ================================================================
+   KAY DIANG v35 : Maîtrise l'anglais (rangs E→National)
+   ================================================================ */
+.en-ranks { display: flex; gap: 6px; margin-bottom: 12px; }
+.en-rank { flex: 1; border: 2px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; opacity: 0.55; }
+.en-rank strong { font-size: 1rem; color: var(--ink); }
+.en-rank small { font-size: 0.6rem; color: var(--muted); }
+.en-rank.done { opacity: 0.85; border-color: var(--ok); }
+.en-rank.on { opacity: 1; border-color: var(--brand); background: var(--brand-soft); transform: scale(1.05); box-shadow: var(--shadow); }
+.en-stats { display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 10px 14px; font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+.en-stats strong { color: var(--ink); }
+.en-jeu { padding: 16px; }
+.en-top { display: flex; align-items: center; gap: 10px; }
+.en-rang-badge { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; font-weight: 900; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+.en-serie-bar { flex: 1; height: 8px; border-radius: 99px; background: var(--card2); overflow: hidden; }
+.en-serie-bar > div { height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand-dark)); transition: width 0.3s; }
+.en-qnum { font-weight: 800; font-size: 0.85rem; color: var(--muted); }
+.en-dir { margin: 14px 0 4px; font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.en-mot { font-size: 1.5rem; font-weight: 900; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.01em; }
+.en-form { display: flex; gap: 8px; }
+.en-form .input { flex: 1; }
+.en-essais { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
+.en-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ok); }
+.en-dot.off { background: var(--line); }
+.en-fb { margin-top: 12px; border-radius: 12px; padding: 10px 12px; font-size: 0.88rem; font-weight: 700; animation: qc-pop 0.3s ease; }
+.en-fb.ok { background: var(--ok-soft); color: var(--ok); }
+.en-fb.ko1 { background: var(--warn-soft); color: var(--warn); }
+.en-fb.ko2 { background: var(--danger-soft); color: var(--danger); }
+.en-win { text-align: center; padding: 26px 18px; animation: qc-pop 0.5s ease; }
+.en-win-trophy { width: 84px; height: 84px; margin: 0 auto 10px; border-radius: 50%; background: var(--warn-soft); color: var(--warn); display: flex; align-items: center; justify-content: center; }

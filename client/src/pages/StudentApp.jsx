@@ -18,6 +18,7 @@ import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
 import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
+import Anglais from './Anglais.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -444,6 +445,7 @@ export default function StudentApp() {
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
+      {tab === 'anglais' && <Anglais meId={me.id} />}
       {tab === 'culture' && filiere !== 'AR' && <Culture meId={me.id} />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
@@ -621,6 +623,7 @@ const TUILES = [
   { id: 'examens', icon: 'clock', img: '/metiers/juriste.jpg', titre: 'Examens', sub: 'Examens chronométrés', cls: 't-navy' },
   { id: 'quiz', icon: 'award', img: '/metiers/data.jpg', titre: 'Quiz', sub: 'Teste-toi', cls: 't-rose' },
   { id: 'flash', icon: 'layers', img: '/metiers/lettres.jpg', titre: 'Flashcards', sub: 'Mémo façon Anki', cls: 't-teal' },
+  { id: 'anglais', icon: 'cap', titre: 'Maîtrise l’anglais', sub: '1000 mots en jeu · rangs E → National', cls: 't-sky' },
   { id: 'agenda', icon: 'calendar', img: '/metiers/campus.jpg', titre: 'Agenda', sub: 'Échéances & planning', cls: 't-sky' },
   { id: 'echanges', icon: 'chat', img: '/metiers/diplomate.jpg', titre: 'Échanges', sub: 'Administration & communauté', cls: 't-green' },
   { id: 'chat', icon: 'users', img: '/metiers/campus.jpg', titre: 'Chat & binômes', sub: 'Discute avec tes amis', cls: 't-violet' },
