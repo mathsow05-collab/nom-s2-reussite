@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, FILIERES } from '../api.js';
 import { Spinner } from '../ui.jsx';
 import Icon from '../Icon.jsx';
+import EmploiRevision from './EmploiRevision.jsx';
 
 const COEFS_DEF = {
   S2: { maths: 5, physique: 4, chimie: 3, svt: 3, francais: 2, 'histoire-geographie': 2, anglais: 2, philosophie: 2 },
