@@ -5,7 +5,6 @@ import { Modal } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
 import Onboarding, { THEMES } from './Onboarding.jsx';
-import { AVATARS } from './StudentApp.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
@@ -42,11 +41,7 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
           ⎋
         </button>
         <div className="pf-avatar">
-          {me.avatar?.startsWith('an:') ? (
-            <span className={`anime-av grand i${me.avatar.slice(3)}`} />
-          ) : (
-            me.avatar || '🧑‍'
-          )}
+          <span className={`anime-av grand i${me.avatar?.startsWith('an:') ? me.avatar.slice(3) : (me.id || 0) % 8}`} />
         </div>
         <h1 className="pf-nom">
           {me.prenom} {me.nom}
@@ -219,15 +214,7 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
       </section>
 
       <section className="card s3card">
-        <h2>Mon avatar</h2>
-        <div className="avatar-grid">
-          {AVATARS.map((a) => (
-            <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} onClick={() => onAvatar(a)}>
-              {a}
-            </button>
-          ))}
-        </div>
-        <h2 style={{ marginTop: 12 }}>Style animé</h2>
+        <h2>Mon avatar style animé</h2>
         <div className="avatar-grid">
           {Array.from({ length: 8 }, (_, i) => `an:${i}`).map((a) => (
             <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} onClick={() => onAvatar(a)}>

@@ -2213,3 +2213,32 @@ h4 { margin: 12px 0 6px; font-size: 0.9rem; }
 .dec-choice:disabled { cursor: default; opacity: 0.75; }
 .dec-choice.ok { border-color: var(--ok); background: var(--ok-soft); opacity: 1; }
 .dec-choice.ko { border-color: var(--danger); background: var(--danger-soft); opacity: 1; }
+
+/* ================================================================
+   KAY DIANG v34 : espacements corrigés, esthétique renforcée,
+   effets dans les quiz (plus de particules qui tombent)
+   ================================================================ */
+.hello3 { margin-bottom: 14px; background: linear-gradient(135deg, var(--brand-dark), var(--brand)); color: #fff; }
+.hello3::after { content: ''; position: absolute; top: -70px; right: -45px; width: 180px; height: 180px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); }
+.hello3 h1 { color: #fff; }
+.hello3 p { color: rgba(255, 255, 255, 0.85); }
+.resume3 { margin-bottom: 12px; }
+.welcome3 { margin-bottom: 12px; }
+.card { background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 3%, var(--card)), var(--card) 34%); }
+.btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); box-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 35%, transparent); }
+@supports not (background: color-mix(in srgb, red 50%, blue)) { .btn-primary { box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35); } }
+.ptile { transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+.ptile:hover { transform: translateY(-2px); border-color: var(--brand); box-shadow: var(--shadow); }
+.avatar-btn:hover .anime-av, .avatar-pick:hover .anime-av { transform: scale(1.06); }
+.anime-av { transition: transform 0.15s; }
+/* effets quiz : pop sur bonne réponse, secousse sur erreur, jamais distrayant */
+.quiz-choice.good { animation: qc-pop 0.4s ease; }
+.quiz-choice.bad { animation: qc-shake 0.35s ease; }
+.quiz-result.win { animation: qc-pop 0.5s ease; }
+.fb3 { animation: qc-pop 0.3s ease; }
+@keyframes qc-pop { 0% { transform: scale(1); } 40% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes qc-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 60% { transform: translateX(5px); } }
+/* fonds de thème plus riches (statiques, jamais animés) */
+[data-theme='sakura'] body { background: radial-gradient(620px 300px at 92% -60px, #ffd7e8 0%, transparent 62%), radial-gradient(9px 9px at 12% 24%, #fbcfe8 45%, transparent 52%), radial-gradient(7px 7px at 80% 38%, #f9a8d4 45%, transparent 52%), radial-gradient(8px 8px at 38% 72%, #fbcfe8 45%, transparent 52%), radial-gradient(6px 6px at 64% 14%, #f9a8d4 45%, transparent 52%), var(--bg); }
+[data-theme='ocean'] body { background: radial-gradient(700px 340px at 8% -70px, rgba(14, 165, 233, 0.20), transparent 62%), radial-gradient(10px 10px at 86% 30%, rgba(56, 189, 248, 0.14) 45%, transparent 52%), radial-gradient(8px 8px at 20% 64%, rgba(56, 189, 248, 0.10) 45%, transparent 52%), var(--bg); }
+body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0.10), transparent 62%), radial-gradient(520px 260px at 4% 104%, rgba(14, 165, 233, 0.08), transparent 60%), var(--bg); }

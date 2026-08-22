@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import Icon from '../Icon.jsx';
-import { AVATARS } from './StudentApp.jsx';
 
 /* Onboarding de personnalisation (première connexion) :
    1) thème avec aperçu en direct, 2) passe-temps, 3) avatar (emoji ou animé). */
@@ -26,7 +25,7 @@ export const PASSETIMES = [
 export default function Onboarding({ prenom, theme, onTheme, onFin }) {
   const [etape, setEtape] = useState(0);
   const [hobbies, setHobbies] = useState([]);
-  const [av, setAv] = useState('');
+  const [av, setAv] = useState('an:0');
 
   const bascule = (id) => setHobbies((h) => (h.includes(id) ? h.filter((x) => x !== id) : [...h, id]));
 
@@ -79,21 +78,10 @@ export default function Onboarding({ prenom, theme, onTheme, onFin }) {
 
         {etape === 2 && (
           <>
-            <h2>Choisis ton avatar</h2>
-            <p className="muted small">Style classique ou style animé — changeable à tout moment dans le Profil.</p>
+            <h2>Choisis ton avatar style animé</h2>
+            <p className="muted small">Changeable à tout moment dans le Profil.</p>
             <div className="ob-av-preview">
-              {av.startsWith('an:') ? (
-                <span className={`anime-av grand i${av.slice(3)}`} />
-              ) : (
-                <span className="ob-av-emoji">{av || '🧑‍'}</span>
-              )}
-            </div>
-            <div className="ob-av-grid">
-              {AVATARS.slice(0, 8).map((a) => (
-                <button key={a} className={av === a ? 'on' : ''} onClick={() => setAv(a)}>
-                  {a}
-                </button>
-              ))}
+              <span className={`anime-av grand i${av.startsWith('an:') ? av.slice(3) : 0}`} />
             </div>
             <div className="ob-av-grid anime">
               {Array.from({ length: 8 }, (_, i) => `an:${i}`).map((a) => (

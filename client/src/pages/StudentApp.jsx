@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, getToken, clearToken, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
@@ -368,7 +368,7 @@ export default function StudentApp() {
             {notifList.length > 0 && <span className="dot3">{notifList.length}</span>}
           </button>
           <button className="avatar-btn" onClick={() => setTab('profil')} title="Mon profil">
-            {me.avatar?.startsWith('an:') ? <span className={`anime-av i${me.avatar.slice(3)}`} /> : me.avatar || '🧑‍'}
+            <span className={`anime-av i${me.avatar?.startsWith('an:') ? me.avatar.slice(3) : (me.id || 0) % 8}`} />
           </button>
           <div className="topbar-id">
             <strong>
@@ -384,7 +384,6 @@ export default function StudentApp() {
         </div>
       </header>
 
-      {tab === 'accueil' && <Particules hobbies={hobbies} />}
 
       {onboard && (
         <Onboarding
@@ -446,7 +445,7 @@ export default function StudentApp() {
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
-      {tab === 'culture' && filiere !== 'AR' && <Culture />}
+      {tab === 'culture' && filiere !== 'AR' && <Culture meId={me.id} />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
@@ -612,39 +611,6 @@ export default function StudentApp() {
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-/* Particules décoratives selon les passe-temps (coupées si reduced-motion). */
-const PART_EMOJI = { anime: '🌸', foot: '⚽', musique: '🎵', gaming: '✨', lecture: '📖', dessin: '🎨' };
-function Particules({ hobbies }) {
-  const emos = (hobbies || []).slice(0, 2).map((h) => PART_EMOJI[h]).filter(Boolean);
-  const parts = useMemo(
-    () =>
-      emos.length
-        ? Array.from({ length: 12 }, (_, i) => ({
-            e: emos[i % emos.length],
-            left: (i * 83) % 100,
-            delay: (i * 1.7) % 12,
-            dur: 11 + ((i * 3) % 7),
-            size: 12 + ((i * 5) % 10),
-          }))
-        : [],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hobbies.join(',')]
-  );
-  if (!parts.length) return null;
-  return (
-    <div className="particules" aria-hidden="true">
-      {parts.map((p, i) => (
-        <span
-          key={i}
-          style={{ left: `${p.left}%`, animationDelay: `${p.delay}s`, animationDuration: `${p.dur}s`, fontSize: p.size }}
-        >
-          {p.e}
-        </span>
-      ))}
     </div>
   );
 }
@@ -1126,11 +1092,11 @@ function ProfilModal({ me, onClose, onAvatar }) {
           <div className="muted small mono">{me.eleve_id}</div>
         </div>
       </div>
-      <label className="label">Choisis ton avatar</label>
+      <label className="label">Choisis ton avatar style animé</label>
       <div className="avatar-grid">
-        {AVATARS.map((a) => (
+        {Array.from({ length: 8 }, (_, i) => `an:${i}`).map((a) => (
           <button key={a} className={me.avatar === a ? 'avatar-pick actif' : 'avatar-pick'} disabled={busy} onClick={() => choisir(a)}>
-            {a}
+            <span className={`anime-av i${a.slice(3)}`} />
           </button>
         ))}
       </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Spinner } from '../ui.jsx';
 import MiniJeu from '../components/MiniJeu.jsx';
+import Decouverte from './Decouverte.jsx';
 import Globe3D from '../components/Globe3D.jsx';
 
 export const CATS = {
@@ -19,7 +20,7 @@ function fmt(d) {
   return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-export default function Culture() {
+export default function Culture({ meId }) {
   const [list, setList] = useState(null);
   const [cat, setCat] = useState('all');
 
@@ -43,6 +44,8 @@ export default function Culture() {
         <h2>Culture du monde</h2>
         <p>Chaque jour, une info utile : actu expliquée, citations, biographies, méthodes… et apprends en jouant avec le challenge Histoire-Géo !</p>
       </section>
+
+      {meId && <Decouverte meId={meId} />}
 
       <Globe3D />
 
