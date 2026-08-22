@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, FILIERES, MATIERE_BY_ID } from '../api.js';
 import Icon from '../Icon.jsx';
+import { sonOk, sonKo, sonWin } from '../sons.js';
 import { Spinner } from '../ui.jsx';
 import { addQuiz, clearErreur, getProg } from '../progress.js';
 
@@ -106,7 +107,11 @@ export default function Quiz() {
   function choisir(i) {
     if (revealed) return;
     setAnswers((a) => a.map((v, j) => (j === idx ? i : v)));
-    if (feedback) setRevealed(true);
+    if (feedback) {
+      setRevealed(true);
+      if (i === questions[idx].bonne) sonOk();
+      else sonKo();
+    }
   }
 
   function suivant() {
@@ -233,6 +238,11 @@ export default function Quiz() {
 
   /* ---------------- résultat ---------------- */
   if (step === 'result') {
+    if (typeof window !== 'undefined' && !window.__quizWinPlayed) {
+      window.__quizWinPlayed = true;
+      const sc = questions.reduce((s2, q, i) => s2 + (answers[i] === q.bonne ? 1 : 0), 0);
+      if (sc / questions.length >= 0.6) sonWin();
+    }
     const score = questions.reduce((s, q, i) => s + (answers[i] === q.bonne ? 1 : 0), 0);
     const pct = Math.round((score / questions.length) * 100);
     const mention =

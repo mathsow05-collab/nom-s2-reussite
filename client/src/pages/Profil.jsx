@@ -5,11 +5,13 @@ import { Modal } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
 import Onboarding, { THEMES } from './Onboarding.jsx';
+import { sonsActifs, setSons } from '../sons.js';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
 export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme, onSetTheme, onPersoChange }) {
   const [perso, setPerso] = useState(false);
+  const [sons, setSonsEtat] = useState(sonsActifs());
   const stats = computeStats(prog, cours);
   const xp = xpOf(prog);
   const lvl = levelOf(xp);
@@ -132,6 +134,16 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
         <button className="theme3" onClick={onTheme}>
           <span>Mode sombre rapide (confort le soir)</span>
           <span className={theme === 'dark' ? 'switch3 on' : 'switch3'} />
+        </button>
+        <button
+          className="theme3"
+          onClick={() => {
+            setSons(!sons);
+            setSonsEtat(!sons);
+          }}
+        >
+          <span>🔊 Petits sons agréables (appuis, réussites)</span>
+          <span className={sons ? 'switch3 on' : 'switch3'} />
         </button>
         <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setPerso(true)}>
           <Icon name="spark" size={15} /> Revoir ma personnalisation complète

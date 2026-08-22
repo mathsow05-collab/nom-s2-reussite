@@ -19,6 +19,7 @@ import Suivi from './Suivi.jsx';
 import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Anglais from './Anglais.jsx';
+import { sonClic } from '../sons.js';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -31,7 +32,6 @@ export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','
 const TABS = [
   { id: 'ia', label: 'Prof IA', icon: 'chat' },
   { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
-  { id: 'culture', label: 'Culture', icon: 'bulb', pasAR: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
@@ -291,6 +291,15 @@ export default function StudentApp() {
     };
   }, []);
 
+  // Petits sons d'interface : tic doux sur chaque appui.
+  useEffect(() => {
+    const h = (e) => {
+      if (e.target?.closest?.('button, .pill, .ptile, .avatar-pick, .er-chip')) sonClic();
+    };
+    document.addEventListener('click', h, true);
+    return () => document.removeEventListener('click', h, true);
+  }, []);
+
   // Bouton retour Android : navigue dans l'app ; sur l'accueil → confirmation.
   const [confirmQuit, setConfirmQuit] = useState(false);
   const [onboard, setOnboard] = useState(() => {
@@ -446,7 +455,6 @@ export default function StudentApp() {
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'anglais' && <Anglais meId={me.id} />}
-      {tab === 'culture' && filiere !== 'AR' && <Culture />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
@@ -631,7 +639,6 @@ const TUILES = [
   { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
   { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
   { id: 'parcours', icon: 'book', img: '/metiers/parcours.jpg', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
-  { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Découvertes & mini-jeux', cls: 't-pink', pasAR: true },
 ];
 const ICO_TAB = {
   cours: 'book', annales: 'file', examens: 'clock', quiz: 'target', flash: 'layers', agenda: 'calendar', echanges: 'chat',

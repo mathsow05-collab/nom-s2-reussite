@@ -2306,3 +2306,15 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .anime-av { aspect-ratio: 320 / 384; width: auto; height: 100%; }
 .anime-av.grand { width: auto; height: 88px; }
 .avatar-btn .anime-av, .avatar-pick .anime-av, .ob-av-grid .anime-av, .profil-avatar .anime-av, .pf-avatar .anime-av { width: auto; height: 100%; }
+
+/* ================================================================
+   KAY DIANG v38 : profil bien cadré + grille avatars lisible
+   ================================================================ */
+.profil3 { overflow-x: clip; }
+.profil3 .card { border-radius: 18px; }
+.pf-hero { padding: 22px 18px 18px; }
+.pf-nom { font-size: clamp(1.15rem, 5vw, 1.45rem); overflow-wrap: anywhere; }
+.pf-ligne { overflow-wrap: anywhere; }
+.pf-stat strong { overflow-wrap: anywhere; font-size: 0.98rem; }
+.avatar-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (min-width: 560px) { .avatar-grid { grid-template-columns: repeat(8, 1fr); } }

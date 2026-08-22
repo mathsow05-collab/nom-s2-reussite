@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Icon from '../Icon.jsx';
 import { MOTS, RANKS, TOTAL_MOTS } from '../data/english.js';
 import { addBonus } from '../progress.js';
+import { sonOk, sonKo, sonWin } from '../sons.js';
 
 const SERIE = 10;
 const LS = 'kd_english';
@@ -66,6 +67,7 @@ export default function Anglais({ meId }) {
       const bonus = essai === 0 ? 1 : 0;
       if (bonus) maj({ ...prog, first: prog.first + 1 });
       if (bonus && meId) addBonus(meId, bonus);
+      sonOk();
       setFb({ type: 'ok', texte: `✔ ${attendu}` });
       setTimeout(() => {
         setFb(null);
@@ -75,6 +77,7 @@ export default function Anglais({ meId }) {
           const np = { ...prog, series: prog.series + 1 };
           if (meId) addBonus(meId, gain);
           maj(np);
+          sonWin();
           setFbWin(true);
         } else {
           setIdx(idx + 1);
@@ -86,6 +89,7 @@ export default function Anglais({ meId }) {
       setFb({ type: 'ko1', texte: `✘ Pas tout à fait… 2e essai ! Indice : « ${attendu[0].toUpperCase()}… » (${attendu.length} caractères)` });
     } else {
       maj({ ...prog, doubles: prog.doubles + 1 });
+      sonKo();
       setFb({ type: 'ko2', texte: `La réponse était : ${attendu}. La série reprend à zéro — tu vas y arriver !` });
     }
   }
