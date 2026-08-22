@@ -326,15 +326,30 @@ router.put('/cours/:id', admin, pdfUpload, (req, res) => {
 /* ------------------------- Réglages (clé IA) ------------------------- */
 router.get('/settings', admin, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'gemini_key'").get();
-  res.json({ ia: !!process.env.GEMINI_API_KEY || !!row, source: process.env.GEMINI_API_KEY ? 'env' : row ? 'admin' : null });
+  const g = db.prepare("SELECT value FROM settings WHERE key = 'groq_key'").get();
+  res.json({
+    ia: !!process.env.GEMINI_API_KEY || !!row,
+    source: process.env.GEMINI_API_KEY ? 'env' : row ? 'admin' : null,
+    groq: !!process.env.GROQ_API_KEY || !!g,
+  });
 });
 
 router.post('/settings/ia', admin, (req, res) => {
   if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
   const key = String(req.body?.key || '').trim();
-  if (!key) return res.status(400).json({ error: 'Clé vide.' });
-  db.prepare("INSERT INTO settings (key, value) VALUES ('gemini_key', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key);
+  const groq = String(req.body?.groq || '').trim();
+  if (!key && !groq) return res.status(400).json({ error: 'Clé vide.' });
+  if (key)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('gemini_key', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key);
+  if (groq)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('groq_key', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(groq);
   addLog('ia_cle_enregistree', { source: 'admin', req, details: req.admin.username });
+  res.json({ ok: true });
+});
+
+router.delete('/settings/ia/groq', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  db.prepare("DELETE FROM settings WHERE key = 'groq_key'").run();
   res.json({ ok: true });
 });
 
