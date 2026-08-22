@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon.jsx';
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const HEURES = Array.from({ length: 13 }, (_, i) => i + 8); // 08 → 20
 const LS = 'kd_emploi_rev';
 const PRIO_L2 = ['francais', 'philosophie', 'anglais', 'histoire-geographie', 'economie', 'espagnol', 'maths', 'physique-chimie', 'svt'];
+const OPT_LIBRE = ['08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'];
+const OPT_COUCHE = ['20', '21', '22', '23', '00', '01', '02', '03', '04', '05'];
 
 function defaut() {
   return {
@@ -23,36 +24,50 @@ function lire() {
 }
 const h2 = (h) => `${String(h).padStart(2, '0')}h`;
 
+/* heures libres du jour, de « libre » jusqu'à 1 h avant le coucher (peut passer minuit) */
+function slotsDuJour(j) {
+  const libre = parseInt(j.libre) || 17;
+  const fin = ((parseInt(j.coucher) || 22) - 1 + 24) % 24;
+  const slots = [];
+  let h = libre;
+  for (let k = 0; k < 12; k++) {
+    if (h === fin) break;
+    slots.push(h);
+    h = (h + 1) % 24;
+    if (h === libre) break;
+  }
+  return slots;
+}
+
+/* sessions intensives : 2 h par matière (3 h si difficulté), 1-2 matières par jour */
 function generer(jours, diffs, matieres, filiere) {
   const prio = filiere === 'L2' ? PRIO_L2 : matieres.map((m) => m.id);
   const poids = (id) => {
     const idx = prio.indexOf(id);
     const base = idx === -1 ? 2 : Math.max(1, prio.length - idx);
-    return base * (diffs.includes(id) ? 2.5 : 1);
+    return base * (diffs.includes(id) ? 3 : 1);
   };
   return jours.map((j) => {
     const cellules = {};
     if (j.cours) for (let h = 8; h < 16; h++) cellules[h] = { t: 'cours' };
-    const debut = Math.min(19, Math.max(8, parseInt(j.libre) || 17));
-    const fin = Math.min(20, (parseInt(j.coucher) || 22) - 1);
-    const dispo = [];
-    for (let h = debut; h < fin; h++) if (!cellules[h]) dispo.push(h);
+    const slots = slotsDuJour(j).filter((h) => !cellules[h]);
     const pool = (j.matieres?.length ? j.matieres : matieres.map((m) => m.id)).filter((id) =>
       matieres.some((m) => m.id === id)
     );
-    const maxBlocs = j.cours ? 3 : 5;
-    const restants = pool.map((id) => ({ id, p: poids(id) + Math.random() * 0.4 }));
-    const blocs = [];
-    for (let k = 0; k < Math.min(maxBlocs, dispo.length) && restants.length; k++) {
-      restants.sort((a, b) => b.p - a.p);
-      let choix = restants[0];
-      if (blocs.length && choix.id === blocs[blocs.length - 1] && restants.length > 1) choix = restants[1];
-      blocs.push(choix.id);
-      choix.p *= 0.5;
+    const classes = [...pool].sort((a, b) => poids(b) - poids(a));
+    const maxBlocs = j.cours ? 2 : 3;
+    let i = 0;
+    let bi = 0;
+    while (i < slots.length && bi < maxBlocs) {
+      let id = classes[bi % Math.max(1, classes.length)];
+      if (!id) break;
+      if (bi > 0 && id === cellules[slots[i - 1]]?.id && classes.length > 1)
+        id = classes[(bi + 1) % classes.length];
+      const len = Math.min(diffs.includes(id) ? 3 : 2, slots.length - i);
+      for (let k = 0; k < len; k++) cellules[slots[i + k]] = { t: 'mat', id };
+      i += len;
+      bi++;
     }
-    blocs.forEach((id, k) => {
-      cellules[dispo[k]] = { t: 'mat', id };
-    });
     return cellules;
   });
 }
@@ -60,8 +75,21 @@ function generer(jours, diffs, matieres, filiere) {
 export default function EmploiRevision({ filiere, matieres }) {
   const [st, setSt] = useState(lire);
   const [pret, setPret] = useState(false);
+  const [notif, setNotif] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported');
   const byId = useMemo(() => Object.fromEntries(matieres.map((m) => [m.id, m])), [matieres]);
   const grid = useMemo(() => generer(st.jours, st.diffs, matieres, filiere), [st, matieres, filiere]);
+
+  /* lignes du tableau : 08h → 23h puis 00h → heure tardive max */
+  const lignes = useMemo(() => {
+    let maxTard = -1;
+    st.jours.forEach((j) => {
+      const fin = ((parseInt(j.coucher) || 22) - 1 + 24) % 24;
+      if (fin < 8 && fin > maxTard) maxTard = fin;
+    });
+    const base = Array.from({ length: 16 }, (_, i) => i + 8);
+    const tard = maxTard >= 0 ? Array.from({ length: maxTard + 1 }, (_, i) => i) : [];
+    return [...base, ...tard];
+  }, [st.jours]);
 
   function maj(n) {
     const next = { ...st, ...n };
@@ -69,23 +97,55 @@ export default function EmploiRevision({ filiere, matieres }) {
     localStorage.setItem(LS, JSON.stringify(next));
   }
   function majJour(i, patch) {
-    const jours = st.jours.map((j, k) => (k === i ? { ...j, ...patch } : j));
-    maj({ jours });
+    maj({ jours: st.jours.map((j, k) => (k === i ? { ...j, ...patch } : j)) });
   }
   function basculeDiff(id) {
     maj({ diffs: st.diffs.includes(id) ? st.diffs.filter((d) => d !== id) : [...st.diffs, id] });
   }
 
+  /* notifications « c'est l'heure de réviser » */
+  function activerNotifs() {
+    if (typeof Notification === 'undefined') return;
+    Notification.requestPermission().then((p) => {
+      setNotif(p);
+      if (p === 'granted')
+        new Notification('Rappels de révision activés 🔔', {
+          body: 'Tant que l’application est ouverte, on te prévient à chaque heure de révision prévue.',
+        });
+    });
+  }
+  useEffect(() => {
+    if (notif !== 'granted' || !pret) return;
+    function check() {
+      const now = new Date();
+      const di = (now.getDay() + 6) % 7;
+      const h = now.getHours();
+      const c = grid[di]?.[h];
+      if (c?.t === 'mat') {
+        const key = `kd_notif_${now.toDateString()}_${h}`;
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, '1');
+          new Notification('C’est l’heure de réviser ! 📚', {
+            body: `${byId[c.id]?.label || 'Révision'} · ${h2(h)}–${h2((h + 1) % 24)}. Courage, tu gères !`,
+          });
+        }
+      }
+    }
+    check();
+    const t = setInterval(check, 30000);
+    return () => clearInterval(t);
+  }, [notif, pret, grid, byId]);
+
   return (
     <section className="card s3card" style={{ marginTop: 14 }}>
       <h2>🗓 Emploi du temps de révision</h2>
       <p className="muted small">
-        Dis-nous ton rythme de la semaine : on te génère un emploi du temps de révision de 08h à 20h. Appuie ensuite
-        sur une matière du tableau pour signaler une difficulté — il se réajuste tout seul.
-        {filiere === 'S2' && ' En filière S, les matières scientifiques sont prioritaires par défaut.'}
+        Dis-nous ton rythme (même si tu révises tard la nuit) : on te génère un tableau avec des{" "}
+        <strong>sessions intensives de 2-3 h</strong> par matière. Appuie sur une matière du tableau pour signaler une
+        difficulté — il se réajuste.
+        {filiere === 'S2' && ' En filière S, les scientifiques sont prioritaires.'}
       </p>
 
-      {/* questionnaire semaine */}
       <div className="er-jours">
         {JOURS.map((j, i) => {
           const d = st.jours[i];
@@ -101,7 +161,7 @@ export default function EmploiRevision({ filiere, matieres }) {
                 <label>
                   <small>Libre à</small>
                   <select className="input" value={d.libre} onChange={(e) => majJour(i, { libre: e.target.value })}>
-                    {['08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'].map((h) => (
+                    {OPT_LIBRE.map((h) => (
                       <option key={h} value={h}>
                         {h}h
                       </option>
@@ -111,7 +171,7 @@ export default function EmploiRevision({ filiere, matieres }) {
                 <label>
                   <small>Couche à</small>
                   <select className="input" value={d.coucher} onChange={(e) => majJour(i, { coucher: e.target.value })}>
-                    {['20', '21', '22', '23'].map((h) => (
+                    {OPT_COUCHE.map((h) => (
                       <option key={h} value={h}>
                         {h}h
                       </option>
@@ -145,9 +205,18 @@ export default function EmploiRevision({ filiere, matieres }) {
         })}
       </div>
 
-      <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setPret(true)}>
-        <Icon name="calendar" size={15} /> Générer mon emploi du temps
-      </button>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+        <button className="btn btn-primary" onClick={() => setPret(true)}>
+          <Icon name="calendar" size={15} /> Générer mon emploi du temps
+        </button>
+        {notif === 'granted' ? (
+          <span className="er-chip on" style={{ alignSelf: 'center' }}>🔔 Rappels activés</span>
+        ) : notif === 'unsupported' ? null : (
+          <button className="btn btn-outline" onClick={activerNotifs}>
+            🔔 Me rappeler les heures de révision
+          </button>
+        )}
+      </div>
 
       {pret && (
         <>
@@ -162,7 +231,7 @@ export default function EmploiRevision({ filiere, matieres }) {
                 </tr>
               </thead>
               <tbody>
-                {HEURES.map((h) => (
+                {lignes.map((h) => (
                   <tr key={h}>
                     <td className="er-h">{h2(h)}</td>
                     {JOURS.map((_, di) => {
@@ -181,7 +250,7 @@ export default function EmploiRevision({ filiere, matieres }) {
                             <button
                               className={diff ? 'er-cell diff' : 'er-cell'}
                               style={{ background: `${m.color}22`, color: m.color, borderColor: diff ? 'var(--danger)' : m.color }}
-                              title={diff ? 'Difficulté signalée : plus de créneaux' : 'Appuie pour signaler une difficulté'}
+                              title={diff ? 'Difficulté : sessions de 3 h' : 'Appuie pour signaler une difficulté'}
                               onClick={() => basculeDiff(c.id)}
                             >
                               {m.label}
@@ -202,8 +271,8 @@ export default function EmploiRevision({ filiere, matieres }) {
             </table>
           </div>
           <p className="muted small" style={{ marginTop: 8 }}>
-            🏫 = cours · « · » = temps libre / repos. Appuie sur une matière pour marquer une difficulté (💪) :
-            l'emploi du temps lui donne automatiquement plus de créneaux.
+            🏫 = cours · « · » = libre/repos. Sessions de 2 h par matière (3 h si difficulté 💪) : 17h→20h peut être
+            100 % maths si tu marques la difficulté. Appuie sur une matière pour ajuster.
           </p>
           {st.diffs.length > 0 && (
             <div className="er-diffs">
