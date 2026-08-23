@@ -17,22 +17,16 @@ fs.mkdirSync(TMP_DIR, { recursive: true });
 
 const MATIERES = ['maths', 'physique', 'chimie', 'svt', 'physique-chimie', 'francais', 'histoire-geographie', 'philosophie', 'anglais', 'espagnol', 'economie', 'lecture', 'sourates', 'tajwid', 'tafsir'];
 
-// Le périmètre Arabe (ex. Moustapha) ne gère QUE élèves + cours Coran :
-// annales, quiz, agenda et catalogue métiers lui sont fermés.
-function refuseAR(req, res, next) {
-  if (req.scope === 'AR') return res.status(403).json({ error: 'Module réservé aux autres périmètres de gestion.' });
-  return next();
-}
-// La « Culture du monde » est un contenu L2 : fermée aux périmètres AR et S2.
+// La « Culture du monde » est un contenu L2 : fermée au périmètre S2.
 function refuseCulture(req, res, next) {
-  if (req.scope === 'AR')
+  if (req.scope === 'S2')
     return res.status(403).json({ error: 'Module réservé au périmètre L2.' });
   return next();
 }
-// Le lexique arabe est un contenu AR : fermé aux périmètres S2 et L2.
+function refuseAR(req, res, next) {
+  return next();
+}
 function refuseLexique(req, res, next) {
-  if (req.scope !== 'all' && req.scope !== 'AR')
-    return res.status(403).json({ error: 'Module réservé au périmètre arabe.' });
   return next();
 }
 const admin = requireAdmin(db);
@@ -171,7 +165,7 @@ router.post('/eleves', admin, (req, res) => {
   const filiere = req.scope !== 'all' ? req.scope : req.body.filiere === 'L2' ? 'L2' : 'S2';
   let id;
   do {
-    id = generateEleveId();
+    id = generateEleveId(filiere === 'L2' ? 'L2' : 'S2');
   } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
   db.prepare('INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere) VALUES (?, ?, ?, ?, ?)').run(
     id,
@@ -223,7 +217,7 @@ router.post('/eleves/:id/regenerer', admin, (req, res) => {
   if (!checkScope(req, res, e)) return;
   let id;
   do {
-    id = generateEleveId();
+    id = generateEleveId(e.filiere === 'L2' ? 'L2' : 'S2');
   } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ? AND id != ?').get(id, e.id));
   db.prepare('UPDATE eleves SET eleve_id = ?, session_jti = NULL WHERE id = ?').run(id, e.id);
   sse.send(e.id, 'session', { type: 'session_remplacee' });
@@ -554,7 +548,7 @@ router.post('/flash', admin, (req, res) => {
     .map((l) => l.split('|').map((x) => x.trim()))
     .filter((p) => p.length >= 2 && p[0] && p[1]);
   if (!cartes.length) return res.status(400).json({ error: 'Ajoutez au moins une carte (format : recto | verso).' });
-  const f = req.scope !== 'all' ? req.scope : filiere === 'L2' ? 'L2' : filiere === 'AR' ? 'AR' : 'all';
+  const f = req.scope !== 'all' ? req.scope : filiere === 'L2' ? 'L2' : 'all';
   const info = db.prepare('INSERT INTO flash_decks (titre, filiere, matiere) VALUES (?,?,?)').run(String(titre).trim(), f, String(matiere || '').trim() || null);
   const ins = db.prepare('INSERT INTO flash_cards (deck_id, recto, verso, ordre) VALUES (?,?,?,?)');
   cartes.forEach(([r, v], i) => ins.run(info.lastInsertRowid, r, v, i + 1));
@@ -830,7 +824,7 @@ router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
       .run(
         String(titre).slice(0, 120),
         String(description || '').slice(0, 500),
-        req.scope !== 'all' ? req.scope : ['S2', 'L2', 'AR', 'all'].includes(filiere) ? filiere : 'all',
+        req.scope !== 'all' ? req.scope : ['S2', 'L2', 'all'].includes(filiere) ? filiere : 'all',
         serie ? String(serie).slice(0, 80) : null,
         duree_min ? Math.max(1, Math.min(240, Number(duree_min))) : null,
         /^\d{4}-\d{2}-\d{2}T/.test(String(deadline || '')) ? deadline : null
@@ -846,7 +840,7 @@ router.post('/devoirs-binomes', admin, refuseAR, (req, res) => {
 
   // Annonce dans le chat de chaque binôme actif de la filière ciblée.
   const liens = db.prepare("SELECT * FROM chat_amis WHERE statut = 'actif'").all();
-  const cible = ['S2', 'L2', 'AR'].includes(filiere) ? filiere : null;
+  const cible = ['S2', 'L2'].includes(filiere) ? filiere : null;
   for (const l of liens) {
     const e = db.prepare('SELECT filiere FROM eleves WHERE id = ?').get(l.eleve_a);
     if (cible && e?.filiere !== cible) continue;

@@ -72,16 +72,10 @@ export const MATIERES_L2 = [
   { id: 'economie', label: 'Économie', color: '#0d9488' },
   { id: 'espagnol', label: 'Espagnol', color: '#ea580c' },
 ];
-export const MATIERES_AR = [
-  { id: 'lecture', label: 'Lecture & makharij', color: '#0d9488' },
-  { id: 'sourates', label: 'Sourates & mémorisation', color: '#059669' },
-  { id: 'tajwid', label: 'Tajwid', color: '#d97706' },
-  { id: 'tafsir', label: 'Sens & tafsîr', color: '#7c3aed' },
-];
+
 export const FILIERES = {
   S2: { label: 'S2 · Sciences', matieres: MATIERES_S2 },
   L2: { label: 'L2 · Lettres', matieres: MATIERES_L2 },
-  AR: { label: 'Arabe · Niveaux', matieres: MATIERES_AR },
 };
 export const MATIERES = [
   ...MATIERES_S2,

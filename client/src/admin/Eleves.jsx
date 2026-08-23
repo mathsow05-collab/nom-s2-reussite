@@ -210,7 +210,6 @@ function CreateEleve({ adminScope, onClose, onCreated }) {
             <select className="input" value={filiere} onChange={(e) => changeFiliere(e.target.value)}>
               <option value="S2">S2 · Sciences</option>
               <option value="L2">L2 · Lettres</option>
-              <option value="AR">Arabe · Niveaux</option>
             </select>
           </>
         ) : (

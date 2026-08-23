@@ -77,13 +77,13 @@ function verifyToken(token) {
 /* ------------------------------------------------------------------ */
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // 31 caractères
 
-function generateEleveId() {
+function generateEleveId(prefix = 'S2') {
   let core = '';
   for (let i = 0; i < 8; i++) core += ALPHABET[crypto.randomInt(ALPHABET.length)];
   let sum = 7;
   for (const ch of core) sum = (sum * 31 + ALPHABET.indexOf(ch)) % 997;
   const check = ALPHABET[sum % ALPHABET.length];
-  return `S2-${core.slice(0, 4)}-${core.slice(4)}${check}`;
+  return `${prefix}-${core.slice(0, 4)}-${core.slice(4)}${check}`;
 }
 
 /* ------------------------------------------------------------------ */

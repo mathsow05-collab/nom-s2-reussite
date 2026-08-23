@@ -7,7 +7,6 @@ import EmploiRevision from './EmploiRevision.jsx';
 const COEFS_DEF = {
   S2: { maths: 5, physique: 4, chimie: 3, svt: 3, francais: 2, 'histoire-geographie': 2, anglais: 2, philosophie: 2 },
   L2: { francais: 4, philosophie: 3, 'histoire-geographie': 3, anglais: 3, espagnol: 2, economie: 3, maths: 2, 'physique-chimie': 2, svt: 2 },
-  AR: { lecture: 3, sourates: 3, tajwid: 2, tafsir: 2 },
 };
 
 function mention(m) {

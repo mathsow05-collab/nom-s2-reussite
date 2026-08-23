@@ -11,12 +11,11 @@ function seed(db, log = console.log) {
   const result = { createdIds: [], admins: [] };
 
   /* ---------------- Admins (avec nom affiché + périmètre de filière) ---------------- */
-  // Comptes officiels : aliou = accès total ; abou = S2 ; moustapha = arabe ;
+  // Comptes officiels : aliou = accès total ; abou = S2.
   // mouhamed = L2. Mise à jour idempotente (mot de passe + périmètre).
   const ADMINS = [
     { username: 'aliou', password: 'balet05', display: 'Aliou Sow (fondateur, accès total)', filiere: 'all' },
     { username: 'abou', password: 'tounkara04', display: 'Abou (responsable S2)', filiere: 'S2' },
-    { username: 'moustapha', password: 'ndiaye2026', display: 'Moustapha Ndiaye (prof d’arabe)', filiere: 'AR' },
     { username: 'mouhamed', password: 'pelo07', display: 'Mouhamed Sy Sow (responsable L2)', filiere: 'L2' },
   ];
   const upAdmin = db.prepare('UPDATE admins SET password_hash = ?, display_name = ?, filiere = ? WHERE username = ?');
@@ -77,22 +76,7 @@ function seed(db, log = console.log) {
     log('[seed] Élèves de démonstration L2 créés :');
     for (const e of result.createdIds.filter((x) => x.filiere === 'L2')) log(`   ${e.prenom} ${e.nom} (${e.classe}) -> ${e.id}`);
   }
-  if (db.prepare("SELECT COUNT(*) c FROM eleves WHERE filiere = 'AR'").get().c === 0) {
-    const demo = [
-      { prenom: 'Khady', nom: 'Gueye', classe: 'Niveau 1', filiere: 'AR' },
-      { prenom: 'Omar', nom: 'Sow', classe: 'Niveau 2', filiere: 'AR' },
-    ];
-    const ins = db.prepare('INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere) VALUES (?, ?, ?, ?, ?)');
-    for (const d of demo) {
-      let id;
-      do {
-        id = generateEleveId();
-      } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
-      ins.run(id, d.nom, d.prenom, d.classe, d.filiere);
-      result.createdIds.push({ id, ...d });
-    }
-    log('[seed] Élèves de démonstration Arabe créés (niveaux 1 et 2).');
-  }
+
 
   /* ---------------- Cours S2 (base vierge) ---------------- */
   // Migration douce : la S2 a désormais Physique et Chimie séparées.
@@ -308,63 +292,6 @@ function seed(db, log = console.log) {
   }
   const writtenMatieres = writeDemoPdfs(UPLOADS_DIR);
   if (writtenMatieres.length) log(`[seed] ${writtenMatieres.length} PDF de matières générés.`);
-
-  /* ---------------- Cours Coran / arabe (niveaux 1-3) ---------------- */
-  const hasCoran = db.prepare("SELECT COUNT(*) c FROM cours WHERE filiere = 'AR' AND matiere = 'sourates'").get().c > 0;
-  if (!hasCoran) {
-    db.prepare("DELETE FROM cours WHERE filiere = 'AR'").run();
-    const cours = [
-      { titre: "L'alphabet arabe et les makharij (prononciation)", matiere: 'lecture', niveau: 1, youtube_id: 'rgLli1ecwl8', pdf_file: 'arabe/niveau1-alphabet.pdf', description: "Les 28 lettres, leurs sons exacts (points d'articulation) et les voyelles." },
-      { titre: "Sourate Al-Fâtiha : lire correctement", matiere: 'sourates', niveau: 1, youtube_id: 'lLzs5QX9pDE', pdf_file: 'arabe/niveau1-fatiha.pdf', description: "La sourate qui ouvre le Coran : lecture répétée, translittération et sens global." },
-      { titre: "Petites sourates (1) : Al-Kawthar et Al-Ikhlâs", matiere: 'sourates', niveau: 1, pdf_file: 'arabe/niveau1-petites1.pdf', description: "Lecture, mémorisation et signification des sourates 108 et 112." },
-      { titre: "Petites sourates (2) : Al-Falaq et An-Nâs", matiere: 'sourates', niveau: 1, pdf_file: 'arabe/niveau1-petites2.pdf', description: "Les deux sourates protectrices (113-114) : lecture et mémorisation." },
-      { titre: "Tajwid 1 : les allongements (madd) et la qalqala", matiere: 'tajwid', niveau: 2, youtube_id: '8bsenfOm2Ck', pdf_file: 'arabe/niveau2-tajwid1.pdf', description: "Les règles de base pour embellir la récitation sans erreur." },
-      { titre: "Lecture appliquée : Ad-Duhâ et Ash-Sharh", matiere: 'sourates', niveau: 2, pdf_file: 'arabe/niveau2-duha.pdf', description: "Appliquer le tajwid appris sur les sourates 93 et 94, avec leur sens." },
-      { titre: "Mémorisation guidée : sourates 99 à 103", matiere: 'sourates', niveau: 2, pdf_file: 'arabe/niveau2-memorisation.pdf', description: "Méthode pas à pas : répéter, comprendre, réciter par cœur." },
-      { titre: "Tajwid 2 : nûn sâkina et tanwîn (idghâm, ikhfâ, izhâr)", matiere: 'tajwid', niveau: 3, pdf_file: 'arabe/niveau3-tajwid2.pdf', description: "Les 4 règles du nûn sâkina avec exemples coraniques." },
-      { titre: "Sourate Al-Mulk (1-10) : lecture et sens", matiere: 'tafsir', niveau: 3, pdf_file: 'arabe/niveau3-mulk.pdf', description: "Lecture fluide des premiers versets et explication simplifiée." },
-      { titre: "Le sens des petites sourates : tafsîr simplifié", matiere: 'tafsir', niveau: 3, pdf_file: 'arabe/niveau3-tafsir.pdf', description: "Comprendre ce que disent les sourates mémorisées au niveau 1." },
-    ];
-    const ins = db.prepare(
-      'INSERT INTO cours (titre, matiere, description, youtube_id, pdf_file, ordre, filiere, niveau) VALUES (@titre, @matiere, @description, @youtube_id, @pdf_file, @ordre, @filiere, @niveau)'
-    );
-    cours.forEach((c, i) => ins.run({ youtube_id: null, pdf_file: null, ...c, ordre: i + 1, filiere: 'AR' }));
-    const written = writeDemoPdfs(UPLOADS_DIR);
-    if (written.length) log(`[seed] ${written.length} PDF générés.`);
-    log(`[seed] Programme Coran : ${cours.length} cours (niveaux 1-3).`);
-  }
-
-  /* ---------------- Lexique arabe-français (bonus interactif) ---------------- */
-  if (db.prepare('SELECT COUNT(*) c FROM lexique').get().c === 0) {
-    const mots = [
-      ['السَّلَامُ عَلَيْكُمْ', 'Bonjour (que la paix soit sur vous)', 'salutations'],
-      ['مَرْحَبًا', 'Bienvenue', 'salutations'],
-      ['شُكْرًا', 'Merci', 'salutations'],
-      ['عَفْوًا', 'De rien / pardon', 'salutations'],
-      ['مَا اسْمُكَ ؟', 'Comment tu t’appelles ? (à un garçon)', 'salutations'],
-      ['أَب', 'Père', 'famille'],
-      ['أُم', 'Mère', 'famille'],
-      ['أَخ', 'Frère', 'famille'],
-      ['أُخْت', 'Sœur', 'famille'],
-      ['جَد', 'Grand-père', 'famille'],
-      ['جَدَّة', 'Grand-mère', 'famille'],
-      ['كِتَاب', 'Livre', 'école'],
-      ['قَلَم', 'Stylo', 'école'],
-      ['مَدْرَسَة', 'École', 'école'],
-      ['أُسْتَاذ', 'Professeur', 'école'],
-      ['تِلْمِيذ', 'Élève', 'école'],
-      ['دَرْس', 'Leçon', 'école'],
-      ['وَاحِد', 'Un', 'nombres'],
-      ['اِثْنَان', 'Deux', 'nombres'],
-      ['ثَلَاثَة', 'Trois', 'nombres'],
-      ['أَرْبَعَة', 'Quatre', 'nombres'],
-      ['خَمْسَة', 'Cinq', 'nombres'],
-      ['عَشَرَة', 'Dix', 'nombres'],
-    ];
-    const ins = db.prepare('INSERT INTO lexique (mot_ar, mot_fr, categorie) VALUES (?, ?, ?)');
-    for (const [ar, fr, cat] of mots) ins.run(ar, fr, cat);
-    log(`[seed] Lexique arabe : ${mots.length} mots.`);
-  }
 
   /* ---------------- Culture du monde (L2) : une publication par jour ---------------- */
   if (db.prepare('SELECT COUNT(*) c FROM culture').get().c === 0) {

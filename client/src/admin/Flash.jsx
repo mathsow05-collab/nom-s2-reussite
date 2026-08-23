@@ -48,7 +48,6 @@ export default function FlashAdmin() {
                 <option value="all">Toutes</option>
                 <option value="S2">S2</option>
                 <option value="L2">L2</option>
-                <option value="AR">Arabe</option>
               </select>
             </div>
             <div style={{ flex: 1 }}>

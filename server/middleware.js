@@ -20,7 +20,7 @@ function requireAdmin(db, { allowQuery = false } = {}) {
     if (!admin) return res.status(401).json({ code: 'UNAUTHORIZED', error: 'Compte admin introuvable.' });
     req.admin = admin;
     // Périmètre de gestion : 'all' (toutes filières) ou une filière précise (S2, L2, AR).
-    req.scope = ['S2', 'L2', 'AR'].includes(admin.filiere) ? admin.filiere : 'all';
+    req.scope = ['S2', 'L2'].includes(admin.filiere) ? admin.filiere : 'all';
     return next();
   };
 }

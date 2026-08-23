@@ -193,7 +193,6 @@ function CoursForm({ form, adminScope, onClose, onSaved }) {
             <select className="input" value={f.filiere} onChange={(e) => set('filiere', e.target.value)}>
               <option value="S2">S2 · Sciences</option>
               <option value="L2">L2 · Lettres</option>
-              <option value="AR">Arabe · Niveaux</option>
             </select>
           </>
         )}
@@ -207,16 +206,7 @@ function CoursForm({ form, adminScope, onClose, onSaved }) {
             </option>
           ))}
         </select>
-        {f.filiere === 'AR' && (
-          <>
-            <label className="label">Niveau de l'élève *</label>
-            <select className="input" value={f.niveau} onChange={(e) => set('niveau', parseInt(e.target.value, 10))}>
-              <option value={1}>Niveau 1 (débutant)</option>
-              <option value={2}>Niveau 2</option>
-              <option value={3}>Niveau 3</option>
-            </select>
-          </>
-        )}
+        
 
         <label className="label">Description</label>
         <textarea className="input" rows="2" value={f.description} onChange={(e) => set('description', e.target.value)} />
