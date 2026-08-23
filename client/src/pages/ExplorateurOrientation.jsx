@@ -5,6 +5,7 @@ import { Modal } from '../ui.jsx';
 import { SLOGAN } from '../orientation/data.js';
 import { nodesById, searchNodes, conseiller, TYPE_META, INTERETS_LIST } from '../orientation/engine.js';
 import { NODES, SECTEURS } from '../orientation/graphData.js';
+import CarteMentale from './CarteMentale.jsx';
 
 /* Explorateur d'orientation v4 — lisible d'abord :
    1. filtre « type de parcours » (chips) ;
@@ -36,6 +37,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
   const [savedOpen, setSavedOpen] = useState(false);
   const [compar, setCompar] = useState([]);
   const [showCompar, setShowCompar] = useState(false);
+  const [carte, setCarte] = useState(false);
 
   const results = useMemo(() => {
     const t = TYPES.find((x) => x.id === type);
@@ -104,6 +106,9 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
               </div>
             )}
           </div>
+          <button className="btn btn-primary" onClick={() => setCarte(true)}>
+            🌳 Carte des parcours
+          </button>
           <button className="btn btn-outline" onClick={() => setQuiz(true)}>
             <Icon name="bulb" size={15} /> Je ne sais pas quoi faire
           </button>
