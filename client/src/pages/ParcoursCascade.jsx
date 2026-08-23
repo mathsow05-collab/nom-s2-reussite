@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Modal } from '../ui.jsx';
 import { NODES, EDGES } from '../orientation/graphData.js';
 import Icon from '../Icon.jsx';
 
@@ -42,6 +43,7 @@ const FICHE = ['concours', 'ecole', 'master', 'pro', 'travail', 'etranger', 'alt
 /* Navigation en cascade : BAC → type → établissement → diplôme → années → débouchés. */
 export default function ParcoursCascade({ onOuvrir }) {
   const [chemin, setChemin] = useState(['bac']);
+  const [fiche, setFiche] = useState(null);
   const courant = byId[chemin[chemin.length - 1]];
   const enfants = enfantsDe(courant.id);
   const derniereAnnee =
@@ -53,7 +55,7 @@ export default function ParcoursCascade({ onOuvrir }) {
     : [];
 
   function entrer(n) {
-    if (FICHE.includes(n.type) || !enfantsDe(n.id).length) return onOuvrir?.(n);
+    if (FICHE.includes(n.type) || !enfantsDe(n.id).length) return setFiche(n);
     setChemin((c) => [...c, n.id]);
   }
 
@@ -92,6 +94,62 @@ export default function ParcoursCascade({ onOuvrir }) {
         })}
       </div>
 
+      {fiche && (
+        <Modal title={fiche.label} onClose={() => setFiche(null)} wide>
+          <p className="muted small" style={{ marginTop: -6 }}>
+            {fiche.sub || ''}
+          </p>
+          {fiche.presentation && <p className="small">{fiche.presentation}</p>}
+          {fiche.details && (
+            <div className="xo-details">
+              {Object.entries(fiche.details).map(([k, v]) => (
+                <div key={k}>
+                  <strong>{k}</strong>
+                  <span>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {fiche.concoursList?.length > 0 && (
+            <>
+              <h4 style={{ margin: '12px 0 6px' }}>Concours & admissions</h4>
+              <div className="chips3">
+                {fiche.concoursList.map((c) => (
+                  <span key={c} className="chip">
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+          {fiche.masters?.length > 0 && (
+            <>
+              <h4 style={{ margin: '12px 0 6px' }}>Masters ensuite</h4>
+              <div className="chips3">
+                {fiche.masters.map((m) => (
+                  <span key={m} className="chip">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+          {fiche.metiers?.length > 0 && (
+            <>
+              <h4 style={{ margin: '12px 0 6px' }}>Métiers visés</h4>
+              <div className="chips3">
+                {fiche.metiers.map((m) => (
+                  <span key={m} className="chip">
+                    💼 {m}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+          {fiche.details?.Conseil && <p className="small" style={{ marginTop: 10 }}>💡 {fiche.details.Conseil}</p>}
+        </Modal>
+      )}
+
       {apres.length > 0 && (
         <>
           <h3 className="pc-titre" style={{ marginTop: 16 }}>
@@ -99,7 +157,7 @@ export default function ParcoursCascade({ onOuvrir }) {
           </h3>
           <div className="pc-grid">
             {apres.map((n) => (
-              <button key={n.id} className="pc-box" onClick={() => onOuvrir?.(n)}>
+              <button key={n.id} className="pc-box" onClick={() => setFiche(n)}>
                 <span className="pc-box-top">
                   <Icon name={n.icon || 'award'} size={16} />
                   <strong>{n.label}</strong>
