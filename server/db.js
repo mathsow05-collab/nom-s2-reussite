@@ -231,6 +231,16 @@ CREATE TABLE IF NOT EXISTS flash_cards (
    Espace de discussion entre élèves : invitations (par lien ou découverte),
    relations « ami » ou « binôme de travail », messages texte / audio / image. */
 db.exec(`
+CREATE TABLE IF NOT EXISTS flammes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eleve_a INTEGER NOT NULL,
+  eleve_b INTEGER NOT NULL,
+  compteur INTEGER NOT NULL DEFAULT 0,
+  record INTEGER NOT NULL DEFAULT 0,
+  dernier_a TEXT,
+  dernier_b TEXT,
+  UNIQUE(eleve_a, eleve_b)
+);
 CREATE TABLE IF NOT EXISTS chat_amis (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   eleve_a INTEGER NOT NULL,

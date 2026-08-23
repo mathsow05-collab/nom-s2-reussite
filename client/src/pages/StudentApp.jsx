@@ -20,6 +20,7 @@ import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Anglais from './Anglais.jsx';
 import { sonClic, sonOuvrir } from '../sons.js';
+import Flammes from './Flammes.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -136,8 +137,26 @@ export default function StudentApp() {
     es.addEventListener('chat', () => {
       window.dispatchEvent(new Event('kd-chat'));
     });
+    es.addEventListener('flamme', (ev) => {
+      try {
+        window.dispatchEvent(new CustomEvent('kd-flamme', { detail: JSON.parse(ev.data) }));
+      } catch {
+        /* ignore */
+      }
+    });
     return () => es.close();
   }, [me]);
+
+  // Toast flamme en direct.
+  useEffect(() => {
+    const h = (e) => {
+      setToast(e.detail);
+      const t = setTimeout(() => setToast(null), 4500);
+      return () => clearTimeout(t);
+    };
+    window.addEventListener('kd-flamme', h);
+    return () => window.removeEventListener('kd-flamme', h);
+  }, []);
 
   // Filet de sécurité si le SSE est bloqué par le réseau.
   useEffect(() => {
@@ -299,6 +318,7 @@ export default function StudentApp() {
     document.addEventListener('click', h, true);
     return () => document.removeEventListener('click', h, true);
   }, []);
+  const [toast, setToast] = useState(null);
   const premierTab = useRef(true);
   useEffect(() => {
     if (premierTab.current) {
@@ -400,6 +420,7 @@ export default function StudentApp() {
           </div>
         </div>
       </header>
+      {toast && <div className="flamme-toast">🔥 Flamme {toast.compteur} avec {toast.avec} !</div>}
 
 
       {onboard && (
@@ -748,6 +769,7 @@ function Home({ me, filiere, prog, cours, onOpen, onGo }) {
       )}
 
       <StreakBanner prog={prog} onGo={onGo} />
+      <Flammes />
       <div className="bac-ligue-row">
         <ContratBac me={me} />
         <LigueCard meId={me.id} />

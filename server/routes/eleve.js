@@ -9,6 +9,7 @@ const { UPLOADS_DIR } = require('../paths');
 const { signToken, rateLimiter } = require('../security');
 const { requireEleve } = require('../middleware');
 const { addLog } = require('../log');
+const { marquerInteraction, listerFlammes } = require('../streaks');
 
 const router = express.Router();
 const UPLOADS = UPLOADS_DIR;
@@ -823,9 +824,14 @@ router.post('/chat/messages', requireEleve(db), (req, res) => {
     const r = db
       .prepare('INSERT INTO chat_messages (de_id, vers_id, type, texte, fichier, mime) VALUES (?, ?, ?, ?, ?, ?)')
       .run(moi, vers, type, texte, fichier, mime);
+    marquerInteraction(moi, vers);
     sse.send(vers, 'chat', { t: 'msg', de: moi, id: r.lastInsertRowid });
     res.json({ ok: true, id: r.lastInsertRowid });
   }
+});
+
+router.get('/flammes', requireEleve(db), (req, res) => {
+  res.json(listerFlammes(req.eleve.id));
 });
 
 router.get('/chat/fichier/:id', requireEleve(db, { allowQuery: true }), (req, res) => {
@@ -864,6 +870,7 @@ router.post('/duel/defier', requireEleve(db), (req, res) => {
   const vers = Number(req.body?.vers_id);
   const lien = chatRelation(moi, vers);
   if (!lien || lien.statut !== 'actif') return res.status(403).json({ error: 'Vous n’êtes pas en lien avec cet élève.' });
+  marquerInteraction(moi, vers);
   const matiere = String(req.body?.matiere || 'all');
   const n = Math.max(5, Math.min(15, parseInt(req.body?.n || '10', 10) || 10));
   const filiere = req.eleve.filiere || 'S2';
@@ -1212,6 +1219,7 @@ router.post('/devoir/:id/proposer', requireEleve(db), (req, res) => {
   const lien = monLienActif(moi);
   if (!lien) return res.status(400).json({ error: 'Forme d’abord un binôme pour participer.' });
   const partenaire = lien.eleve_a === moi ? lien.eleve_b : lien.eleve_a;
+  marquerInteraction(moi, partenaire);
   db.prepare(
     'INSERT INTO devoir_binome_participations (devoir_id, lien_id, statut, propose_par) VALUES (?, ?, ?, ?) ON CONFLICT (devoir_id, lien_id) DO NOTHING'
   ).run(d.id, lien.id, 'propose', moi);
