@@ -2325,14 +2325,14 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .avatar-btn { border-radius: 50%; }
 .pf-avatar { border-radius: 50%; }
 .avatar-btn .anime-av, .pf-avatar .anime-av { width: 100%; height: 100%; border-radius: 50%; background-size: 400% 240%; }
-.avatar-btn .anime-av.i0, .pf-avatar .anime-av.i0 { background-position: 0% 50%; }
-.avatar-btn .anime-av.i1, .pf-avatar .anime-av.i1 { background-position: 33.333% 50%; }
-.avatar-btn .anime-av.i2, .pf-avatar .anime-av.i2 { background-position: 66.666% 50%; }
-.avatar-btn .anime-av.i3, .pf-avatar .anime-av.i3 { background-position: 100% 50%; }
-.avatar-btn .anime-av.i4, .pf-avatar .anime-av.i4 { background-position: 0% 50%; }
-.avatar-btn .anime-av.i5, .pf-avatar .anime-av.i5 { background-position: 33.333% 50%; }
-.avatar-btn .anime-av.i6, .pf-avatar .anime-av.i6 { background-position: 66.666% 50%; }
-.avatar-btn .anime-av.i7, .pf-avatar .anime-av.i7 { background-position: 100% 50%; }
+.avatar-btn .anime-av.i0, .pf-avatar .anime-av.i0 { background-position: 0% 7.14%; }
+.avatar-btn .anime-av.i1, .pf-avatar .anime-av.i1 { background-position: 33.333% 7.14%; }
+.avatar-btn .anime-av.i2, .pf-avatar .anime-av.i2 { background-position: 66.666% 7.14%; }
+.avatar-btn .anime-av.i3, .pf-avatar .anime-av.i3 { background-position: 100% 7.14%; }
+.avatar-btn .anime-av.i4, .pf-avatar .anime-av.i4 { background-position: 0% 92.86%; }
+.avatar-btn .anime-av.i5, .pf-avatar .anime-av.i5 { background-position: 33.333% 92.86%; }
+.avatar-btn .anime-av.i6, .pf-avatar .anime-av.i6 { background-position: 66.666% 92.86%; }
+.avatar-btn .anime-av.i7, .pf-avatar .anime-av.i7 { background-position: 100% 92.86%; }
 
 /* ================================================================
    KAY DIANG v40 : avatar rond 50 px, bord blanc, ombre, rien devant
