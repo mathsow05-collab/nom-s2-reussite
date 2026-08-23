@@ -4,15 +4,12 @@ import Icon from '../Icon.jsx';
 import { Modal, Spinner } from '../ui.jsx';
 import PdfViewer from '../components/PdfViewer.jsx';
 import VideoPlayer from '../components/VideoPlayer.jsx';
-import AudioCoran from '../components/AudioCoran.jsx';
-import QuizAyat from '../components/QuizAyat.jsx';
 import Metiers from './Metiers.jsx';
 import Annales from './Annales.jsx';
 import Quiz from './Quiz.jsx';
 import Agenda from './Agenda.jsx';
 import Outils from './Outils.jsx';
 import Echanges from './Echanges.jsx';
-import ParcoursArabe from './ParcoursArabe.jsx';
 import Culture from './Culture.jsx';
 import Assistant from './Assistant.jsx';
 import Suivi from './Suivi.jsx';
@@ -33,7 +30,6 @@ export const AVATARS = ['🧑‍🎓','👩🏾‍','🦁','🚀','⭐','📚','
 
 const TABS = [
   { id: 'ia', label: 'Prof IA', icon: 'chat' },
-  { id: 'parcours', label: 'Parcours', icon: 'map', arSeul: true },
   { id: 'cours', label: 'Cours', icon: 'book' },
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
@@ -493,7 +489,6 @@ export default function StudentApp() {
       )}
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
-      {tab === 'parcours' && filiere === 'AR' && <ParcoursArabe meId={me.eleve_id} />}
       {tab === 'anglais' && <Anglais meId={me.id} />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
@@ -510,9 +505,6 @@ export default function StudentApp() {
       {tab === 'cours' && (
         <main className="container">
           {filiere === 'AR' && <CoranEspace meId={me.eleve_id} />}
-          {filiere === 'AR' && <AudioCoran />}
-          {filiere === 'AR' && <QuizAyat />}
-          {filiere === 'AR' && <LexiqueArabe />}
         <div className="search3">
           <Icon name="search" size={16} />
           <input placeholder="Rechercher un cours…" value={qCours} onChange={(e) => setQCours(e.target.value)} />
@@ -700,11 +692,10 @@ const TUILES = [
   { id: 'outils', icon: 'chart', img: '/metiers/finance.jpg', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
   { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
   { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
-  { id: 'parcours', icon: 'book', img: '/metiers/parcours.jpg', titre: 'Parcours arabe', sub: 'Coran, audio & lexique', cls: 't-emerald', arSeul: true },
 ];
 const ICO_TAB = {
   cours: 'book', annales: 'file', examens: 'clock', quiz: 'target', flash: 'layers', agenda: 'calendar', echanges: 'chat',
-  outils: 'chart', orientation: 'compass', ia: 'spark', parcours: 'book', culture: 'glob', suivi: 'chart', accueil: 'home', chat: 'users',
+ 
 };
 
 const PROG_VIDE = { cours: {}, quiz: [], minutes: 0, jours: {} };
@@ -1345,40 +1336,6 @@ function CoranEspace({ meId }) {
   );
 }
 
-// Bonus filière arabe : lexique interactif arabe-français.
-function LexiqueArabe() {
-  const [mots, setMots] = useState(null);
-  const [cat, setCat] = useState('all');
-  useEffect(() => {
-    api('/eleve/lexique').then(setMots).catch(() => setMots([]));
-  }, []);
-  if (!mots || mots.length === 0) return null;
-  const cats = [...new Set(mots.map((m) => m.categorie))];
-  const visible = cat === 'all' ? mots : mots.filter((m) => m.categorie === cat);
-  return (
-    <section className="panel" style={{ marginBottom: 16 }}>
-      <h2>Lexique arabe – français</h2>
-      <div className="pills">
-        <button className={cat === 'all' ? 'pill active' : 'pill'} onClick={() => setCat('all')}>
-          Tout
-        </button>
-        {cats.map((c) => (
-          <button key={c} className={cat === c ? 'pill active' : 'pill'} onClick={() => setCat(c)}>
-            {c}
-          </button>
-        ))}
-      </div>
-      <div className="lexique-grid">
-        {visible.map((m) => (
-          <div className="lex-card" key={m.id}>
-            <div className="lex-ar">{m.mot_ar}</div>
-            <div className="lex-fr">{m.mot_fr}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function SessionLost({ reason }) {
   const messages = {

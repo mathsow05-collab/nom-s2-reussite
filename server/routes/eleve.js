@@ -557,11 +557,6 @@ router.get('/culture', requireEleve(db), (req, res) => {
   res.json(db.prepare('SELECT * FROM culture ORDER BY date_publi DESC, id DESC').all());
 });
 
-/* ------------------------- Lexique arabe (bonus) ------------------------- */
-router.get('/lexique', requireEleve(db), (req, res) => {
-  res.json(db.prepare('SELECT * FROM lexique ORDER BY categorie, id').all());
-});
-
 /* ------------------------- Agenda des échéances ------------------------- */
 router.get('/echeances', requireEleve(db), (req, res) => {
   res.json(db.prepare('SELECT * FROM echeances ORDER BY date_debut').all());
