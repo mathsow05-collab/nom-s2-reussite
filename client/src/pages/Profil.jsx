@@ -9,7 +9,7 @@ import { sonsActifs, setSons } from '../sons.js';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
-export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme, onSetTheme, onPersoChange }) {
+export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme, onSetTheme, onPersoChange, onJur }) {
   const [perso, setPerso] = useState(false);
   const [sons, setSonsEtat] = useState(sonsActifs());
   const stats = computeStats(prog, cours);
@@ -147,6 +147,9 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
         </button>
         <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setPerso(true)}>
           <Icon name="spark" size={15} /> Revoir ma personnalisation complète
+        </button>
+        <button className="btn btn-ghost" style={{ marginTop: 8 }} onClick={onJur}>
+          📄 CGU · Confidentialité · Mentions légales
         </button>
       </section>
 

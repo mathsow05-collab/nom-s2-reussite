@@ -64,6 +64,7 @@ router.get('/me', requireEleve(db), (req, res) => {
     classe: req.eleve.classe,
     filiere: req.eleve.filiere || 'S2',
     avatar: req.eleve.avatar || null,
+    consentement_at: req.eleve.consentement_at || null,
   });
 });
 
@@ -123,6 +124,13 @@ router.get('/metiers', requireEleve(db), (req, res) => {
   res.json(
     db.prepare("SELECT * FROM metiers WHERE filiere = ? OR filiere = 'all' ORDER BY ordre, id").all(filiere)
   );
+});
+
+router.post('/consentement', requireEleve(db), (req, res) => {
+  const now = new Date().toISOString();
+  db.prepare('UPDATE eleves SET consentement_at = COALESCE(consentement_at, ?) WHERE id = ?').run(now, req.eleve.id);
+  addLog('consentement_recueilli', { eleveDbId: req.eleve.id, req });
+  res.json({ ok: true, consentement_at: now });
 });
 
 router.post('/logout', requireEleve(db), (req, res) => {

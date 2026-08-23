@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { api, setToken } from '../api.js';
+import { Modal } from '../ui.jsx';
+import Juridique from './Juridique.jsx';
 import Icon from '../Icon.jsx';
 
 export default function StudentLogin() {
   const [id, setId] = useState('');
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [jur, setJur] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -61,6 +64,16 @@ export default function StudentLogin() {
           Espace administrateur
         </a>
       </main>
+      <p style={{ textAlign: 'center', marginTop: 14 }}>
+        <button className="btn btn-ghost" onClick={() => setJur(true)}>
+          📄 Conditions d'utilisation · Confidentialité · Mentions légales
+        </button>
+      </p>
+      {jur && (
+        <Modal title="Informations légales" onClose={() => setJur(false)} wide>
+          <Juridique avecBoutonFermer onFermer={() => setJur(false)} />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -160,6 +160,7 @@ function ensureColumn(table, col, ddl) {
   if (!cols.includes(col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${ddl}`);
 }
 ensureColumn('eleves', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
+ensureColumn('eleves', 'consentement_at', 'TEXT');
 ensureColumn('cours', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('admins', 'display_name', 'TEXT');

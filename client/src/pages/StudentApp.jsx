@@ -21,6 +21,7 @@ import Profil from './Profil.jsx';
 import Anglais from './Anglais.jsx';
 import { sonClic, sonOuvrir } from '../sons.js';
 import Flammes from './Flammes.jsx';
+import Juridique from './Juridique.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -310,6 +311,12 @@ export default function StudentApp() {
     };
   }, []);
 
+
+  async function donnerConsentement() {
+    const r = await api('/eleve/consentement', { method: 'POST', body: {} });
+    setMe((m) => ({ ...m, consentement_at: r.consentement_at }));
+  }
+
   // Petits sons premium : tic sur chaque appui + signature sonore par espace ouvert.
   useEffect(() => {
     const h = (e) => {
@@ -319,6 +326,9 @@ export default function StudentApp() {
     return () => document.removeEventListener('click', h, true);
   }, []);
   const [toast, setToast] = useState(null);
+  const [jur, setJur] = useState(false);
+  const [consentOk, setConsentOk] = useState(false);
+  const [consentLu, setConsentLu] = useState(false);
   const premierTab = useRef(true);
   useEffect(() => {
     if (premierTab.current) {
@@ -471,6 +481,7 @@ export default function StudentApp() {
           onGo={(t) => setTab(t)}
           logout={logout}
           onSetTheme={setTheme}
+          onJur={() => setJur(true)}
           onPersoChange={() => {
             try {
               setHobbies(JSON.parse(localStorage.getItem('kd_hobbies') || '[]'));
@@ -636,6 +647,28 @@ export default function StudentApp() {
           </div>
         </div>
       )}
+      {me && !me.consentement_at && (
+        <Modal title="Consentement requis avant de commencer" onClose={() => {}} wide>
+          <Juridique />
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '14px 0', cursor: 'pointer' }}>
+            <input type="checkbox" checked={consentLu} onChange={(e) => setConsentLu(e.target.checked)} style={{ marginTop: 3 }} />
+            <span className="small">
+              J'ai lu les documents ci-dessus et je déclare être majeur·e, ou être inscrit·e avec l'autorisation de mon
+              parent / tuteur légal, conformément à la loi n° 2008-12 du 25 janvier 2008.
+            </span>
+          </label>
+          <button className="btn btn-primary" disabled={!consentLu} onClick={donnerConsentement}>
+            J'accepte et je commence
+          </button>
+        </Modal>
+      )}
+
+      {jur && (
+        <Modal title="Informations légales" onClose={() => setJur(false)} wide>
+          <Juridique avecBoutonFermer onFermer={() => setJur(false)} />
+        </Modal>
+      )}
+
       {confirmQuit && (
         <Modal title="Quitter SCHOOBY ?" onClose={() => setConfirmQuit(false)}>
           <p>Voulez-vous vraiment vous déconnecter ?</p>
