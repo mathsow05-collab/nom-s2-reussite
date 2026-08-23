@@ -5,7 +5,7 @@
    documents « hors ligne » sont gérés séparément par IndexedDB (offline.jsx),
    uniquement à la demande de l'élève. */
 
-const V = 'kd-v4'; // bump : purge les anciens caches (correctifs non visibles sinon)
+const V = 'kd-v5'; // bump : purge les anciens caches (correctifs non visibles sinon)
 const SHELL = `${V}-shell`; // coquille de l'app
 const STATIC = `${V}-static`; // assets construits + images
 const FONTS = `${V}-fonts`; // polices Google
@@ -53,7 +53,8 @@ self.addEventListener('fetch', (e) => {
     (url.pathname.startsWith('/assets/') ||
       url.pathname.startsWith('/textures/') ||
       url.pathname.startsWith('/metiers/') ||
-      url.pathname.startsWith('/icons/'))
+      url.pathname.startsWith('/icons/') ||
+      url.pathname.startsWith('/sons/'))
   ) {
     e.respondWith(swr(req, STATIC));
     return;
