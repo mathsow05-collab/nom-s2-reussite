@@ -2383,3 +2383,23 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .cm-ctrl { position: absolute; top: 10px; left: 10px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
 .cm-ctrl button { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1.1rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
 .cm-hint { margin: 8px 2px 0; }
+
+/* ================================================================
+   KAY DIANG v45 : parcours guidé en cascade (cases alignées)
+   ================================================================ */
+.pc { margin-top: 4px; }
+.pc-crumb { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.pc-crumb-btn { border: 1.5px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
+.pc-crumb-on { border: 1.5px solid var(--brand); background: var(--brand-soft); color: var(--brand-dark, var(--brand)); border-radius: 999px; padding: 4px 12px; font-size: 0.72rem; font-weight: 800; }
+.pc-titre { font-size: 0.95rem; color: var(--ink); margin: 4px 0 10px; }
+.pc-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .pc-grid { grid-template-columns: 1fr 1fr; } }
+.pc-box { position: relative; display: flex; flex-direction: column; gap: 4px; text-align: left; border: 1.5px solid var(--line); background: var(--card); border-radius: 14px; padding: 12px 14px; cursor: pointer; font: inherit; transition: transform 0.12s, border-color 0.12s; }
+.pc-box:active { transform: scale(0.98); }
+.pc-box:hover { border-color: var(--brand); }
+.pc-box-top { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.pc-box-top strong { font-size: 0.9rem; flex: 1; min-width: 0; }
+.pc-box small { color: var(--muted); font-size: 0.72rem; }
+.pc-info { color: var(--ink); background: var(--card2); border-radius: 8px; padding: 5px 8px; display: block; }
+.pc-badge { flex: 0 0 auto; background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; border-radius: 999px; padding: 2px 8px; font-size: 0.62rem; font-weight: 800; }
+.pc-go { position: absolute; right: 12px; bottom: 10px; color: var(--brand); font-weight: 800; }

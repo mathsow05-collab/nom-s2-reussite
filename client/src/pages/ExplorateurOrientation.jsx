@@ -6,6 +6,7 @@ import { SLOGAN } from '../orientation/data.js';
 import { nodesById, searchNodes, conseiller, TYPE_META, INTERETS_LIST } from '../orientation/engine.js';
 import { NODES, SECTEURS } from '../orientation/graphData.js';
 import CarteMentale from './CarteMentale.jsx';
+import ParcoursCascade from './ParcoursCascade.jsx';
 
 /* Explorateur d'orientation v4 — lisible d'abord :
    1. filtre « type de parcours » (chips) ;
@@ -38,6 +39,7 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
   const [compar, setCompar] = useState([]);
   const [showCompar, setShowCompar] = useState(false);
   const [carte, setCarte] = useState(false);
+  const [vue, setVue] = useState('cascade');
 
   const results = useMemo(() => {
     const t = TYPES.find((x) => x.id === type);
@@ -121,6 +123,26 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
         </div>
       </header>
 
+      <div className="pills" style={{ marginBottom: 12 }}>
+        <button className={vue === 'cascade' ? 'pill active' : 'pill'} onClick={() => setVue('cascade')}>
+          🧭 Parcours guidé
+        </button>
+        <button className={vue === 'libre' ? 'pill active' : 'pill'} onClick={() => setVue('libre')}>
+          🔎 Filtres & recherche
+        </button>
+      </div>
+
+      {vue === 'cascade' && (
+        <ParcoursCascade
+          onOuvrir={(n) => {
+            if (n.type === 'metier') onOpenMetier(n.id);
+            else setSelected(n.id);
+          }}
+        />
+      )}
+
+      {vue === 'libre' && (
+        <>
       {/* ------------------------- filtre 1 : type de parcours ------------------------- */}
       <div className="xo2-filtres">
         <span className="xo2-label">Type de parcours</span>
@@ -355,6 +377,9 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
           ))}
         </Modal>
       )}
+        </>
+      )}
+
       {carte && (
         <Modal title="🌳 Carte mentale de ton orientation" onClose={() => setCarte(false)} wide>
           <CarteMentale
