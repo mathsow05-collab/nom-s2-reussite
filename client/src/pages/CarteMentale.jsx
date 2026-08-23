@@ -7,7 +7,11 @@ const NODE_H = 36;
 const LEAF_H = 46;
 const PALETTE = ['#c4b5fd', '#a5c4fb', '#a7e8d8', '#fcd9a8', '#fbc0d4', '#b8e0f2'];
 
-/* Arbre mental horizontal façon mind-map : racine à gauche, niveaux à droite. */
+/* Carte mentale horizontale :
+   - 1 doigt / souris : déplacer la carte ;
+   - pincer (2 doigts) ou molette : zoom ;
+   - toucher un nœud : fiche info ;
+   - toucher ⊕ / − : plier / déplier le niveau. */
 export default function CarteMentale({ onNode }) {
   const tree = useMemo(() => {
     const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
@@ -37,10 +41,11 @@ export default function CarteMentale({ onNode }) {
     return s;
   });
   const [zoom, setZoom] = useState(0.95);
-  const [pan, setPan] = useState({ x: 24, y: 60 });
-  const drag = useRef(null);
+  const [pan, setPan] = useState({ x: 24, y: 80 });
+  const pointers = useRef(new Map());
+  const pinch = useRef(null);
+  const moved = useRef(0);
 
-  /* disposition « tidy tree » : feuilles empilées, parents centrés */
   const pos = useMemo(() => {
     const p = {};
     let y = 0;
@@ -59,6 +64,12 @@ export default function CarteMentale({ onNode }) {
     return p;
   }, [collapsed, tree]);
 
+  function zoomAt(cx, cy, nz) {
+    nz = Math.min(2.4, Math.max(0.35, nz));
+    setPan((p) => ({ x: cx - ((cx - p.x) * nz) / zoom, y: cy - ((cy - p.y) * nz) / zoom }));
+    setZoom(nz);
+  }
+
   function toggle(id) {
     setCollapsed((c) => {
       const n = new Set(c);
@@ -71,16 +82,16 @@ export default function CarteMentale({ onNode }) {
   return (
     <div className="cm-wrap">
       <div className="cm-ctrl">
-        <button onClick={() => setZoom((z) => Math.min(2, z + 0.2))} title="Zoomer">
+        <button onClick={() => zoomAt(window.innerWidth / 2, 300, zoom + 0.2)} title="Zoomer">
           +
         </button>
-        <button onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))} title="Dézoomer">
+        <button onClick={() => zoomAt(window.innerWidth / 2, 300, zoom - 0.2)} title="Dézoomer">
           −
         </button>
         <button
           onClick={() => {
             setZoom(0.95);
-            setPan({ x: 24, y: 60 });
+            setPan({ x: 24, y: 80 });
           }}
           title="Recentrer"
         >
@@ -91,17 +102,47 @@ export default function CarteMentale({ onNode }) {
       <svg
         className="cm-svg"
         onPointerDown={(e) => {
-          drag.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          moved.current = 0;
+          if (pointers.current.size === 2) {
+            const [a, b] = [...pointers.current.values()];
+            pinch.current = { d: Math.hypot(a.x - b.x, a.y - b.y), z: zoom };
+          }
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
-          if (drag.current) setPan({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y });
+          if (!pointers.current.has(e.pointerId)) return;
+          const prev = pointers.current.get(e.pointerId);
+          const dx = e.clientX - prev.x;
+          const dy = e.clientY - prev.y;
+          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pointers.current.size === 2 && pinch.current) {
+            const [a, b] = [...pointers.current.values()];
+            const d = Math.hypot(a.x - b.x, a.y - b.y);
+            if (pinch.current.d > 0) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              zoomAt((a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top, pinch.current.z * (d / pinch.current.d));
+            }
+            moved.current += Math.abs(dx) + Math.abs(dy);
+          } else if (pointers.current.size === 1) {
+            setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+            moved.current += Math.abs(dx) + Math.abs(dy);
+          }
         }}
-        onPointerUp={() => (drag.current = null)}
-        onPointerLeave={() => (drag.current = null)}
+        onPointerUp={(e) => {
+          pointers.current.delete(e.pointerId);
+          if (pointers.current.size < 2) pinch.current = null;
+        }}
+        onPointerCancel={(e) => {
+          pointers.current.delete(e.pointerId);
+          pinch.current = null;
+        }}
+        onWheel={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          zoomAt(e.clientX - rect.left, e.clientY - rect.top, zoom * (e.deltaY < 0 ? 1.15 : 0.87));
+        }}
       >
         <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
-          {/* liens */}
           {Object.keys(pos).map((id) => {
             const pid = tree.parent[id];
             if (!pid || !pos[pid]) return null;
@@ -111,16 +152,9 @@ export default function CarteMentale({ onNode }) {
             const y2 = pos[id].y;
             const mx = (x1 + x2) / 2;
             return (
-              <path
-                key={`e${id}`}
-                d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
-                fill="none"
-                stroke="var(--line)"
-                strokeWidth={1.6}
-              />
+              <path key={`e${id}`} d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`} fill="none" stroke="var(--line)" strokeWidth={1.6} />
             );
           })}
-          {/* nœuds */}
           {Object.keys(pos).map((id) => {
             const n = tree.byId[id];
             const d = tree.depth[id] ?? 0;
@@ -128,31 +162,42 @@ export default function CarteMentale({ onNode }) {
             const ouvert = !collapsed.has(id);
             const label = n.label.length > 26 ? n.label.slice(0, 25) + '…' : n.label;
             return (
-              <g
-                key={id}
-                transform={`translate(${pos[id].x},${pos[id].y - NODE_H / 2})`}
-                style={{ cursor: 'pointer' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (kids.length) toggle(id);
-                  onNode?.(n);
-                }}
-              >
+              <g key={id} transform={`translate(${pos[id].x},${pos[id].y - NODE_H / 2})`}>
                 <rect
                   width={NODE_W}
                   height={NODE_H}
                   rx={10}
+                  style={{ cursor: 'pointer' }}
                   fill={PALETTE[d % PALETTE.length]}
                   stroke={d === 0 ? 'var(--brand)' : 'rgba(0,0,0,0.08)'}
                   strokeWidth={d === 0 ? 2 : 1}
+                  onClick={() => {
+                    if (moved.current > 6) return;
+                    onNode?.(n);
+                  }}
                 />
-                <text x={10} y={NODE_H / 2 + 4} fontSize={11} fontWeight={700} fill="#1e2a44">
+                <text
+                  x={10}
+                  y={NODE_H / 2 + 4}
+                  fontSize={11}
+                  fontWeight={700}
+                  fill="#1e2a44"
+                  style={{ pointerEvents: 'none' }}
+                >
                   {label}
                 </text>
                 {kids.length > 0 && (
-                  <g transform={`translate(${NODE_W + 9},${NODE_H / 2})`}>
-                    <circle r={8} fill="var(--card)" stroke="var(--brand)" strokeWidth={1.4} />
-                    <text x={0} y={3.5} fontSize={9} fontWeight={800} textAnchor="middle" fill="var(--brand)">
+                  <g
+                    transform={`translate(${NODE_W + 9},${NODE_H / 2})`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (moved.current > 6) return;
+                      toggle(id);
+                    }}
+                  >
+                    <circle r={9} fill="var(--card)" stroke="var(--brand)" strokeWidth={1.6} />
+                    <text x={0} y={3.5} fontSize={10} fontWeight={800} textAnchor="middle" fill="var(--brand)" style={{ pointerEvents: 'none' }}>
                       {ouvert ? '−' : '+'}
                     </text>
                   </g>
@@ -163,8 +208,7 @@ export default function CarteMentale({ onNode }) {
         </g>
       </svg>
       <p className="muted small cm-hint">
-        Glisse pour déplacer · + / − pour zoomer · appuie sur ⊕ pour déplier un niveau · appuie sur une feuille pour
-        voir le détail.
+        Glisse = déplacer · pince ou molette = zoom · touche un nœud = fiche info · ⊕ / − = déplier / plier.
       </p>
     </div>
   );
