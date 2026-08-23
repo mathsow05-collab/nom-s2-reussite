@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api, setToken } from '../api.js';
 import { Modal } from '../ui.jsx';
 import Juridique from './Juridique.jsx';
+import InstallApp from './InstallApp.jsx';
 import Icon from '../Icon.jsx';
 
 export default function StudentLogin() {
@@ -64,7 +65,8 @@ export default function StudentLogin() {
           Espace administrateur
         </a>
       </main>
-      <p style={{ textAlign: 'center', marginTop: 14 }}>
+      <p style={{ textAlign: 'center', marginTop: 14, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <InstallApp auto />
         <button className="btn btn-ghost" onClick={() => setJur(true)}>
           📄 Conditions d'utilisation · Confidentialité · Mentions légales
         </button>
