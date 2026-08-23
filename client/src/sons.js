@@ -35,7 +35,7 @@ function note(f, t0, dur, type = 'sine', g = 0.05) {
 export const sonClic = () => {
   if (!actif) return;
   try {
-    note(720, 0, 0.07, 'sine', 0.026);
+    note(760, 0, 0.08, 'sine', 0.06);
   } catch {
     /* ignore */
   }
@@ -44,8 +44,8 @@ export const sonClic = () => {
 export const sonOk = () => {
   if (!actif) return;
   try {
-    note(523, 0, 0.12, 'sine', 0.04);
-    note(784, 0.09, 0.16, 'sine', 0.04);
+    note(523, 0, 0.14, 'sine', 0.09);
+    note(784, 0.1, 0.2, 'sine', 0.09);
   } catch {
     /* ignore */
   }
@@ -54,8 +54,8 @@ export const sonOk = () => {
 export const sonKo = () => {
   if (!actif) return;
   try {
-    note(220, 0, 0.16, 'triangle', 0.038);
-    note(174, 0.1, 0.2, 'triangle', 0.032);
+    note(220, 0, 0.18, 'triangle', 0.08);
+    note(174, 0.11, 0.22, 'triangle', 0.07);
   } catch {
     /* ignore */
   }
@@ -64,7 +64,7 @@ export const sonKo = () => {
 export const sonWin = () => {
   if (!actif) return;
   try {
-    [523, 659, 784, 1046].forEach((f, i) => note(f, i * 0.09, 0.18, 'sine', 0.045));
+    [523, 659, 784, 1046].forEach((f, i) => note(f, i * 0.1, 0.22, 'sine', 0.09));
   } catch {
     /* ignore */
   }

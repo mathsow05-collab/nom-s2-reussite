@@ -2318,3 +2318,18 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .pf-stat strong { overflow-wrap: anywhere; font-size: 0.98rem; }
 .avatar-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
 @media (min-width: 560px) { .avatar-grid { grid-template-columns: repeat(8, 1fr); } }
+
+/* ================================================================
+   KAY DIANG v39 : l'avatar remplit tout le rond (cover, non étiré)
+   ================================================================ */
+.avatar-btn { border-radius: 50%; }
+.pf-avatar { border-radius: 50%; }
+.avatar-btn .anime-av, .pf-avatar .anime-av { width: 100%; height: 100%; border-radius: 50%; background-size: 400% 240%; }
+.avatar-btn .anime-av.i0, .pf-avatar .anime-av.i0 { background-position: 0% 50%; }
+.avatar-btn .anime-av.i1, .pf-avatar .anime-av.i1 { background-position: 33.333% 50%; }
+.avatar-btn .anime-av.i2, .pf-avatar .anime-av.i2 { background-position: 66.666% 50%; }
+.avatar-btn .anime-av.i3, .pf-avatar .anime-av.i3 { background-position: 100% 50%; }
+.avatar-btn .anime-av.i4, .pf-avatar .anime-av.i4 { background-position: 0% 50%; }
+.avatar-btn .anime-av.i5, .pf-avatar .anime-av.i5 { background-position: 33.333% 50%; }
+.avatar-btn .anime-av.i6, .pf-avatar .anime-av.i6 { background-position: 66.666% 50%; }
+.avatar-btn .anime-av.i7, .pf-avatar .anime-av.i7 { background-position: 100% 50%; }
