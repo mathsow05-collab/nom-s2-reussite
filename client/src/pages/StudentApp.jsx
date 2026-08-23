@@ -19,7 +19,7 @@ import Suivi from './Suivi.jsx';
 import { TelechargerHL } from '../offline.jsx';
 import Profil from './Profil.jsx';
 import Anglais from './Anglais.jsx';
-import { sonClic } from '../sons.js';
+import { sonClic, sonOuvrir } from '../sons.js';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -291,7 +291,7 @@ export default function StudentApp() {
     };
   }, []);
 
-  // Petits sons d'interface : tic doux sur chaque appui.
+  // Petits sons premium : tic sur chaque appui + signature sonore par espace ouvert.
   useEffect(() => {
     const h = (e) => {
       if (e.target?.closest?.('button, .pill, .ptile, .avatar-pick, .er-chip')) sonClic();
@@ -299,6 +299,14 @@ export default function StudentApp() {
     document.addEventListener('click', h, true);
     return () => document.removeEventListener('click', h, true);
   }, []);
+  const premierTab = useRef(true);
+  useEffect(() => {
+    if (premierTab.current) {
+      premierTab.current = false;
+      return;
+    }
+    sonOuvrir(tab);
+  }, [tab]);
 
   // Bouton retour Android : navigue dans l'app ; sur l'accueil → confirmation.
   const [confirmQuit, setConfirmQuit] = useState(false);

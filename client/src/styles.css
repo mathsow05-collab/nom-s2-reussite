@@ -2333,3 +2333,16 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .avatar-btn .anime-av.i5, .pf-avatar .anime-av.i5 { background-position: 33.333% 50%; }
 .avatar-btn .anime-av.i6, .pf-avatar .anime-av.i6 { background-position: 66.666% 50%; }
 .avatar-btn .anime-av.i7, .pf-avatar .anime-av.i7 { background-position: 100% 50%; }
+
+/* ================================================================
+   KAY DIANG v40 : avatar rond 50 px, bord blanc, ombre, rien devant
+   ================================================================ */
+.avatar-btn {
+  width: 50px; height: 50px; border-radius: 50%;
+  border: 2.5px solid #fff; background: var(--brand-soft);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+  position: relative; z-index: 3; overflow: hidden; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.avatar-btn .anime-av { border-radius: 50%; }
+.pf-avatar { border: 3px solid #fff; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); overflow: hidden; }
