@@ -2364,3 +2364,13 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
   border-radius: 999px; padding: 10px 18px; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
   animation: qc-pop 0.4s ease;
 }
+
+/* ================================================================
+   KAY DIANG v43 : invitation à installer l'application (PWA)
+   ================================================================ */
+.ia-wrap { position: fixed; inset: 0; z-index: 95; background: rgba(8, 12, 30, 0.55); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ia-card { width: min(420px, 94vw); background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; text-align: center; box-shadow: var(--shadow); animation: qc-pop 0.35s ease; }
+.ia-ico { width: 68px; height: 68px; margin: 0 auto 10px; border-radius: 20px; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px color-mix(in srgb, var(--brand) 40%, transparent); }
+.ia-card h2 { font-size: 1.15rem; margin: 0 0 6px; color: var(--ink); }
+.ia-steps { text-align: left; background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 10px; color: var(--ink); }
+.ia-steps ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }

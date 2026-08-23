@@ -19,6 +19,7 @@ import Anglais from './Anglais.jsx';
 import { sonClic, sonOuvrir } from '../sons.js';
 import Flammes from './Flammes.jsx';
 import Juridique from './Juridique.jsx';
+import InstallApp from './InstallApp.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -638,6 +639,8 @@ export default function StudentApp() {
           </div>
         </div>
       )}
+      <InstallApp auto />
+
       {me && !me.consentement_at && (
         <Modal title="Consentement requis avant de commencer" onClose={() => {}} wide>
           <Juridique />

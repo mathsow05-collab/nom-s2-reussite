@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, setAdminToken } from '../api.js';
 import Icon from '../Icon.jsx';
+import InstallApp from './InstallApp.jsx';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -49,6 +50,9 @@ export default function AdminLogin() {
           </a>
         </div>
       </form>
+      <p style={{ textAlign: 'center', marginTop: 12 }}>
+        <InstallApp />
+      </p>
     </div>
   );
 }
