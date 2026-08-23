@@ -24,19 +24,19 @@ function jouer(fichier, vol = 0.5) {
 }
 
 /* tic de sélection net et discret */
-export const sonClic = () => jouer('clic', 0.4);
+export const sonClic = () => jouer('clic', 0.35);
 
 /* carillon doux à l'ouverture d'un espace */
-export const sonOuvrir = () => jouer('ouvrir', 0.5);
+export const sonOuvrir = () => jouer('ouvrir', 0.45);
 
 /* ton « bonne réponse » chaleureux */
-export const sonOk = () => jouer('ok', 0.55);
+export const sonOk = () => jouer('ok', 0.5);
 
 /* ton d'erreur feutré, jamais agressif */
-export const sonKo = () => jouer('ko', 0.45);
+export const sonKo = () => jouer('ko', 0.4);
 
 /* carillon de victoire */
-export const sonWin = () => jouer('win', 0.6);
+export const sonWin = () => jouer('win', 0.55);
 
 /* rappel / notification positive */
 export const sonNotif = () => jouer('notif', 0.5);
