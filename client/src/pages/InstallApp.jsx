@@ -10,20 +10,31 @@ export default function InstallApp({ auto = false }) {
   const install = useInstall();
   const [ouvert, setOuvert] = useState(false);
 
+  /* Invitation automatique : uniquement si l'installation directe est
+     possible (prompt natif Android/Chrome/desktop) et pas déjà refusée. */
   useEffect(() => {
-    if (!auto || estInstalle()) return undefined;
+    if (!auto || !install.peut || estInstalle()) return;
     let dis = null;
     try {
       dis = localStorage.getItem(LS_DISMISS);
     } catch {
       /* ignore */
     }
-    if (dis && Date.now() - Number(dis) < 3 * 86400000) return undefined;
-    const t = setTimeout(() => setOuvert(true), 1200);
-    return () => clearTimeout(t);
-  }, [auto]);
+    if (dis && Date.now() - Number(dis) < 3 * 86400000) return;
+    setOuvert(true);
+  }, [auto, install.peut]);
 
   function plusTard() {
+    try {
+      localStorage.setItem(LS_DISMISS, String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+    setOuvert(false);
+  }
+
+  async function installerMaintenant() {
+    await install.installer();
     try {
       localStorage.setItem(LS_DISMISS, String(Date.now()));
     } catch {
@@ -48,43 +59,19 @@ export default function InstallApp({ auto = false }) {
             </div>
             <h2>Installe SCHOOBY sur ton téléphone</h2>
             <p className="muted small">
-              Comme une vraie application : icône sur l'écran d'accueil, accès rapide, et tes documents hors ligne
-              même sans connexion.
+              Icône sur l'écran d'accueil, accès en un tap, documents hors ligne : comme une vraie application.
             </p>
 
             {install.peut ? (
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%' }}
-                onClick={() => {
-                  install.installer();
-                  setOuvert(false);
-                }}
-              >
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={installerMaintenant}>
                 ⬇ Installer maintenant
               </button>
             ) : (
-              <div className="ia-steps small">
-                {ios ? (
-                  <>
-                    <strong>Sur iPhone / iPad :</strong>
-                    <ol>
-                      <li>Ouvre le menu Partager (carré avec flèche ↑) dans Safari ;</li>
-                      <li>Choisis « Sur l'écran d'accueil » ;</li>
-                      <li>Valide — l'icône SCHOOBY apparaît !</li>
-                    </ol>
-                  </>
-                ) : (
-                  <>
-                    <strong>Sur Android :</strong>
-                    <ol>
-                      <li>Ouvre le menu ⋮ de ton navigateur ;</li>
-                      <li>Choisis « Ajouter à l'écran d'accueil » / « Installer l'application » ;</li>
-                      <li>Valide — c'est terminé !</li>
-                    </ol>
-                  </>
-                )}
-              </div>
+              <p className="ia-steps small">
+                {ios
+                  ? 'Sur iPhone : bouton Partager ↑ puis « Sur l’écran d’accueil ».'
+                  : 'Ouvre le menu ⋮ du navigateur puis « Installer l’application ».'}
+              </p>
             )}
 
             <button className="btn btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={plusTard}>
