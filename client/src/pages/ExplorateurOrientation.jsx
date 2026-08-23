@@ -350,6 +350,16 @@ export default function ExplorateurOrientation({ filiere, onOpenMetier }) {
           ))}
         </Modal>
       )}
+      {carte && (
+        <Modal title="🌳 Carte mentale de ton orientation" onClose={() => setCarte(false)} wide>
+          <CarteMentale
+            onNode={(n) => {
+              if (n.type === 'metier') onOpenMetier(n.id);
+              else setSelected(n.id);
+            }}
+          />
+        </Modal>
+      )}
     </div>
   );
 }

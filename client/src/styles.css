@@ -2374,3 +2374,12 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .ia-card h2 { font-size: 1.15rem; margin: 0 0 6px; color: var(--ink); }
 .ia-steps { text-align: left; background: var(--card2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 10px; color: var(--ink); }
 .ia-steps ol { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); }
+
+/* ================================================================
+   KAY DIANG v44 : carte mentale d'orientation (mind-map)
+   ================================================================ */
+.cm-wrap { position: relative; height: 66dvh; min-height: 380px; border-radius: 16px; overflow: hidden; background: var(--card2); border: 1px solid var(--line); }
+.cm-svg { width: 100%; height: 100%; touch-action: none; display: block; }
+.cm-ctrl { position: absolute; top: 10px; left: 10px; z-index: 5; display: flex; flex-direction: column; gap: 6px; }
+.cm-ctrl button { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 1.1rem; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
+.cm-hint { margin: 8px 2px 0; }
