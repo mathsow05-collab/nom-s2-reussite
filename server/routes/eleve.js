@@ -27,7 +27,7 @@ router.post(
     if (!raw) return res.status(400).json({ code: 'MISSING_ID', error: 'Veuillez saisir votre ID.' });
 
     const eleve = db.prepare('SELECT * FROM eleves WHERE eleve_id = ?').get(raw);
-    if (!eleve) return res.status(404).json({ code: 'ID_INVALIDE', error: 'ID introuvable. Vérifiez votre identifiant.' });
+    if (!eleve) return res.status(404).json({ code: 'ID_INVALIDE', error: 'Identifiants incorrects.' });
     if (!eleve.actif) {
       addLog('connexion_refusee', { eleveDbId: eleve.id, eleveRef: eleve.eleve_id, req, details: 'accès révoqué' });
       return res.status(403).json({ code: 'REVOQUE', error: 'Votre accès a été suspendu par l’administration.' });
@@ -729,7 +729,7 @@ router.post('/chat/code/:code/ajouter', requireEleve(db), (req, res) => {
   res.json({ ok: true, type: r.type });
 });
 
-router.post('/chat/inviter', requireEleve(db), (req, res) => {
+router.post('/chat/inviter', requireEleve(db), rateLimiter({ max: 10, windowMs: 15 * 60 * 1000, message: 'Trop d’invitations en peu de temps.' }), (req, res) => {
   const r = chatInviter(req.eleve.id, Number(req.body?.vers_id), String(req.body?.type || 'ami'));
   if (r.error) return res.status(r.status).json({ error: r.error });
   addLog('chat_invitation', { eleveDbId: req.eleve.id, eleveRef: req.eleve.eleve_id, req, details: `vers ${req.body.vers_id}` });
@@ -791,7 +791,7 @@ router.get('/chat/messages/:amiId', requireEleve(db), (req, res) => {
   );
 });
 
-router.post('/chat/messages', requireEleve(db), (req, res) => {
+router.post('/chat/messages', requireEleve(db), rateLimiter({ max: 60, windowMs: 60 * 1000, message: 'Trop de messages à la minute. Respire !' }), (req, res) => {
   const estForm = !!req.headers['content-type']?.startsWith('multipart/form-data');
   if (!estForm) return envoyer();
   return chatUpload(req, res, (err) => {
@@ -865,7 +865,7 @@ const eleveCourt = (id) => {
 /* DUELS DE QUIZ : on défie son binôme sur les mêmes questions ;      */
 /* chacun répond de son côté, les scores sont comparés à la fin.      */
 /* ------------------------------------------------------------------ */
-router.post('/duel/defier', requireEleve(db), (req, res) => {
+router.post('/duel/defier', requireEleve(db), rateLimiter({ max: 15, windowMs: 5 * 60 * 1000, message: 'Trop de défis en peu de temps.' }), (req, res) => {
   const moi = req.eleve.id;
   const vers = Number(req.body?.vers_id);
   const lien = chatRelation(moi, vers);

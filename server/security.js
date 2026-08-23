@@ -92,7 +92,8 @@ function generateEleveId() {
 function rateLimiter({ max, windowMs, message }) {
   const hits = new Map();
   return function limiter(req, res, next) {
-    const key = req.ip || 'unknown';
+    const qui = String(req.headers.authorization || '').slice(0, 64);
+    const key = `${req.ip || 'unknown'}|${qui}`;
     const now = Date.now();
     let rec = hits.get(key);
     if (!rec || rec.reset < now) {
