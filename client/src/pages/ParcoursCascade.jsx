@@ -3,7 +3,32 @@ import { NODES, EDGES } from '../orientation/graphData.js';
 import Icon from '../Icon.jsx';
 
 const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
-const enfantsDe = (id) => EDGES.filter((e) => e.from === id).map((e) => byId[e.to]).filter(Boolean);
+
+/* Transitions logiques : après une licence viennent les ANNÉES, pas les
+   universités (les liens « proposée par » servent seulement à la fiche). */
+const SUIVANTS = {
+  bac: ['branche'],
+  branche: ['univ', 'domaine', 'pro', 'concours', 'alternance', 'etranger', 'travail'],
+  univ: ['fac'],
+  fac: ['licence'],
+  domaine: ['ecole'],
+  licence: ['annee'],
+  annee: ['annee', 'master'],
+  master: ['doctorat', 'metier'],
+  doctorat: ['metier'],
+  ecole: ['master', 'metier'],
+  concours: ['metier'],
+  pro: ['master', 'metier'],
+  alternance: ['pro', 'metier'],
+  travail: ['pro', 'metier'],
+  etranger: ['metier'],
+};
+const enfantsDe = (id) => {
+  const t = byId[id]?.type;
+  return EDGES.filter((e) => e.from === id)
+    .map((e) => byId[e.to])
+    .filter((n) => n && (!SUIVANTS[t] || SUIVANTS[t].includes(n.type)));
+};
 
 /* Niveau d'accès déduit des textes d'admission : Bac, ou L2/L3. */
 function niveauAcces(n) {
@@ -28,7 +53,7 @@ export default function ParcoursCascade({ onOuvrir }) {
     : [];
 
   function entrer(n) {
-    if (FICHE.includes(n.type)) return onOuvrir?.(n);
+    if (FICHE.includes(n.type) || !enfantsDe(n.id).length) return onOuvrir?.(n);
     setChemin((c) => [...c, n.id]);
   }
 
@@ -57,7 +82,7 @@ export default function ParcoursCascade({ onOuvrir }) {
                 <strong>{n.label}</strong>
                 {niv && <span className="pc-badge">{niv}</span>}
               </span>
-              {n.sub && <small>{n.sub}</small>}
+              {n.type !== 'annee' && n.sub && <small>{n.sub}</small>}
               {n.type === 'annee' && n.details?.Programme && (
                 <small className="pc-info">📚 {String(n.details.Programme).slice(0, 90)}…</small>
               )}
