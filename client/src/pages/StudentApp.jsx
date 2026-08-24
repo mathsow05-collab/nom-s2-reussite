@@ -35,6 +35,7 @@ const TABS = [
   { id: 'annales', label: 'Annales', icon: 'file' },
   { id: 'quiz', label: 'Quiz', icon: 'award' },
   { id: 'orientation', label: 'Orientation', icon: 'compass' },
+  { id: 'culture', label: 'Culture', icon: 'bulb' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
   { id: 'outils', label: 'Outils', icon: 'chart' },
   { id: 'echanges', label: 'Échanges', icon: 'chat' },
@@ -491,6 +492,7 @@ export default function StudentApp() {
 
       {tab === 'ia' && filiere !== 'L2' && <Assistant />}
       {tab === 'anglais' && <Anglais meId={me.id} />}
+      {tab === 'culture' && <Culture />}
       {tab === 'annales' && <Annales focus={annalesFocus} onFocusLu={() => setAnnalesFocus(null)} />}
       {tab === 'examens' && <Examens />}
       {tab === 'quiz' && <Quiz />}
@@ -693,6 +695,7 @@ const TUILES = [
   { id: 'chat', icon: 'users', img: '/metiers/campus.jpg', titre: 'Chat & binômes', sub: 'Discute avec tes amis', cls: 't-violet' },
   { id: 'outils', icon: 'chart', img: '/metiers/finance.jpg', titre: 'Outils', sub: 'Notes, simulateur, planning', cls: 't-violet' },
   { id: 'orientation', icon: 'compass', img: '/metiers/ciel.jpg', titre: 'Orientation', sub: 'Métiers & études', cls: 't-teal' },
+  { id: 'culture', icon: 'globe', img: '/metiers/culture.jpg', titre: 'Culture', sub: 'Actu, histoires & mini-jeux', cls: 't-pink' },
   { id: 'ia', icon: 'spark', img: '/metiers/info.jpg', titre: 'Prof IA', sub: 'Pose tes questions', cls: 't-orange', pasL2: true },
 ];
 const ICO_TAB = {
