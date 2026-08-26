@@ -2409,3 +2409,4 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
    ================================================================ */
 .abo-ecran { position: fixed; inset: 0; z-index: 998; background: var(--bg); overflow: auto; padding-bottom: 40px; }
 .abo-bandeau { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; text-align: center; font-size: 0.8rem; font-weight: 800; padding: 7px 12px; border-radius: 0 0 12px 12px; margin: -6px 12px 10px; }
+.abo-carte { padding: 4px; }

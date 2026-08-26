@@ -6,12 +6,20 @@ import PdfViewer from '../components/PdfViewer.jsx';
 import { useHorsLigne, useInstall, supprimerHL, lireHL, fmtTaille } from '../offline.jsx';
 import Onboarding, { THEMES } from './Onboarding.jsx';
 import { sonsActifs, setSons } from '../sons.js';
+import Abonnement from './Abonnement.jsx';
 import { badgesOf, computeStats, fmtMin, levelOf, streak, xpOf } from '../progress.js';
 import { MATIERE_BY_ID } from '../api.js';
 
 export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme, onTheme, onSetTheme, onPersoChange, onJur }) {
   const [perso, setPerso] = useState(false);
   const [sons, setSonsEtat] = useState(sonsActifs());
+  const [abo, setAbo] = useState(null);
+  const [renouv, setRenouv] = useState(false);
+  useEffect(() => {
+    api('/eleve/abonnement')
+      .then(setAbo)
+      .catch(() => {});
+  }, []);
   const stats = computeStats(prog, cours);
   const xp = xpOf(prog);
   const lvl = levelOf(xp);
@@ -113,6 +121,30 @@ export default function Profil({ me, cours, prog, onAvatar, onGo, logout, theme,
           ))}
         </div>
       </section>
+
+      {abo && abo.statut !== 'ecole' && (
+        <section className="card s3card">
+          <h2>🔑 Mon abonnement</h2>
+          <div className="pf-level-top">
+            <span className="small">
+              {abo.statut === 'essai' ? '🎁 Essai gratuit' : abo.statut === 'actif' ? '✔ Abonnement actif' : '⛔ Expiré'} —{' '}
+              <strong>{abo.jours} jour(s) restant(s)</strong>
+            </span>
+            <span className="pf-xp">{abo.montant} F / 30 j</span>
+          </div>
+          <div className="bar3" style={{ marginTop: 8 }}>
+            <div style={{ width: `${Math.min(100, (abo.jours / 30) * 100)}%` }} />
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setRenouv(true)}>
+            {abo.jours > 0 ? 'Renouveler maintenant' : 'Activer mon accès'}
+          </button>
+          {renouv && (
+            <Modal title="Renouvellement" onClose={() => setRenouv(false)}>
+              <Abonnement onClose={() => setRenouv(false)} />
+            </Modal>
+          )}
+        </section>
+      )}
 
       <section className="card s3card">
         <h2>Ma personnalisation</h2>

@@ -52,6 +52,7 @@ app.get('/api/version', (req, res) =>
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/eleve', require('./routes/eleve'));
 app.use('/api/decouverte', require('./routes/decouverte'));
+app.use('/api/paiement', require('./paiement').router);
 
 /* Images du catalogue métiers uploadées par les admins (contenu public). */
 app.use('/media/metiers', express.static(path.join(UPLOADS, 'metiers')));

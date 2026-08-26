@@ -64,11 +64,10 @@ router.post(
     const { prenom, nom, classe, filiere, tel, device_id } = req.body || {};
     const f = filiere === 'L2' ? 'L2' : 'S2';
     if (!prenom || !nom) return res.status(400).json({ error: 'Prénom et nom obligatoires.' });
-    const telNorm = String(tel || '').replace(/\D/g, '');
-    // Anti-abus : un appareil ou un numéro qui a déjà consommé un essai n'en reprend pas.
-    const abus =
-      (device_id && db.prepare("SELECT 1 FROM eleves WHERE device_id = ? AND essai_debut IS NOT NULL AND id != ?").get(device_id, -1)) ||
-      (telNorm.length >= 8 && db.prepare('SELECT 1 FROM eleves WHERE tel = ? AND essai_debut IS NOT NULL').get(telNorm));
+    // Anti-abus : un appareil qui a déjà consommé un essai n'en reprend pas.
+    const abus = !!(
+      device_id && db.prepare('SELECT 1 FROM eleves WHERE device_id = ? AND essai_debut IS NOT NULL').get(device_id)
+    );
     const now = new Date();
     const fin = new Date(now.getTime() + (abus ? 0 : 7) * 86400000);
     let id;
@@ -76,8 +75,8 @@ router.post(
       id = generateEleveId(f === 'L2' ? 'L2' : 'S2');
     } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
     const r = db.prepare(
-      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id, tel) VALUES (?,?,?,?,?,1,'auto',?,?,?,?)"
-    ).run(id, String(nom).trim(), String(prenom).trim(), String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f, now.toISOString(), fin.toISOString(), String(device_id || ''), telNorm || null);
+      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id) VALUES (?,?,?,?,?,1,'auto',?,?,?,?)"
+    ).run(id, String(nom).trim(), String(prenom).trim(), String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f, now.toISOString(), fin.toISOString(), String(device_id || ''));
     const jti = crypto.randomBytes(16).toString('hex');
     db.prepare('UPDATE eleves SET session_jti = ?, session_started_at = ? WHERE id = ?').run(jti, now.toISOString(), r.lastInsertRowid);
     addLog('inscription', { eleveDbId: r.lastInsertRowid, eleveRef: id, req, details: abus ? 'essai_refuse_abus' : 'essai_7j' });
@@ -93,6 +92,7 @@ router.get('/abonnement', requireEleve(db), (req, res) => {
   res.json({
     statut,
     jours: Math.max(0, reste),
+    auto: require('../paiement').actif(),
     montant: ABOS[e.filiere] || 1000,
     filiere: e.filiere,
     numeros: {

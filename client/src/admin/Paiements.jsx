@@ -4,12 +4,12 @@ import Icon from '../Icon.jsx';
 
 export default function Paiements() {
   const [list, setList] = useState(null);
-  const [cfg, setCfg] = useState({ wave: '', om: '' });
+  const [cfg, setCfg] = useState({ wave: '', om: '', cinetpay_key: '', cinetpay_site: '' });
   const [msg, setMsg] = useState(null);
   const maj = () => api('/admin/paiements').then(setList).catch(() => {});
   useEffect(() => {
     maj();
-    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '' })).catch(() => {});
+    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '', cinetpay_key: s.cinetpay_key || '', cinetpay_site: s.cinetpay_site || '' })).catch(() => {});
   }, []);
 
   async function agir(id, ok) {
@@ -31,6 +31,15 @@ export default function Paiements() {
         <input className="input" value={cfg.wave} onChange={(e) => setCfg({ ...cfg, wave: e.target.value })} placeholder="77 000 00 00" />
         <label className="label">Orange Money</label>
         <input className="input" value={cfg.om} onChange={(e) => setCfg({ ...cfg, om: e.target.value })} placeholder="78 000 00 00" />
+        <h2 style={{ marginTop: 14 }}>Paiement automatique (CinetPay)</h2>
+        <p className="muted small">
+          Avec un compte CinetPay (gratuit à créer), les élèves paient en 1 appui sur Wave / Orange Money et l'accès
+          s'active tout seul. Sans clés, le mode manuel reste disponible.
+        </p>
+        <label className="label">Clé API CinetPay</label>
+        <input className="input" value={cfg.cinetpay_key} onChange={(e) => setCfg({ ...cfg, cinetpay_key: e.target.value })} placeholder="xxxx-xxxx-…" />
+        <label className="label">ID du site</label>
+        <input className="input" value={cfg.cinetpay_site} onChange={(e) => setCfg({ ...cfg, cinetpay_site: e.target.value })} placeholder="123456" />
         <button className="btn btn-primary" style={{ marginTop: 10 }} onClick={sauverNumeros}>
           Enregistrer
         </button>

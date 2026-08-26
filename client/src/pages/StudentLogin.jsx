@@ -12,7 +12,7 @@ export default function StudentLogin() {
   const [busy, setBusy] = useState(false);
   const [jur, setJur] = useState(false);
   const [inscrire, setInscrire] = useState(false);
-  const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2', tel: '' });
+  const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2' });
 
   async function submitInscription(e) {
     e.preventDefault();
@@ -96,7 +96,6 @@ export default function StudentLogin() {
           <input className="input" placeholder="Prénom *" value={f.prenom} onChange={(e) => setF({ ...f, prenom: e.target.value })} required />
           <input className="input" placeholder="Nom *" value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} required />
           <input className="input" placeholder="Classe (ex. Terminale S2)" value={f.classe} onChange={(e) => setF({ ...f, classe: e.target.value })} />
-          <input className="input" placeholder="Téléphone (conseillé, anti-abus)" value={f.tel} onChange={(e) => setF({ ...f, tel: e.target.value })} />
           <button className="btn btn-primary" disabled={busy}>
             🎁 Créer mon compte — 7 jours gratuits
           </button>

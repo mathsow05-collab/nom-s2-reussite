@@ -329,6 +329,7 @@ router.get('/settings', admin, (req, res) => {
     groq: !!process.env.GROQ_API_KEY || !!g,
     wave: wave?.value || '',
     om: om?.value || '',
+    cinetpay: !!(db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_api_key'").get()?.value && db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_site_id'").get()?.value),
   });
 });
 
@@ -349,6 +350,12 @@ router.post('/settings/paiements', admin, (req, res) => {
   if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
   const wave = String(req.body?.wave || '').trim();
   const om = String(req.body?.om || '').trim();
+  const ck = String(req.body?.cinetpay_key || '').trim();
+  const cs = String(req.body?.cinetpay_site || '').trim();
+  if (ck)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('cinetpay_api_key', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(ck);
+  if (cs)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('cinetpay_site_id', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(cs);
   if (wave)
     db.prepare("INSERT INTO settings (key, value) VALUES ('wave_numero', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(wave);
   if (om)
