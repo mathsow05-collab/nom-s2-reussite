@@ -13,7 +13,8 @@ export default function StudentLogin() {
   const [jur, setJur] = useState(false);
   const [inscrire, setInscrire] = useState(false);
   const [cree, setCree] = useState(null);
-  const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2' });
+  const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2', tel: '' });
+  const [code, setCode] = useState('');
 
   async function submitInscription(e) {
     e.preventDefault();
@@ -22,10 +23,24 @@ export default function StudentLogin() {
     try {
       const fp = await empreinte();
       const r = await api('/eleve/inscrire', { method: 'POST', body: { ...f, device_id: deviceId(), fp_hash: fp.hash, fp_mark: fp.mark } });
-      setToken(r.token);
-      setCree(r.eleve_id);
+      setCree(r);
     } catch (ex) {
       setErr(ex.message || 'Inscription impossible.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitCode(e) {
+    e.preventDefault();
+    setErr(null);
+    setBusy(true);
+    try {
+      const r = await api('/eleve/verifier', { method: 'POST', body: { code, tel: f.tel } });
+      setToken(r.token);
+      window.location.hash = '#/app';
+    } catch (ex) {
+      setErr(ex.message || 'Vérification impossible.');
     } finally {
       setBusy(false);
     }
@@ -87,27 +102,31 @@ export default function StudentLogin() {
       </main>
       {cree && (
         <section className="card s3card" style={{ marginTop: 14, padding: 18, textAlign: 'center' }}>
-          <h2>🎉 Compte créé !</h2>
+          <h2>📲 Vérifie ton WhatsApp</h2>
           <p className="muted small">
-            Voici ton identifiant personnel. <strong>Note-le bien</strong> (photo ou papier) : c'est avec lui que tu te
-            reconnecteras chaque fois.
+            Ton identifiant : <strong>{cree.eleve_id}</strong>. Un message WhatsApp avec ton <strong>code à 6 chiffres</strong>{' '}
+            et ton ID vient de partir{cree.envoi_auto ? '' : ' (ou sera envoyé par l’école dans quelques minutes)'}. Entre le
+            code pour activer ta semaine gratuite :
           </p>
-          <div className="cree-id">{cree}</div>
-          <button
-            className="btn btn-outline"
-            onClick={() => {
-              try {
-                navigator.clipboard?.writeText(cree);
-              } catch {
-                /* ignore */
-              }
-            }}
-          >
-            Copier mon ID
-          </button>
-          <button className="btn btn-primary" style={{ marginTop: 10, width: '100%' }} onClick={() => (window.location.hash = '#/app')}>
-            Commencer ma semaine gratuite
-          </button>
+          {cree.abus && (
+            <div className="alert alert-danger">
+              Ce téléphone/numéro a déjà utilisé sa semaine gratuite : l'abonnement est requis directement.
+            </div>
+          )}
+          <form onSubmit={submitCode} style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+            <input
+              className="input cree-id"
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="••••••"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              required
+            />
+            <button className="btn btn-primary" disabled={busy || code.length !== 6}>
+              Activer ma semaine gratuite
+            </button>
+          </form>
         </section>
       )}
 
@@ -124,6 +143,7 @@ export default function StudentLogin() {
           <input className="input" placeholder="Prénom *" value={f.prenom} onChange={(e) => setF({ ...f, prenom: e.target.value })} required />
           <input className="input" placeholder="Nom *" value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} required />
           <input className="input" placeholder="Classe (ex. Terminale S2)" value={f.classe} onChange={(e) => setF({ ...f, classe: e.target.value })} />
+          <input className="input" placeholder="Numéro WhatsApp * (code + ID envoyés dessus)" type="tel" value={f.tel} onChange={(e) => setF({ ...f, tel: e.target.value })} required />
           <button className="btn btn-primary" disabled={busy}>
             🎁 Créer mon compte — 7 jours gratuits
           </button>

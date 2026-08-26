@@ -4,12 +4,16 @@ import Icon from '../Icon.jsx';
 
 export default function Paiements() {
   const [list, setList] = useState(null);
-  const [cfg, setCfg] = useState({ wave: '', om: '', cinetpay_key: '', cinetpay_site: '' });
+  const [cfg, setCfg] = useState({ wave: '', om: '', cinetpay_key: '', cinetpay_site: '', whatsapp_token: '', whatsapp_phone_id: '' });
   const [msg, setMsg] = useState(null);
-  const maj = () => api('/admin/paiements').then(setList).catch(() => {});
+  const [insc, setInsc] = useState(null);
+  const maj = () => {
+    api('/admin/paiements').then(setList).catch(() => {});
+    api('/admin/inscriptions').then(setInsc).catch(() => {});
+  };
   useEffect(() => {
     maj();
-    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '', cinetpay_key: s.cinetpay_key || '', cinetpay_site: s.cinetpay_site || '' })).catch(() => {});
+    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '', cinetpay_key: s.cinetpay_key || '', cinetpay_site: s.cinetpay_site || '', whatsapp_token: s.whatsapp_token || '', whatsapp_phone_id: s.whatsapp_phone_id || '' })).catch(() => {});
   }, []);
 
   async function agir(id, ok) {
@@ -44,6 +48,38 @@ export default function Paiements() {
           Enregistrer
         </button>
         {msg && <div className="alert alert-ok">{msg}</div>}
+      </div>
+
+      <div className="panel">
+        <h2>📲 Inscriptions à vérifier (code WhatsApp)</h2>
+        <p className="muted small">
+          Si l'envoi automatique n'est pas branché, envoie le code + l'ID en 1 clic via ton WhatsApp, puis l'élève le
+          saisit et sa semaine gratuite démarre.
+        </p>
+        {insc && insc.length === 0 && <p className="muted">Aucune inscription en attente.</p>}
+        {insc?.map((i) => {
+          const tel = i.tel?.length === 9 ? '221' + i.tel : i.tel;
+          const txt = encodeURIComponent(`Bienvenue sur SCHOOBY  Ton code de vérification : ${i.code_verif} — Ton identifiant élève : ${i.eleve_id}. Garde-les précieusement.`);
+          return (
+            <div className="hist3" key={i.id}>
+              <span className="hist3-ico" style={{ background: 'var(--warn-soft)' }}>
+                <Icon name="users" size={16} />
+              </span>
+              <div className="hist3-txt">
+                <strong>{i.prenom} {i.nom} ({i.filiere}) — {i.tel}</strong>
+                <small>code {i.code_verif} · ID {i.eleve_id}</small>
+              </div>
+              <a className="btn btn-primary" href={`https://wa.me/${tel}?text=${txt}`} target="_blank" rel="noreferrer">
+                Envoyer via WhatsApp
+              </a>
+            </div>
+          );
+        })}
+        <h2 style={{ marginTop: 14 }}>WhatsApp automatique (API Meta, optionnel)</h2>
+        <label className="label">Token d'accès Meta</label>
+        <input className="input" value={cfg.whatsapp_token} onChange={(e) => setCfg({ ...cfg, whatsapp_token: e.target.value })} placeholder="EAAG…" />
+        <label className="label">ID du numéro WhatsApp</label>
+        <input className="input" value={cfg.whatsapp_phone_id} onChange={(e) => setCfg({ ...cfg, whatsapp_phone_id: e.target.value })} placeholder="1055…" />
       </div>
 
       <div className="panel">

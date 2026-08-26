@@ -329,6 +329,7 @@ router.get('/settings', admin, (req, res) => {
     groq: !!process.env.GROQ_API_KEY || !!g,
     wave: wave?.value || '',
     om: om?.value || '',
+    whatsapp: !!db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_token'").get()?.value,
     cinetpay: !!(db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_api_key'").get()?.value && db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_site_id'").get()?.value),
   });
 });
@@ -352,6 +353,12 @@ router.post('/settings/paiements', admin, (req, res) => {
   const om = String(req.body?.om || '').trim();
   const ck = String(req.body?.cinetpay_key || '').trim();
   const cs = String(req.body?.cinetpay_site || '').trim();
+  const wt = String(req.body?.whatsapp_token || '').trim();
+  const wp = String(req.body?.whatsapp_phone_id || '').trim();
+  if (wt)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('whatsapp_token', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(wt);
+  if (wp)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('whatsapp_phone_id', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(wp);
   if (ck)
     db.prepare("INSERT INTO settings (key, value) VALUES ('cinetpay_api_key', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(ck);
   if (cs)
@@ -362,6 +369,17 @@ router.post('/settings/paiements', admin, (req, res) => {
     db.prepare("INSERT INTO settings (key, value) VALUES ('om_numero', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(om);
   addLog('paiements_numeros_maj', { source: 'admin', req });
   res.json({ ok: true });
+});
+
+router.get('/inscriptions', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  res.json(
+    db
+      .prepare(
+        "SELECT id, eleve_id, prenom, nom, classe, filiere, tel, code_verif, created_at FROM eleves WHERE create_par = 'auto' AND essai_debut IS NULL AND code_verif IS NOT NULL ORDER BY id DESC LIMIT 50"
+      )
+      .all()
+  );
 });
 
 router.get('/paiements', admin, (req, res) => {

@@ -11,6 +11,31 @@ const { requireEleve } = require('../middleware');
 const { addLog } = require('../log');
 const { marquerInteraction, listerFlammes } = require('../streaks');
 
+/* Envoi WhatsApp via l'API officielle Meta Cloud (si configurée par la direction). */
+async function envoyerWhatsApp(tel, texte) {
+  const token = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_token'").get()?.value;
+  const phoneId = db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_phone_id'").get()?.value;
+  if (!token || !phoneId) return false;
+  let num = tel;
+  if (num.length === 9) num = '221' + num;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v19.0/${phoneId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: num,
+        type: 'text',
+        text: { body: texte },
+      }),
+    });
+    const d = await r.json();
+    return !!d?.messages?.length;
+  } catch {
+    return false;
+  }
+}
+
 const router = express.Router();
 const UPLOADS = UPLOADS_DIR;
 
@@ -60,32 +85,64 @@ const ABOS = { S2: 1500, L2: 1000 };
 router.post(
   '/inscrire',
   rateLimiter({ max: 6, windowMs: 60 * 60 * 1000, message: 'Trop d’inscriptions depuis cette connexion. Réessaie plus tard.' }),
-  (req, res) => {
+  async (req, res) => {
     const { prenom, nom, classe, filiere, device_id, fp_hash, fp_mark } = req.body || {};
+    const telNorm = String(req.body?.tel || '').replace(/\D/g, '');
     const f = filiere === 'L2' ? 'L2' : 'S2';
     if (!prenom || !nom) return res.status(400).json({ error: 'Prénom et nom obligatoires.' });
-    // Anti-abus multi-couches : empreinte matérielle, marqueur persistant,
-    // ancien ID appareil. Un appareil qui a déjà pris un essai n'en reprend pas.
+    if (telNorm.length < 8) return res.status(400).json({ error: 'Un numéro WhatsApp valide est obligatoire pour recevoir ton code et ton ID.' });
+    // Anti-abus : empreintes + numéro déjà utilisé pour un essai.
     const abus = !!(
       (fp_hash && db.prepare('SELECT 1 FROM eleves WHERE fp_hash = ? AND essai_debut IS NOT NULL').get(fp_hash)) ||
       (fp_mark && db.prepare('SELECT 1 FROM eleves WHERE fp_mark = ? AND essai_debut IS NOT NULL').get(fp_mark)) ||
-      (device_id && db.prepare('SELECT 1 FROM eleves WHERE device_id = ? AND essai_debut IS NOT NULL').get(device_id))
+      (device_id && db.prepare('SELECT 1 FROM eleves WHERE device_id = ? AND essai_debut IS NOT NULL').get(device_id)) ||
+      db.prepare('SELECT 1 FROM eleves WHERE tel = ? AND essai_debut IS NOT NULL').get(telNorm)
     );
-    const now = new Date();
-    const fin = new Date(now.getTime() + (abus ? 0 : 7) * 86400000);
+    const code = String(crypto.randomInt(100000, 999999));
     let id;
     do {
       id = generateEleveId(f === 'L2' ? 'L2' : 'S2');
     } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
+    const now = new Date();
     const r = db.prepare(
-      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id) VALUES (?,?,?,?,?,1,'auto',?,?,?)"
-    ).run(id, String(nom).trim(), String(prenom).trim(), String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f, now.toISOString(), fin.toISOString(), String(device_id || ''));
-    db.prepare('UPDATE eleves SET fp_hash = ?, fp_mark = ? WHERE eleve_id = ?').run(String(fp_hash || ''), String(fp_mark || ''), id);
+      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id, tel, fp_hash, fp_mark, code_verif, code_expires) VALUES (?,?,?,?,?,1,'auto',NULL,NULL,?,?,?,?,?,?)"
+    ).run(
+      id, String(nom).trim(), String(prenom).trim(),
+      String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f,
+      String(device_id || ''), telNorm, String(fp_hash || ''), String(fp_mark || ''),
+      code, new Date(now.getTime() + 24 * 3600 * 1000).toISOString()
+    );
+    if (abus) db.prepare('UPDATE eleves SET code_verif = NULL WHERE id = ?').run(r.lastInsertRowid);
+    addLog('inscription', { eleveDbId: r.lastInsertRowid, eleveRef: id, req, details: abus ? 'abus_refuse' : 'code_whatsapp' });
+    // Envoi automatique si l'API WhatsApp officielle est configurée.
+    const texte = `Bienvenue sur SCHOOBY  Ton code de vérification : ${code} — Ton identifiant élève : ${id}. Garde-les précieusement.`;
+    let envoye = false;
+    if (!abus) envoye = await envoyerWhatsApp(telNorm, texte);
+    return res.json({ ok: true, eleve_id: id, envoi_auto: envoye, abus });
+  }
+);
+
+/* Vérification du code reçu sur WhatsApp → active la semaine gratuite. */
+router.post(
+  '/verifier',
+  rateLimiter({ max: 8, windowMs: 15 * 60 * 1000, message: 'Trop de tentatives. Attends un peu.' }),
+  (req, res) => {
+    const code = String(req.body?.code || '').trim();
+    const telNorm = String(req.body?.tel || '').replace(/\D/g, '');
+    const e = db.prepare('SELECT * FROM eleves WHERE tel = ? AND create_par = ? ORDER BY id DESC').get(telNorm, 'auto');
+    if (!e || !e.code_verif) return res.status(400).json({ error: 'Aucun compte à vérifier pour ce numéro.' });
+    if (e.code_expires && new Date(e.code_expires) < new Date())
+      return res.status(400).json({ error: 'Code expiré. Refais une inscription pour en recevoir un autre.' });
+    if (code !== e.code_verif) return res.status(400).json({ error: 'Code incorrect. Vérifie le message WhatsApp.' });
+    const now = new Date();
+    const fin = new Date(now.getTime() + 7 * 86400000);
     const jti = crypto.randomBytes(16).toString('hex');
-    db.prepare('UPDATE eleves SET session_jti = ?, session_started_at = ? WHERE id = ?').run(jti, now.toISOString(), r.lastInsertRowid);
-    addLog('inscription', { eleveDbId: r.lastInsertRowid, eleveRef: id, req, details: abus ? 'essai_refuse_abus' : 'essai_7j' });
-    const token = signToken({ sub: r.lastInsertRowid, role: 'eleve', jti }, 14 * 24 * 3600);
-    res.json({ token, essai: !abus, jours: abus ? 0 : 7, eleve_id: id });
+    db.prepare('UPDATE eleves SET code_verif = NULL, essai_debut = ?, abo_expire = ?, session_jti = ?, session_started_at = ? WHERE id = ?').run(
+      now.toISOString(), fin.toISOString(), jti, now.toISOString(), e.id
+    );
+    addLog('inscription_verifiee', { eleveDbId: e.id, eleveRef: e.eleve_id, req });
+    const token = signToken({ sub: e.id, role: 'eleve', jti }, 14 * 24 * 3600);
+    res.json({ token, eleve_id: e.eleve_id, jours: 7 });
   }
 );
 
