@@ -75,7 +75,7 @@ router.post(
       id = generateEleveId(f === 'L2' ? 'L2' : 'S2');
     } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
     const r = db.prepare(
-      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id) VALUES (?,?,?,?,?,1,'auto',?,?,?,?)"
+      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id) VALUES (?,?,?,?,?,1,'auto',?,?,?)"
     ).run(id, String(nom).trim(), String(prenom).trim(), String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f, now.toISOString(), fin.toISOString(), String(device_id || ''));
     const jti = crypto.randomBytes(16).toString('hex');
     db.prepare('UPDATE eleves SET session_jti = ?, session_started_at = ? WHERE id = ?').run(jti, now.toISOString(), r.lastInsertRowid);
