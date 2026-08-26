@@ -3,7 +3,7 @@ import { api, setToken } from '../api.js';
 import { Modal } from '../ui.jsx';
 import Juridique from './Juridique.jsx';
 import InstallApp from './InstallApp.jsx';
-import { deviceId } from '../device.js';
+import { deviceId, empreinte } from '../device.js';
 import Icon from '../Icon.jsx';
 
 export default function StudentLogin() {
@@ -20,7 +20,8 @@ export default function StudentLogin() {
     setErr(null);
     setBusy(true);
     try {
-      const r = await api('/eleve/inscrire', { method: 'POST', body: { ...f, device_id: deviceId() } });
+      const fp = await empreinte();
+      const r = await api('/eleve/inscrire', { method: 'POST', body: { ...f, device_id: deviceId(), fp_hash: fp.hash, fp_mark: fp.mark } });
       setToken(r.token);
       setCree(r.eleve_id);
     } catch (ex) {

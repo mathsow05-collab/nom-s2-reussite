@@ -166,6 +166,8 @@ ensureColumn('eleves', 'essai_debut', 'TEXT');
 ensureColumn('eleves', 'abo_expire', 'TEXT');
 ensureColumn('eleves', 'device_id', 'TEXT');
 ensureColumn('eleves', 'tel', 'TEXT');
+ensureColumn('eleves', 'fp_hash', 'TEXT');
+ensureColumn('eleves', 'fp_mark', 'TEXT');
 db.exec(`CREATE TABLE IF NOT EXISTS payements (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   eleve_db_id INTEGER NOT NULL,
