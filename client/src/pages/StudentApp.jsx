@@ -20,6 +20,7 @@ import { sonClic, sonOuvrir } from '../sons.js';
 import Flammes from './Flammes.jsx';
 import Juridique from './Juridique.jsx';
 import InstallApp from './InstallApp.jsx';
+import Abonnement from './Abonnement.jsx';
 import Examens from './Examens.jsx';
 import Chat from './Chat.jsx';
 import Onboarding from './Onboarding.jsx';
@@ -315,6 +316,14 @@ export default function StudentApp() {
     setMe((m) => ({ ...m, consentement_at: r.consentement_at }));
   }
 
+  // Statut d'abonnement (essai / expiré / école).
+  useEffect(() => {
+    if (!me) return;
+    api('/eleve/abonnement')
+      .then(setAbo)
+      .catch(() => setAbo({ statut: 'ecole' }));
+  }, [me]);
+
   // Petits sons premium : tic sur chaque appui + signature sonore par espace ouvert.
   useEffect(() => {
     const h = (e) => {
@@ -327,6 +336,7 @@ export default function StudentApp() {
   const [jur, setJur] = useState(false);
   const [consentOk, setConsentOk] = useState(false);
   const [consentLu, setConsentLu] = useState(false);
+  const [abo, setAbo] = useState(null);
   const premierTab = useRef(true);
   useEffect(() => {
     if (premierTab.current) {
@@ -642,6 +652,14 @@ export default function StudentApp() {
         </div>
       )}
       <InstallApp auto />
+
+      {me && abo?.statut === 'expiré' && <Abonnement logout={logout} />}
+
+      {me && abo?.statut === 'essai' && (
+        <div className="abo-bandeau">
+          🎁 Essai gratuit : encore {abo.jours} jour(s) — puis {abo.montant} F CFA / 30 jours.
+        </div>
+      )}
 
       {me && !me.consentement_at && (
         <Modal title="Consentement requis avant de commencer" onClose={() => {}} wide>

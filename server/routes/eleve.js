@@ -6,7 +6,7 @@ const multer = require('multer');
 const db = require('../db');
 const sse = require('../sse');
 const { UPLOADS_DIR } = require('../paths');
-const { signToken, rateLimiter } = require('../security');
+const { signToken, rateLimiter, generateEleveId } = require('../security');
 const { requireEleve } = require('../middleware');
 const { addLog } = require('../log');
 const { marquerInteraction, listerFlammes } = require('../streaks');
@@ -54,6 +54,66 @@ router.post(
     });
   }
 );
+
+/* ------------------------- INSCRIPTION PUBLIQUE + essai 7 j ------------------------- */
+const ABOS = { S2: 1500, L2: 1000 };
+router.post(
+  '/inscrire',
+  rateLimiter({ max: 6, windowMs: 60 * 60 * 1000, message: 'Trop d’inscriptions depuis cette connexion. Réessaie plus tard.' }),
+  (req, res) => {
+    const { prenom, nom, classe, filiere, tel, device_id } = req.body || {};
+    const f = filiere === 'L2' ? 'L2' : 'S2';
+    if (!prenom || !nom) return res.status(400).json({ error: 'Prénom et nom obligatoires.' });
+    const telNorm = String(tel || '').replace(/\D/g, '');
+    // Anti-abus : un appareil ou un numéro qui a déjà consommé un essai n'en reprend pas.
+    const abus =
+      (device_id && db.prepare("SELECT 1 FROM eleves WHERE device_id = ? AND essai_debut IS NOT NULL AND id != ?").get(device_id, -1)) ||
+      (telNorm.length >= 8 && db.prepare('SELECT 1 FROM eleves WHERE tel = ? AND essai_debut IS NOT NULL').get(telNorm));
+    const now = new Date();
+    const fin = new Date(now.getTime() + (abus ? 0 : 7) * 86400000);
+    let id;
+    do {
+      id = generateEleveId(f === 'L2' ? 'L2' : 'S2');
+    } while (db.prepare('SELECT 1 FROM eleves WHERE eleve_id = ?').get(id));
+    const r = db.prepare(
+      "INSERT INTO eleves (eleve_id, nom, prenom, classe, filiere, actif, create_par, essai_debut, abo_expire, device_id, tel) VALUES (?,?,?,?,?,1,'auto',?,?,?,?)"
+    ).run(id, String(nom).trim(), String(prenom).trim(), String(classe || (f === 'S2' ? 'Terminale S2' : 'Terminale L2')).trim(), f, now.toISOString(), fin.toISOString(), String(device_id || ''), telNorm || null);
+    const jti = crypto.randomBytes(16).toString('hex');
+    db.prepare('UPDATE eleves SET session_jti = ?, session_started_at = ? WHERE id = ?').run(jti, now.toISOString(), r.lastInsertRowid);
+    addLog('inscription', { eleveDbId: r.lastInsertRowid, eleveRef: id, req, details: abus ? 'essai_refuse_abus' : 'essai_7j' });
+    const token = signToken({ sub: r.lastInsertRowid, role: 'eleve', jti }, 12 * 3600);
+    res.json({ token, essai: !abus, jours: abus ? 0 : 7, eleve_id: id });
+  }
+);
+
+router.get('/abonnement', requireEleve(db), (req, res) => {
+  const e = req.eleve;
+  const reste = e.abo_expire ? Math.ceil((new Date(e.abo_expire) - new Date()) / 86400000) : 0;
+  const statut = e.create_par !== 'auto' ? 'ecole' : reste > 0 ? (e.essai_debut && !e.paye ? 'essai' : 'actif') : 'expiré';
+  res.json({
+    statut,
+    jours: Math.max(0, reste),
+    montant: ABOS[e.filiere] || 1000,
+    filiere: e.filiere,
+    numeros: {
+      wave: db.prepare("SELECT value FROM settings WHERE key = 'wave_numero'").get()?.value || '',
+      om: db.prepare("SELECT value FROM settings WHERE key = 'om_numero'").get()?.value || '',
+    },
+    en_attente: db.prepare("SELECT id, montant, methode, created_at FROM payements WHERE eleve_db_id = ? AND statut = 'en_attente'").all(e.id),
+  });
+});
+
+router.post('/abonnement/payer', requireEleve(db), (req, res) => {
+  const e = req.eleve;
+  const methode = req.body?.methode === 'om' ? 'om' : 'wave';
+  const numero = String(req.body?.numero_envoyeur || '').replace(/\D/g, '');
+  if (numero.length < 8) return res.status(400).json({ error: 'Numéro envoyeur invalide.' });
+  db.prepare('INSERT INTO payements (eleve_db_id, montant, methode, numero_envoyeur, reference) VALUES (?,?,?,?,?)').run(
+    e.id, ABOS[e.filiere] || 1000, methode, numero, String(req.body?.reference || '')
+  );
+  addLog('paiement_declare', { eleveDbId: e.id, eleveRef: e.eleve_id, req, details: methode });
+  res.json({ ok: true });
+});
 
 router.get('/me', requireEleve(db), (req, res) => {
   res.json({
@@ -124,6 +184,18 @@ router.get('/metiers', requireEleve(db), (req, res) => {
   res.json(
     db.prepare("SELECT * FROM metiers WHERE filiere = ? OR filiere = 'all' ORDER BY ordre, id").all(filiere)
   );
+});
+
+/* Abonnement : les comptes auto-inscrits doivent un abonnement valide après
+   la semaine d'essai. Les comptes créés par l'admin (école) ne sont jamais bloqués. */
+router.use((req, res, next) => {
+  const { verifyToken } = require('../security');
+  const payload = verifyToken(String(req.headers.authorization || '').replace('Bearer ', ''));
+  if (!payload || payload.role !== 'eleve') return next();
+  const e = db.prepare('SELECT create_par, abo_expire FROM eleves WHERE id = ?').get(payload.sub);
+  if (!e || e.create_par !== 'auto') return next();
+  if (e.abo_expire && new Date(e.abo_expire) > new Date()) return next();
+  return res.status(402).json({ code: 'ABO_EXPIRE', error: 'Ta semaine d’essai est terminée : active ton abonnement pour continuer.' });
 });
 
 router.post('/consentement', requireEleve(db), (req, res) => {

@@ -321,10 +321,14 @@ router.put('/cours/:id', admin, pdfUpload, (req, res) => {
 router.get('/settings', admin, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'gemini_key'").get();
   const g = db.prepare("SELECT value FROM settings WHERE key = 'groq_key'").get();
+  const wave = db.prepare("SELECT value FROM settings WHERE key = 'wave_numero'").get();
+  const om = db.prepare("SELECT value FROM settings WHERE key = 'om_numero'").get();
   res.json({
     ia: !!process.env.GEMINI_API_KEY || !!row,
     source: process.env.GEMINI_API_KEY ? 'env' : row ? 'admin' : null,
     groq: !!process.env.GROQ_API_KEY || !!g,
+    wave: wave?.value || '',
+    om: om?.value || '',
   });
 });
 
@@ -340,6 +344,48 @@ router.post('/settings/ia', admin, (req, res) => {
   addLog('ia_cle_enregistree', { source: 'admin', req, details: req.admin.username });
   res.json({ ok: true });
 });
+
+router.post('/settings/paiements', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  const wave = String(req.body?.wave || '').trim();
+  const om = String(req.body?.om || '').trim();
+  if (wave)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('wave_numero', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(wave);
+  if (om)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('om_numero', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(om);
+  addLog('paiements_numeros_maj', { source: 'admin', req });
+  res.json({ ok: true });
+});
+
+router.get('/paiements', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  res.json(
+    db
+      .prepare(
+        `SELECT p.*, e.prenom, e.nom, e.classe, e.filiere, e.eleve_id
+         FROM payements p JOIN eleves e ON e.id = p.eleve_db_id
+         ORDER BY (p.statut = 'en_attente') DESC, p.id DESC LIMIT 100`
+      )
+      .all()
+  );
+});
+
+function reglerPaiement(req, res, statut) {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  const p = db.prepare("SELECT * FROM payements WHERE id = ? AND statut = 'en_attente'").get(req.params.id);
+  if (!p) return res.status(404).json({ error: 'Paiement introuvable.' });
+  db.prepare('UPDATE payements SET statut = ? WHERE id = ?').run(statut, p.id);
+  if (statut === 'valide') {
+    const e = db.prepare('SELECT abo_expire FROM eleves WHERE id = ?').get(p.eleve_db_id);
+    const base = e?.abo_expire && new Date(e.abo_expire) > new Date() ? new Date(e.abo_expire) : new Date();
+    const fin = new Date(base.getTime() + 30 * 86400000);
+    db.prepare('UPDATE eleves SET abo_expire = ? WHERE id = ?').run(fin.toISOString(), p.eleve_db_id);
+  }
+  addLog('paiement_' + statut, { source: 'admin', req, eleveDbId: p.eleve_db_id, details: `#${p.id}` });
+  res.json({ ok: true });
+}
+router.post('/paiements/:id/valider', admin, (req, res) => reglerPaiement(req, res, 'valide'));
+router.post('/paiements/:id/rejeter', admin, (req, res) => reglerPaiement(req, res, 'rejete'));
 
 router.delete('/settings/ia/groq', admin, (req, res) => {
   if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });

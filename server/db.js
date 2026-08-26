@@ -161,6 +161,21 @@ function ensureColumn(table, col, ddl) {
 }
 ensureColumn('eleves', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('eleves', 'consentement_at', 'TEXT');
+ensureColumn('eleves', 'create_par', "TEXT NOT NULL DEFAULT 'admin'");
+ensureColumn('eleves', 'essai_debut', 'TEXT');
+ensureColumn('eleves', 'abo_expire', 'TEXT');
+ensureColumn('eleves', 'device_id', 'TEXT');
+ensureColumn('eleves', 'tel', 'TEXT');
+db.exec(`CREATE TABLE IF NOT EXISTS payements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  eleve_db_id INTEGER NOT NULL,
+  montant INTEGER NOT NULL,
+  methode TEXT NOT NULL,
+  numero_envoyeur TEXT,
+  reference TEXT,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+)`);
 ensureColumn('cours', 'filiere', "TEXT NOT NULL DEFAULT 'S2'");
 ensureColumn('admins', 'filiere', "TEXT NOT NULL DEFAULT 'all'");
 ensureColumn('admins', 'display_name', 'TEXT');

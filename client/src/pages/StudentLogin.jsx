@@ -3,6 +3,7 @@ import { api, setToken } from '../api.js';
 import { Modal } from '../ui.jsx';
 import Juridique from './Juridique.jsx';
 import InstallApp from './InstallApp.jsx';
+import { deviceId } from '../device.js';
 import Icon from '../Icon.jsx';
 
 export default function StudentLogin() {
@@ -10,6 +11,23 @@ export default function StudentLogin() {
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
   const [jur, setJur] = useState(false);
+  const [inscrire, setInscrire] = useState(false);
+  const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2', tel: '' });
+
+  async function submitInscription(e) {
+    e.preventDefault();
+    setErr(null);
+    setBusy(true);
+    try {
+      const r = await api('/eleve/inscrire', { method: 'POST', body: { ...f, device_id: deviceId() } });
+      setToken(r.token);
+      window.location.hash = '#/app';
+    } catch (ex) {
+      setErr(ex.message || 'Inscription impossible.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -65,7 +83,35 @@ export default function StudentLogin() {
           Espace administrateur
         </a>
       </main>
+      {inscrire && (
+        <form onSubmit={submitInscription} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+          <div className="pills">
+            <button type="button" className={f.filiere === 'S2' ? 'pill active' : 'pill'} onClick={() => setF({ ...f, filiere: 'S2' })}>
+              S2 · Sciences (1 500 F/mois après essai)
+            </button>
+            <button type="button" className={f.filiere === 'L2' ? 'pill active' : 'pill'} onClick={() => setF({ ...f, filiere: 'L2' })}>
+              L2 · Lettres (1 000 F/mois après essai)
+            </button>
+          </div>
+          <input className="input" placeholder="Prénom *" value={f.prenom} onChange={(e) => setF({ ...f, prenom: e.target.value })} required />
+          <input className="input" placeholder="Nom *" value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} required />
+          <input className="input" placeholder="Classe (ex. Terminale S2)" value={f.classe} onChange={(e) => setF({ ...f, classe: e.target.value })} />
+          <input className="input" placeholder="Téléphone (conseillé, anti-abus)" value={f.tel} onChange={(e) => setF({ ...f, tel: e.target.value })} />
+          <button className="btn btn-primary" disabled={busy}>
+            🎁 Créer mon compte — 7 jours gratuits
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => setInscrire(false)}>
+            J'ai déjà un ID
+          </button>
+        </form>
+      )}
+
       <p style={{ textAlign: 'center', marginTop: 14, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+        {!inscrire && (
+          <button className="btn btn-primary" onClick={() => setInscrire(true)}>
+            ✍ S'inscrire (1 semaine gratuite)
+          </button>
+        )}
         <InstallApp auto />
         <button className="btn btn-ghost" onClick={() => setJur(true)}>
           📄 Conditions d'utilisation · Confidentialité · Mentions légales
