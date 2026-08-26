@@ -12,6 +12,7 @@ export default function StudentLogin() {
   const [busy, setBusy] = useState(false);
   const [jur, setJur] = useState(false);
   const [inscrire, setInscrire] = useState(false);
+  const [cree, setCree] = useState(null);
   const [f, setF] = useState({ prenom: '', nom: '', classe: '', filiere: 'S2' });
 
   async function submitInscription(e) {
@@ -21,7 +22,7 @@ export default function StudentLogin() {
     try {
       const r = await api('/eleve/inscrire', { method: 'POST', body: { ...f, device_id: deviceId() } });
       setToken(r.token);
-      window.location.hash = '#/app';
+      setCree(r.eleve_id);
     } catch (ex) {
       setErr(ex.message || 'Inscription impossible.');
     } finally {
@@ -83,6 +84,32 @@ export default function StudentLogin() {
           Espace administrateur
         </a>
       </main>
+      {cree && (
+        <section className="card s3card" style={{ marginTop: 14, padding: 18, textAlign: 'center' }}>
+          <h2>🎉 Compte créé !</h2>
+          <p className="muted small">
+            Voici ton identifiant personnel. <strong>Note-le bien</strong> (photo ou papier) : c'est avec lui que tu te
+            reconnecteras chaque fois.
+          </p>
+          <div className="cree-id">{cree}</div>
+          <button
+            className="btn btn-outline"
+            onClick={() => {
+              try {
+                navigator.clipboard?.writeText(cree);
+              } catch {
+                /* ignore */
+              }
+            }}
+          >
+            Copier mon ID
+          </button>
+          <button className="btn btn-primary" style={{ marginTop: 10, width: '100%' }} onClick={() => (window.location.hash = '#/app')}>
+            Commencer ma semaine gratuite
+          </button>
+        </section>
+      )}
+
       {inscrire && (
         <form onSubmit={submitInscription} style={{ display: 'grid', gap: 8, marginTop: 12 }}>
           <div className="pills">

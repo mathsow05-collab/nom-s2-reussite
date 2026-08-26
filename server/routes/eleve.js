@@ -45,7 +45,7 @@ router.post(
       new Date().toISOString(),
       eleve.id
     );
-    const token = signToken({ sub: eleve.id, role: 'eleve', jti }, 12 * 3600);
+    const token = signToken({ sub: eleve.id, role: 'eleve', jti }, 14 * 24 * 3600);
     addLog('connexion', { eleveDbId: eleve.id, eleveRef: eleve.eleve_id, req });
 
     return res.json({
@@ -80,7 +80,7 @@ router.post(
     const jti = crypto.randomBytes(16).toString('hex');
     db.prepare('UPDATE eleves SET session_jti = ?, session_started_at = ? WHERE id = ?').run(jti, now.toISOString(), r.lastInsertRowid);
     addLog('inscription', { eleveDbId: r.lastInsertRowid, eleveRef: id, req, details: abus ? 'essai_refuse_abus' : 'essai_7j' });
-    const token = signToken({ sub: r.lastInsertRowid, role: 'eleve', jti }, 12 * 3600);
+    const token = signToken({ sub: r.lastInsertRowid, role: 'eleve', jti }, 14 * 24 * 3600);
     res.json({ token, essai: !abus, jours: abus ? 0 : 7, eleve_id: id });
   }
 );
