@@ -3,6 +3,8 @@ import StudentLogin from './pages/StudentLogin.jsx';
 import StudentApp from './pages/StudentApp.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import AdminApp from './pages/AdminApp.jsx';
+import EtudiantLogin from './pages/etu/EtudiantLogin.jsx';
+import EtudiantApp from './pages/etu/EtudiantApp.jsx';
 
 export default function App() {
   const [route, setRoute] = useState(window.location.hash || '#/');
@@ -13,6 +15,8 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  if (route.startsWith('#/etu/app')) return <EtudiantApp />;
+  if (route.startsWith('#/etudiant')) return <EtudiantLogin />;
   if (route.startsWith('#/admin/app')) return <AdminApp />;
   if (route.startsWith('#/admin')) return <AdminLogin />;
   if (route.startsWith('#/app')) return <StudentApp />;

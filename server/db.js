@@ -370,4 +370,108 @@ CREATE TABLE IF NOT EXISTS devoir_binome_reponses (
 CREATE INDEX IF NOT EXISTS idx_devoir_rep_pair ON devoir_binome_reponses (devoir_id, lien_id);
 `);
 
+/* ------------------------- ESPACE ÉTUDIANT (gratuit) ----------------------
+   Espace universitaire : inscription gratuite vérifiée par code WhatsApp,
+   groupes de travail par filière, boutique de packs vendus par les étudiants
+   (commission % pour la plateforme), culture par filière, orientation,
+   planning personnel, opportunités (bourses & stages). */
+db.exec(`
+CREATE TABLE IF NOT EXISTS etudiants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  etu_id TEXT UNIQUE NOT NULL,
+  nom TEXT NOT NULL,
+  prenom TEXT NOT NULL,
+  filiere TEXT NOT NULL,
+  universite TEXT,
+  tel TEXT NOT NULL,
+  fp_hash TEXT, fp_mark TEXT, device_id TEXT,
+  avatar TEXT,
+  actif INTEGER NOT NULL DEFAULT 1,
+  session_jti TEXT, session_started_at TEXT,
+  code_verif TEXT, code_expires TEXT, verifie INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS etu_groupes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  filiere TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'etude',
+  description TEXT,
+  createur_id INTEGER NOT NULL,
+  actif INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS etu_membres (
+  groupe_id INTEGER NOT NULL,
+  etudiant_id INTEGER NOT NULL,
+  role TEXT NOT NULL DEFAULT 'membre',
+  joined_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE(groupe_id, etudiant_id)
+);
+CREATE TABLE IF NOT EXISTS etu_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  groupe_id INTEGER NOT NULL,
+  etudiant_id INTEGER NOT NULL,
+  texte TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS etu_packs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vendeur_id INTEGER NOT NULL,
+  titre TEXT NOT NULL,
+  filiere TEXT NOT NULL,
+  matiere TEXT,
+  prix INTEGER NOT NULL,
+  description TEXT,
+  contenu TEXT,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  ventes INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS etu_achats (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pack_id INTEGER NOT NULL,
+  acheteur_id INTEGER NOT NULL,
+  statut TEXT NOT NULL DEFAULT 'en_attente',
+  methode TEXT, reference TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  valide_at TEXT
+);
+CREATE TABLE IF NOT EXISTS etu_planning (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  etudiant_id INTEGER NOT NULL,
+  jour INTEGER NOT NULL,
+  debut TEXT NOT NULL,
+  fin TEXT,
+  titre TEXT NOT NULL,
+  salle TEXT
+);
+CREATE TABLE IF NOT EXISTS etu_culture (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filiere TEXT NOT NULL,
+  titre TEXT NOT NULL,
+  contenu TEXT NOT NULL,
+  date_publi TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE TABLE IF NOT EXISTS etu_orientation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  filiere TEXT NOT NULL,
+  titre TEXT NOT NULL,
+  contenu TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS etu_opportunites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL DEFAULT 'bourse',
+  titre TEXT NOT NULL,
+  contenu TEXT NOT NULL,
+  lien TEXT,
+  date_limite TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_etu_id ON etudiants(etu_id);
+CREATE INDEX IF NOT EXISTS idx_etu_groupes_fil ON etu_groupes(filiere);
+CREATE INDEX IF NOT EXISTS idx_etu_msg ON etu_messages(groupe_id, id);
+CREATE INDEX IF NOT EXISTS idx_etu_packs_fil ON etu_packs(filiere, statut);
+`);
+
 module.exports = db;

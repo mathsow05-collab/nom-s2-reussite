@@ -4,7 +4,7 @@ import Icon from '../Icon.jsx';
 
 export default function Paiements() {
   const [list, setList] = useState(null);
-  const [cfg, setCfg] = useState({ wave: '', om: '', cinetpay_key: '', cinetpay_site: '', whatsapp_token: '', whatsapp_phone_id: '' });
+  const [cfg, setCfg] = useState({ wave: '', om: '', cinetpay_key: '', cinetpay_site: '', whatsapp_token: '', whatsapp_phone_id: '', commission_packs: '25' });
   const [msg, setMsg] = useState(null);
   const [insc, setInsc] = useState(null);
   const maj = () => {
@@ -13,7 +13,7 @@ export default function Paiements() {
   };
   useEffect(() => {
     maj();
-    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '', cinetpay_key: s.cinetpay_key || '', cinetpay_site: s.cinetpay_site || '', whatsapp_token: s.whatsapp_token || '', whatsapp_phone_id: s.whatsapp_phone_id || '' })).catch(() => {});
+    api('/admin/settings').then((s) => setCfg({ wave: s.wave || '', om: s.om || '', cinetpay_key: s.cinetpay_key || '', cinetpay_site: s.cinetpay_site || '', whatsapp_token: s.whatsapp_token || '', whatsapp_phone_id: s.whatsapp_phone_id || '', commission_packs: s.commission_packs || '25' })).catch(() => {});
   }, []);
 
   async function agir(id, ok) {
@@ -48,6 +48,13 @@ export default function Paiements() {
           Enregistrer
         </button>
         {msg && <div className="alert alert-ok">{msg}</div>}
+      </div>
+
+      <div className="panel">
+        <h2>🛒 Commission boutique étudiante</h2>
+        <label className="label">Commission de la plateforme sur chaque pack vendu (%)</label>
+        <input className="input" type="number" min="0" max="90" value={cfg.commission_packs} onChange={(e) => setCfg({ ...cfg, commission_packs: e.target.value })} />
+        <p className="muted small">Exemple : pack à 2 000 F, commission {cfg.commission_packs || 25} % → la plateforme garde {Math.round(2000 * (cfg.commission_packs || 25) / 100)} F, le vendeur reçoit {2000 - Math.round(2000 * (cfg.commission_packs || 25) / 100)} F.</p>
       </div>
 
       <div className="panel">

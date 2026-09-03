@@ -5,7 +5,7 @@
    documents « hors ligne » sont gérés séparément par IndexedDB (offline.jsx),
    uniquement à la demande de l'élève. */
 
-const V = 'kd-v8'; // bump : purge les anciens caches (correctifs non visibles sinon)
+const V = 'kd-v9'; // bump : purge les anciens caches (correctifs non visibles sinon)
 const SHELL = `${V}-shell`; // coquille de l'app
 const STATIC = `${V}-static`; // assets construits + images
 const FONTS = `${V}-fonts`; // polices Google

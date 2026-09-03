@@ -51,6 +51,7 @@ app.get('/api/version', (req, res) =>
 
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/eleve', require('./routes/eleve'));
+app.use('/api/etudiant', require('./routes/etudiant'));
 app.use('/api/decouverte', require('./routes/decouverte'));
 app.use('/api/paiement', require('./paiement').router);
 

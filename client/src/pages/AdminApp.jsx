@@ -17,11 +17,13 @@ import CultureAdmin from '../admin/Culture.jsx';
 import IaSettings from '../admin/IaSettings.jsx';
 import DevoirsBinomes from '../admin/Devoirs.jsx';
 import PaiementsAdmin from '../admin/Paiements.jsx';
+import EtudiantsAdmin from '../admin/Etudiants.jsx';
 
 const TABS = [
   { id: 'dash', label: 'Tableau de bord', icon: 'grid' },
   { id: 'ia', label: 'Assistant IA', icon: 'chat', directionSeul: true },
   { id: 'paiements', label: 'Paiements', icon: 'briefcase', directionSeul: true },
+  { id: 'etudiants', label: 'Étudiants', icon: 'cap', directionSeul: true },
   { id: 'eleves', label: 'Élèves & accès', icon: 'users' },
   { id: 'cours', label: 'Cours & PDF', icon: 'book' },
   { id: 'culture', label: 'Culture du monde', icon: 'bulb' },
@@ -116,6 +118,7 @@ export default function AdminApp() {
         {tab === 'dash' && <Dashboard />}
         {tab === 'ia' && me.filiere === 'all' && <IaSettings />}
         {tab === 'paiements' && me.filiere === 'all' && <PaiementsAdmin />}
+        {tab === 'etudiants' && me.filiere === 'all' && <EtudiantsAdmin />}
         {tab === 'eleves' && <Eleves adminScope={me.filiere} />}
         {tab === 'cours' && <Cours adminScope={me.filiere} />}
         {tab === 'culture' && <CultureAdmin />}

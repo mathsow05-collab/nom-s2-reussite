@@ -329,6 +329,7 @@ router.get('/settings', admin, (req, res) => {
     groq: !!process.env.GROQ_API_KEY || !!g,
     wave: wave?.value || '',
     om: om?.value || '',
+    commission_packs: db.prepare("SELECT value FROM settings WHERE key = 'commission_packs'").get()?.value || '25',
     whatsapp: !!db.prepare("SELECT value FROM settings WHERE key = 'whatsapp_token'").get()?.value,
     cinetpay: !!(db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_api_key'").get()?.value && db.prepare("SELECT value FROM settings WHERE key = 'cinetpay_site_id'").get()?.value),
   });
@@ -353,6 +354,9 @@ router.post('/settings/paiements', admin, (req, res) => {
   const om = String(req.body?.om || '').trim();
   const ck = String(req.body?.cinetpay_key || '').trim();
   const cs = String(req.body?.cinetpay_site || '').trim();
+  const com = String(req.body?.commission_packs ?? '').trim();
+  if (com !== '' && Number(com) >= 0 && Number(com) <= 90)
+    db.prepare("INSERT INTO settings (key, value) VALUES ('commission_packs', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(String(Math.round(Number(com))));
   const wt = String(req.body?.whatsapp_token || '').trim();
   const wp = String(req.body?.whatsapp_phone_id || '').trim();
   if (wt)
@@ -368,6 +372,62 @@ router.post('/settings/paiements', admin, (req, res) => {
   if (om)
     db.prepare("INSERT INTO settings (key, value) VALUES ('om_numero', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(om);
   addLog('paiements_numeros_maj', { source: 'admin', req });
+  res.json({ ok: true });
+});
+
+/* ----------------------- Espace étudiant (gratuit) ------------------------ */
+router.get('/etudiants', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  res.json(db.prepare('SELECT id, etu_id, prenom, nom, filiere, universite, tel, verifie, created_at FROM etudiants ORDER BY id DESC LIMIT 200').all());
+});
+
+router.get('/packs', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  res.json(
+    db.prepare(
+      `SELECT p.*, e.prenom v_prenom, e.nom v_nom, e.tel v_tel,
+       (SELECT COUNT(*) FROM etu_achats a WHERE a.pack_id = p.id AND a.statut = 'valide') AS ventes_ok
+       FROM etu_packs p JOIN etudiants e ON e.id = p.vendeur_id ORDER BY (p.statut = 'en_attente') DESC, p.id DESC LIMIT 100`
+    ).all()
+  );
+});
+
+router.post('/packs/:id/valider', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  db.prepare("UPDATE etu_packs SET statut = 'en_ligne' WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
+router.post('/packs/:id/refuser', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  db.prepare("UPDATE etu_packs SET statut = 'refuse' WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
+router.get('/achats-packs', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  res.json(
+    db.prepare(
+      `SELECT a.id, a.statut, a.methode, a.reference, a.created_at, p.titre pack_titre, p.prix,
+              ach.prenom ach_prenom, ach.nom ach_nom, ven.prenom v_prenom, ven.tel v_tel
+       FROM etu_achats a JOIN etu_packs p ON p.id = a.pack_id
+       JOIN etudiants ach ON ach.id = a.acheteur_id JOIN etudiants ven ON ven.id = p.vendeur_id
+       ORDER BY (a.statut = 'en_attente') DESC, a.id DESC LIMIT 100`
+    ).all()
+  );
+});
+
+router.post('/achats-packs/:id/valider', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  db.prepare("UPDATE etu_achats SET statut = 'valide', valide_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?").run(req.params.id);
+  const a = db.prepare('SELECT pack_id FROM etu_achats WHERE id = ?').get(req.params.id);
+  if (a) db.prepare('UPDATE etu_packs SET ventes = ventes + 1 WHERE id = ?').run(a.pack_id);
+  res.json({ ok: true });
+});
+
+router.post('/achats-packs/:id/rejeter', admin, (req, res) => {
+  if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+  db.prepare("UPDATE etu_achats SET statut = 'rejete' WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
 

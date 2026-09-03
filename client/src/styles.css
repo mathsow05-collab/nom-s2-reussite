@@ -2411,3 +2411,15 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .abo-bandeau { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; text-align: center; font-size: 0.8rem; font-weight: 800; padding: 7px 12px; border-radius: 0 0 12px 12px; margin: -6px 12px 10px; }
 .abo-carte { padding: 4px; }
 .cree-id { font-family: ui-monospace, monospace; font-size: 1.3rem; font-weight: 800; letter-spacing: 0.06em; background: var(--card2); border: 2px dashed var(--brand); border-radius: 14px; padding: 12px; margin: 12px 0; color: var(--ink); }
+
+/* ------------------------- Espace Étudiant (gratuit) ---------------------- */
+.etu-msg { background: var(--card-bg, #1e293b); border: 1px solid var(--border, #334155); border-radius: 12px; padding: 8px 12px; max-width: 85%; }
+.etu-msg.moi { margin-left: auto; background: var(--primary-soft, #312e81); border-color: var(--primary, #6366f1); }
+.etu-msg p { margin: 2px 0 0; }
+.etu-bilan { display: grid; gap: 2px; border-left: 4px solid var(--ok, #22c55e); }
+.etu-contenu { margin-top: 8px; padding: 10px; background: var(--card-bg, #1e293b); border-radius: 10px; border: 1px dashed var(--border, #334155); }
+.etu-contenu p { margin: 4px 0 0; }
+.etu-jour { margin: 0 0 6px; font-size: 15px; }
+.etu-creneau { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-top: 6px; }
+.etu-heure { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; color: var(--primary, #818cf8); white-space: nowrap; }
+.etu-titre { flex: 1; min-width: 0; }
