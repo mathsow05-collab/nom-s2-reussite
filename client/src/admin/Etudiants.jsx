@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import Icon from '../Icon.jsx';
+import { Modal } from '../ui.jsx';
 import { FILIERES_ETU } from '../data/etu.js';
 
 /* Espace étudiant (gratuit) côté direction : liste des étudiants, validation
@@ -10,6 +11,28 @@ export default function EtudiantsAdmin() {
   const [etudiants, setEtudiants] = useState(null);
   const [packs, setPacks] = useState(null);
   const [achats, setAchats] = useState(null);
+  const [creer, setCreer] = useState(false);
+  const [cree, setCree] = useState(null);
+  const [err, setErr] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [f, setF] = useState({ prenom: '', nom: '', filiere: 'mi', universite: '', tel: '' });
+
+  async function creerEtudiant(e) {
+    e.preventDefault();
+    setErr(null);
+    setBusy(true);
+    try {
+      const r = await api('/admin/etudiants', { method: 'POST', body: f });
+      setCree(r.etu_id);
+      setCreer(false);
+      setF({ prenom: '', nom: '', filiere: 'mi', universite: '', tel: '' });
+      maj();
+    } catch (ex) {
+      setErr(ex.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const maj = () => {
     api('/admin/etudiants').then(setEtudiants).catch(() => {});
@@ -42,6 +65,10 @@ export default function EtudiantsAdmin() {
 
   return (
     <div>
+      <div className="pills" style={{ marginBottom: 10 }}>
+        <button className="pill active" onClick={() => setCreer(true)}>+ Créer un étudiant (ID instantané)</button>
+      </div>
+
       <div className="pills">
         <button className={vue === 'packs' ? 'pill active' : 'pill'} onClick={() => setVue('packs')}>
           📦 Packs à vérifier {attente > 0 && `(${attente})`}
@@ -116,6 +143,55 @@ export default function EtudiantsAdmin() {
             </div>
           ))}
         </div>
+      )}
+
+      {cree && (
+        <Modal title="🎉 Étudiant créé !" onClose={() => setCree(null)}>
+          <p>
+            Compte gratuit activé immédiatement. Donne cet ID à l'étudiant — c'est avec lui qu'il se connectera sur
+            l'écran <strong>SCHOOBY Étudiant</strong> :
+          </p>
+          <div className="cree-id" style={{ textAlign: 'center', margin: '10px 0' }}>{cree}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="btn btn-outline"
+              onClick={() => {
+                try {
+                  navigator.clipboard?.writeText(cree);
+                } catch {
+                  /* ignore */
+                }
+              }}
+            >
+              Copier l'ID
+            </button>
+            <button className="btn btn-primary" onClick={() => setCree(null)}>
+              Terminé
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {creer && (
+        <Modal title="Créer un étudiant" onClose={() => { setCreer(false); setErr(null); }}>
+          <form onSubmit={creerEtudiant} style={{ display: 'grid', gap: 8 }}>
+            <input className="input" placeholder="Prénom *" value={f.prenom} onChange={(e) => setF({ ...f, prenom: e.target.value })} required />
+            <input className="input" placeholder="Nom *" value={f.nom} onChange={(e) => setF({ ...f, nom: e.target.value })} required />
+            <select className="input" value={f.filiere} onChange={(e) => setF({ ...f, filiere: e.target.value })}>
+              {Object.entries(FILIERES_ETU).map(([k, v]) => (
+                <option key={k} value={k}>{v.ico} {v.label}</option>
+              ))}
+            </select>
+            <input className="input" placeholder="Université (ex. UCAD)" value={f.universite} onChange={(e) => setF({ ...f, universite: e.target.value })} />
+            <input className="input" placeholder="Numéro WhatsApp * (protège le compte)" type="tel" value={f.tel} onChange={(e) => setF({ ...f, tel: e.target.value })} required />
+            {err && <div className="alert alert-danger">{err}</div>}
+            <button className="btn btn-primary" disabled={busy}>{busy ? 'Création…' : 'Générer l\'ID étudiant'}</button>
+          </form>
+          <p className="muted small" style={{ marginTop: 8 }}>
+            Le compte est actif tout de suite — pas besoin de code WhatsApp. Le numéro empêche quiconque de recréer un
+            compte avec ce même numéro.
+          </p>
+        </Modal>
       )}
 
       {vue === 'etudiants' && (

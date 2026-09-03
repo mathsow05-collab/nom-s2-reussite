@@ -381,6 +381,33 @@ router.get('/etudiants', admin, (req, res) => {
   res.json(db.prepare('SELECT id, etu_id, prenom, nom, filiere, universite, tel, verifie, created_at FROM etudiants ORDER BY id DESC LIMIT 200').all());
 });
 
+router.post(
+  '/etudiants',
+  admin,
+  rateLimiter({ max: 30, windowMs: 60 * 60 * 1000, message: 'Trop de créations.' }),
+  (req, res) => {
+    if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
+    const { prenom, nom, filiere, universite, tel } = req.body || {};
+    if (!prenom || !nom) return res.status(400).json({ error: 'Prénom et nom obligatoires.' });
+    if (!tel) return res.status(400).json({ error: 'Le numéro WhatsApp est obligatoire (même pour un compte créé ici).' });
+    const telNorm = String(tel).replace(/\D/g, '');
+    if (telNorm.length < 8) return res.status(400).json({ error: 'Numéro WhatsApp invalide.' });
+    const FIL = { mi:1, pc:1, sante:1, droit:1, eco:1, lettres:1, ing:1 };
+    if (!FIL[filiere]) return res.status(400).json({ error: 'Filière invalide.' });
+    if (db.prepare('SELECT 1 FROM etudiants WHERE tel = ? AND verifie = 1').get(telNorm))
+      return res.status(400).json({ error: 'Ce numéro a déjà un compte étudiant actif.' });
+    let id;
+    do {
+      id = generateEleveId('ETU');
+    } while (db.prepare('SELECT 1 FROM etudiants WHERE etu_id = ?').get(id));
+    db.prepare(
+      "INSERT INTO etudiants (etu_id, nom, prenom, filiere, universite, tel, verifie, create_par) VALUES (?,?,?,?,?,?,1,'admin')"
+    ).run(id, String(nom).trim(), String(prenom).trim(), filiere, String(universite || '').trim() || null, telNorm);
+    addLog('etudiant_cree_admin', { eleveRef: id, req });
+    res.json({ ok: true, etu_id: id });
+  }
+);
+
 router.get('/packs', admin, (req, res) => {
   if (req.scope !== 'all') return res.status(403).json({ error: 'Réservé à la direction.' });
   res.json(

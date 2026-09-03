@@ -474,4 +474,10 @@ CREATE INDEX IF NOT EXISTS idx_etu_msg ON etu_messages(groupe_id, id);
 CREATE INDEX IF NOT EXISTS idx_etu_packs_fil ON etu_packs(filiere, statut);
 `);
 
+function ensureEtu(col, ddl) {
+  const cols = db.prepare('PRAGMA table_info(etudiants)').all().map((c) => c.name);
+  if (!cols.includes(col)) db.exec(`ALTER TABLE etudiants ADD COLUMN ${col} ${ddl}`);
+}
+ensureEtu('create_par', "TEXT NOT NULL DEFAULT 'auto'");
+
 module.exports = db;
