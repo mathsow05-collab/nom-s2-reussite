@@ -33,13 +33,14 @@ export default function EtudiantApp() {
   const premierTab = useRef(true);
 
   useEffect(() => {
-    api('/etudiant/me').catch((e) => {
-      if (e.status === 401) {
-        clearToken();
-        window.location.hash = '#/etudiant';
-      }
-    });
-    api('/etudiant/me').then(setMe).catch(() => {});
+    api('/etudiant/me')
+      .then(setMe)
+      .catch((e) => {
+        if (e.status === 401) {
+          clearToken();
+          window.location.hash = '#/etudiant';
+        }
+      });
   }, []);
 
   useEffect(() => {

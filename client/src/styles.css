@@ -2425,3 +2425,32 @@ body { background: radial-gradient(700px 320px at 90% -80px, rgba(79, 70, 229, 0
 .etu-creneau { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-top: 6px; }
 .etu-heure { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; color: var(--primary, #818cf8); white-space: nowrap; }
 .etu-titre { flex: 1; min-width: 0; }
+
+/* ============================================================
+   ANTI-CLIGNOTEMENT iOS / mobile
+   Sur iPhone, backdrop-filter + fonds translucides en position
+   sticky/fixed provoquent un re-rendu GPU à chaque frame →
+   écran qui clignote. Sur mobile : fonds opaques, plus de flou
+   dynamique, animations infinies coupées, pas de flash blanc au
+   rebond de scroll.
+   ============================================================ */
+html { background: var(--bg); }
+:root, html { -webkit-tap-highlight-color: transparent; }
+
+@media (hover: none), (pointer: coarse) {
+  body { overscroll-behavior-y: none; touch-action: manipulation; }
+
+  /* Fonds 100 % opaques : plus rien à échantillonner par frame. */
+  .topbar, .bnav, .sheet3-card, .ia-card, .gs3-card, .xo-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--card) !important;
+  }
+  .ob-wrap { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+  /* Toutes les animations infinies coupées : rien ne "boucle" à l'écran. */
+  .hello3::before, .shiny, .skel, .mq-track, .ex-timer.rouge,
+  .jeu-timer.rouge, .typing, .g3-dot, .aurora .blob {
+    animation: none !important;
+  }
+}
