@@ -5,7 +5,7 @@
    documents « hors ligne » sont gérés séparément par IndexedDB (offline.jsx),
    uniquement à la demande de l'élève. */
 
-const V = 'kd-v11'; // bump : purge les anciens caches (correctifs non visibles sinon)
+const V = 'kd-v12'; // bump : purge les anciens caches (correctifs non visibles sinon)
 const SHELL = `${V}-shell`; // coquille de l'app
 const STATIC = `${V}-static`; // assets construits + images
 const FONTS = `${V}-fonts`; // polices Google
@@ -33,16 +33,25 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Navigation : réseau d'abord, repli sur la coquille hors ligne.
+  // Navigation : cache d'abord → l'app s'affiche INSTANTANÉMENT (fini le
+  // flash blanc pendant que le serveur gratuit se réveille), puis la coquille
+  // est rafraîchie en arrière-plan pour la prochaine ouverture.
   if (req.mode === 'navigate') {
     e.respondWith(
-      fetch(req)
-        .then((r) => {
-          const cp = r.clone();
-          caches.open(SHELL).then((c) => c.put('/', cp));
-          return r;
-        })
-        .catch(async () => (await caches.match('/')) || new Response('Hors ligne', { status: 503 }))
+      (async () => {
+        const shell = await caches.match('/');
+        const maj = fetch(req)
+          .then((r) => {
+            if (r && r.status === 200) {
+              const cp = r.clone();
+              caches.open(SHELL).then((c) => c.put('/', cp));
+            }
+            return r;
+          })
+          .catch(() => null);
+        if (shell) return shell;
+        return (await maj) || new Response('Hors ligne', { status: 503 });
+      })()
     );
     return;
   }
