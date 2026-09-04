@@ -6,6 +6,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    /* Compatible vieux iPhone : iOS 11+ (Safari 11). Sans ça, les iPhone
+       sous iOS < 14 affichent une page blanche (syntaxe récente non reconnue). */
+    target: ['es2017', 'safari11'],
   },
   server: {
     host: true,
