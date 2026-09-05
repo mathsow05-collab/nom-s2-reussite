@@ -1,6 +1,11 @@
 /* Sons d'interface courts et doux, synthétisés (WebAudio) — jamais plus de 0,4 s. */
 let ctx = null;
-let actif = typeof localStorage !== 'undefined' ? localStorage.getItem('kd_sons') !== '0' : true;
+let actif = true;
+try {
+  actif = localStorage.getItem('kd_sons') !== '0';
+} catch {
+  actif = true; /* stockage bloqué (confidentialité iOS) : sons actifs par défaut */
+}
 
 export const sonsActifs = () => actif;
 export function setSons(v) {

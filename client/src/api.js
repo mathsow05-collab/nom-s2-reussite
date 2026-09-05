@@ -4,12 +4,38 @@ const ADMIN_TOKEN_KEY = 's2r_admin_token';
 /* Jetons en sessionStorage : chaque onglet garde SA session. On peut donc
    tester avec deux élèves (ou un élève + un admin) dans deux onglets du même
    navigateur sans se déconnecter mutuellement. */
-export const getToken = () => sessionStorage.getItem(TOKEN_KEY);
-export const setToken = (t) => sessionStorage.setItem(TOKEN_KEY, t);
-export const clearToken = () => sessionStorage.removeItem(TOKEN_KEY);
-export const getAdminToken = () => sessionStorage.getItem(ADMIN_TOKEN_KEY);
-export const setAdminToken = (t) => sessionStorage.setItem(ADMIN_TOKEN_KEY, t);
-export const clearAdminToken = () => sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+/* Accès stockage blindé : sur iPhone avec protections de confidentialité
+   renforcées (ou navigation privée stricte), sessionStorage/localStorage
+   peuvent être bloqués → on bascule sur un repli en mémoire au lieu de
+   faire planter toute l'application. */
+const memStore = {};
+function sGet(k) {
+  try {
+    return sessionStorage.getItem(k);
+  } catch {
+    return k in memStore ? memStore[k] : null;
+  }
+}
+function sSet(k, v) {
+  try {
+    sessionStorage.setItem(k, v);
+  } catch {
+    memStore[k] = v;
+  }
+}
+function sDel(k) {
+  try {
+    sessionStorage.removeItem(k);
+  } catch {
+    delete memStore[k];
+  }
+}
+export const getToken = () => sGet(TOKEN_KEY);
+export const setToken = (t) => sSet(TOKEN_KEY, t);
+export const clearToken = () => sDel(TOKEN_KEY);
+export const getAdminToken = () => sGet(ADMIN_TOKEN_KEY);
+export const setAdminToken = (t) => sSet(ADMIN_TOKEN_KEY, t);
+export const clearAdminToken = () => sDel(ADMIN_TOKEN_KEY);
 
 export class ApiError extends Error {
   constructor(status, code, message) {
